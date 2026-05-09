@@ -4,6 +4,7 @@ import {
   isActorCharacterSheetApplication,
   isSupportedClass,
   normalizePreparationGroupRank,
+  registerSheetIntegration,
   shouldRedirectCreationWizardToPlanner,
 } from '../../../scripts/ui/sheet-integration.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
@@ -104,6 +105,15 @@ describe('character sheet application detection', () => {
     expect(isActorCharacterSheetApplication(asJQuery(app), actor)).toBe(true);
   });
 
+  test('accepts the Foundry v13 ApplicationV2 actor sheet element for the matching actor', () => {
+    const actor = createMockActor({ id: 'abc123' });
+    const app = document.createElement('section');
+    app.id = 'CharacterSheetPF2e-Actor-abc123';
+    app.className = 'application sheet actor character';
+
+    expect(isActorCharacterSheetApplication(app, actor)).toBe(true);
+  });
+
   test('rejects PF2e HUD windows that render character-sheet content', () => {
     const actor = createMockActor({ id: 'abc123' });
     const hud = document.createElement('div');
@@ -126,6 +136,119 @@ describe('character sheet application detection', () => {
   });
 });
 
+describe('character sheet render integration', () => {
+  test('adds header buttons when Foundry v13 passes inner sheet HTML as an HTMLElement', () => {
+    const restoreJQuery = useDomJQuery();
+    try {
+      const actor = createMockActor({ id: 'abc123' });
+      const app = document.createElement('section');
+      app.id = 'CharacterSheetPF2e-Actor-abc123';
+      app.className = 'application sheet actor character';
+
+      const header = document.createElement('header');
+      header.className = 'window-header';
+      const closeButton = document.createElement('button');
+      closeButton.className = 'close';
+      header.append(closeButton);
+
+      const content = document.createElement('div');
+      content.className = 'sheet-content';
+      app.append(header, content);
+      document.body.append(app);
+
+      registerSheetIntegration();
+      const renderHandler = Hooks.on.mock.calls.find(
+        ([hook]) => hook === 'renderCharacterSheetPF2e',
+      )[1];
+      renderHandler({ actor }, content);
+
+      expect(header.querySelector('.pf2e-leveler-create-btn')).not.toBeNull();
+      expect(header.querySelector('.pf2e-leveler-plan-btn')).not.toBeNull();
+    } finally {
+      restoreJQuery();
+    }
+  });
+});
+
 function asJQuery(element) {
   return { 0: element, get: () => element };
+}
+
+function useDomJQuery() {
+  const previous = global.$;
+  global.$ = (input) => new TestQuery(input);
+  return () => {
+    global.$ = previous;
+  };
+}
+
+class TestQuery {
+  constructor(input) {
+    this.elements = normalizeElements(input);
+    this.length = this.elements.length;
+    this.elements.forEach((element, index) => {
+      this[index] = element;
+    });
+  }
+
+  closest(selector) {
+    return new TestQuery(this.elements.map((element) => element.closest(selector)).filter(Boolean));
+  }
+
+  find(selector) {
+    return new TestQuery(
+      this.elements.flatMap((element) => Array.from(element.querySelectorAll(selector))),
+    );
+  }
+
+  first() {
+    return new TestQuery(this.elements.slice(0, 1));
+  }
+
+  remove() {
+    this.elements.forEach((element) => element.remove());
+    return this;
+  }
+
+  before(content) {
+    const nodes = normalizeElements(content);
+    this.elements.forEach((element) => {
+      nodes.forEach((node) => element.before(node));
+    });
+    return this;
+  }
+
+  append(content) {
+    const nodes = normalizeElements(content);
+    this.elements.forEach((element) => {
+      nodes.forEach((node) => element.append(node));
+    });
+    return this;
+  }
+
+  on(eventName, handler) {
+    this.elements.forEach((element) => element.addEventListener(eventName, handler));
+    return this;
+  }
+
+  get(index = 0) {
+    return this.elements[index] ?? null;
+  }
+}
+
+function normalizeElements(input) {
+  if (!input) return [];
+  if (input instanceof TestQuery) return input.elements;
+  if (input instanceof HTMLElement) return [input];
+  if (typeof input === 'string') return elementsFromHtml(input);
+  if (Array.isArray(input)) return input.filter((item) => item instanceof HTMLElement);
+  if (typeof input.length === 'number')
+    return Array.from(input).filter((item) => item instanceof HTMLElement);
+  return [];
+}
+
+function elementsFromHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html.trim();
+  return Array.from(template.content.children);
 }

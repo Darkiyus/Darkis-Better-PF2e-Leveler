@@ -9,6 +9,7 @@ import { renderApplicationInFront, scheduleBringApplicationToFront } from './sha
 
 const PLANNER_WINDOW_SELECTORS = ['#pf2e-leveler-planner', '.pf2e-leveler.level-planner'];
 const WIZARD_WINDOW_SELECTORS = ['#pf2e-leveler-wizard', '.pf2e-leveler.character-wizard'];
+const APPLICATION_ROOT_SELECTOR = '.application, .app, .window-app';
 
 export function registerSheetIntegration() {
   Hooks.on('renderCharacterSheetPF2e', onRenderCharacterSheet);
@@ -49,8 +50,10 @@ function onRenderCharacterSheet(sheet, html) {
   const actor = sheet.actor;
   if (actor.type !== 'character') return;
 
-  const appElement = html.closest('.app');
-  if (!isActorCharacterSheetApplication(appElement, actor)) return;
+  const appNode = getClosestApplicationElement(html);
+  if (!isActorCharacterSheetApplication(appNode, actor)) return;
+
+  const appElement = $(appNode);
 
   appElement.find('.pf2e-leveler-plan-btn').remove();
   appElement.find('.pf2e-leveler-create-btn').remove();
@@ -93,7 +96,11 @@ function onRenderCharacterSheet(sheet, html) {
 
 function getApplicationElementFromEvent(event) {
   const element = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-  return element?.closest('.application, .app, .window-app') ?? null;
+  return element?.closest(APPLICATION_ROOT_SELECTOR) ?? null;
+}
+
+function getClosestApplicationElement(html) {
+  return getElement(html)?.closest?.(APPLICATION_ROOT_SELECTOR) ?? null;
 }
 
 function getActorSheetSelectors(actor) {
@@ -107,20 +114,21 @@ function getActorSheetElementId(actor) {
 }
 
 function isActorCharacterSheetApplication(appElement, actor) {
-  const element = getJQueryElement(appElement);
+  const element = getElement(appElement);
   if (!element || isPF2eHudElement(element) || isPF2eAttackPopoutElement(element)) return false;
 
   const expectedId = getActorSheetElementId(actor);
   if (expectedId && element.id === expectedId) return true;
 
-  return element.classList.contains('window-app')
+  return (element.classList.contains('window-app') || element.classList.contains('application'))
     && element.classList.contains('sheet')
     && element.classList.contains('actor')
     && element.classList.contains('character');
 }
 
-function getJQueryElement(jqueryElement) {
-  return jqueryElement?.[0] ?? jqueryElement?.get?.(0) ?? null;
+function getElement(elementLike) {
+  if (elementLike instanceof HTMLElement) return elementLike;
+  return elementLike?.[0] ?? elementLike?.get?.(0) ?? null;
 }
 
 function isPF2eHudElement(element) {

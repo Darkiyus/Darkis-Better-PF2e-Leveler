@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.6
+
+### Compatibility
+
+- **Foundry v13 character sheets show Leveler header buttons again** - Sheet integration now accepts Foundry's ApplicationV2 sheet element shape, restoring the creation wizard and planner icons while still excluding PF2e HUD and attack popout windows
+
 ## 3.4.5
 
 ### Level Planner
