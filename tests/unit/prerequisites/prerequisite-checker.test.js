@@ -51,6 +51,44 @@ describe('checkPrerequisites', () => {
     expect(result.results[0].met).toBe(true);
   });
 
+  test('uses SF2e skill labels in skill prerequisites', () => {
+    const originalConfig = global.CONFIG;
+    const originalSystemId = global.game.system.id;
+    global.game.system.id = 'sf2e';
+    global.CONFIG = {
+      SF2E: {
+        skills: {
+          com: { label: 'Computer' },
+          pil: { label: 'Piloting' },
+        },
+      },
+      PF2E: {
+        skills: {
+          acrobatics: { label: 'Acrobatics' },
+        },
+      },
+    };
+
+    try {
+      const feat = {
+        system: { prerequisites: { value: [{ value: 'trained in Computer' }] } },
+      };
+      const result = checkPrerequisites(feat, {
+        ...buildState,
+        skills: { computers: 1 },
+      });
+
+      expect(result.met).toBe(true);
+      expect(result.results[0]).toEqual(expect.objectContaining({
+        met: true,
+        text: 'trained in Computer',
+      }));
+    } finally {
+      global.CONFIG = originalConfig;
+      global.game.system.id = originalSystemId;
+    }
+  });
+
   test('uses raw source prerequisite text when translated system text is not parseable', () => {
     const feat = {
       _source: {

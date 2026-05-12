@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.8
+
+### Level Planner
+
+- **Starfinder 2e Computers and Piloting skills now appear in Plan Level** - The planner, feat picker, prerequisite checks, and apply path now use the active ruleset skill list instead of the fixed PF2e skill list, matching the Character Creation wizard in SF2e worlds and PF2e Anachronism campaigns
+
 ## 3.4.7
 
 ### Compatibility

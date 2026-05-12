@@ -1,5 +1,12 @@
-import { PROFICIENCY_RANK_NAMES, SKILLS } from '../constants.js';
+import { PROFICIENCY_RANK_NAMES } from '../constants.js';
 import { slugify } from '../utils/pf2e-api.js';
+import {
+  getActiveSkillConfigEntry,
+  getActiveSkillSlugs,
+  isActiveSkillSlug,
+  normalizeSkillSlug,
+  SKILL_ALIASES,
+} from '../utils/skill-slugs.js';
 
 const RANK_NAME_ALIASES = {
   untrained: 'untrained',
@@ -1211,42 +1218,38 @@ function resolveSkillSlug(subject) {
   const normalized = normalizeRequirementToken(subject);
   if (!normalized) return null;
 
-  if (SKILLS.includes(normalized)) return normalized;
+  const activeSkill = normalizeSkillSlug(normalized);
+  if (isActiveSkillSlug(activeSkill)) return activeSkill;
 
   const aliases = getSkillAliasLookup();
   const exact = aliases.get(normalized);
   if (exact) return exact;
 
-  return SKILLS.find((skill) => normalized.includes(normalizeRequirementToken(skill))) ?? null;
+  return getActiveSkillSlugs().find((skill) => normalized.includes(normalizeRequirementToken(skill))) ?? null;
 }
 
 function getSkillAliasLookup() {
   const lookup = new Map();
 
-  for (const skill of SKILLS) {
+  for (const skill of getActiveSkillSlugs()) {
     lookup.set(normalizeRequirementToken(skill), skill);
-  }
 
-  const configSkills = globalThis.CONFIG?.PF2E?.skills ?? {};
-  for (const [slug, rawEntry] of Object.entries(configSkills)) {
-    const canonicalSlug = SKILLS.includes(slug) ? slug : null;
-    if (!canonicalSlug) continue;
-
+    const rawEntry = getActiveSkillConfigEntry(skill);
     const rawLabel =
       typeof rawEntry === 'string'
         ? rawEntry
-        : (rawEntry?.label ?? rawEntry?.short ?? rawEntry?.long ?? null);
+        : (rawEntry?.label ?? rawEntry?.short ?? rawEntry?.long ?? skill);
     const localizedLabel =
       rawLabel && game?.i18n?.has?.(rawLabel) ? game.i18n.localize(rawLabel) : rawLabel;
 
-    for (const candidate of [slug, rawLabel, localizedLabel]) {
+    for (const candidate of [skill, rawLabel, localizedLabel]) {
       const normalized = normalizeRequirementToken(candidate);
-      if (normalized) lookup.set(normalized, canonicalSlug);
+      if (normalized) lookup.set(normalized, skill);
     }
   }
 
-  for (const [alias, slug] of Object.entries(FALLBACK_SKILL_ALIASES)) {
-    lookup.set(normalizeRequirementToken(alias), slug);
+  for (const [alias, slug] of Object.entries({ ...SKILL_ALIASES, ...FALLBACK_SKILL_ALIASES })) {
+    if (isActiveSkillSlug(slug)) lookup.set(normalizeRequirementToken(alias), normalizeSkillSlug(slug));
   }
 
   return lookup;

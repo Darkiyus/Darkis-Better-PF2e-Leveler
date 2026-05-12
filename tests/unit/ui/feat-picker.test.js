@@ -1231,6 +1231,87 @@ describe('FeatPicker prerequisite enforcement', () => {
     expect(context.maxLevel).toBe('7');
   });
 
+  test('uses SF2e skills for skill filter chips', () => {
+    const originalConfig = global.CONFIG;
+    const originalSystemId = global.game.system.id;
+    global.game.system.id = 'sf2e';
+    global.CONFIG = {
+      SF2E: {
+        skills: {
+          acrobatics: { label: 'Acrobatics' },
+          computers: { label: 'Computers' },
+          piloting: { label: 'Piloting' },
+        },
+      },
+      PF2E: {
+        skills: {
+          acrobatics: { label: 'Acrobatics' },
+          arcana: { label: 'Arcana' },
+        },
+      },
+    };
+
+    try {
+      const picker = new FeatPicker(
+        createActor(),
+        'skill',
+        3,
+        createBuildState({ level: 3 }),
+        jest.fn(),
+      );
+
+      expect(picker._buildSkillOptionsBase()).toEqual([
+        { slug: 'acrobatics', label: 'Acrobatics' },
+        { slug: 'computers', label: 'Computers' },
+        { slug: 'piloting', label: 'Piloting' },
+      ]);
+    } finally {
+      global.CONFIG = originalConfig;
+      global.game.system.id = originalSystemId;
+    }
+  });
+
+  test('matches SF2e skill filter labels in prerequisite text', () => {
+    const originalConfig = global.CONFIG;
+    const originalSystemId = global.game.system.id;
+    global.game.system.id = 'sf2e';
+    global.CONFIG = {
+      SF2E: {
+        skills: {
+          com: { label: 'Computer' },
+          pil: { label: 'Piloting' },
+        },
+      },
+      PF2E: { skills: {} },
+    };
+
+    try {
+      const computerFeat = createFeat({
+        name: 'Terminal Expert',
+        uuid: 'terminal-expert',
+        slug: 'terminal-expert',
+        prereqText: 'trained in Computer',
+      });
+      computerFeat.system.level.value = 3;
+      computerFeat.system.traits.value = ['skill'];
+
+      const picker = new FeatPicker(
+        createActor(),
+        'skill',
+        3,
+        createBuildState({ level: 3, skills: { computers: 1 } }),
+        jest.fn(),
+      );
+      picker.allFeats = [computerFeat];
+      picker.selectedSkills.add('computers');
+
+      expect(picker._applyFilters().map((feat) => feat.slug)).toEqual(['terminal-expert']);
+    } finally {
+      global.CONFIG = originalConfig;
+      global.game.system.id = originalSystemId;
+    }
+  });
+
   test('required skill filters still enforce feat limitations even if visible skill chips change', () => {
     const deceptionFeat = createFeat({
       name: 'Charming Liar',

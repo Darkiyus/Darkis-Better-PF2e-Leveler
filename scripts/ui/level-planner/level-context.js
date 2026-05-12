@@ -1,4 +1,4 @@
-import { PROFICIENCY_RANK_NAMES, SKILLS, SUBCLASS_TAGS, WEALTH_MODES, CHARACTER_WEALTH, expandPermanentItemSlots, MODULE_ID } from '../../constants.js';
+import { PROFICIENCY_RANK_NAMES, SUBCLASS_TAGS, WEALTH_MODES, CHARACTER_WEALTH, expandPermanentItemSlots, MODULE_ID } from '../../constants.js';
 import { getChoicesForLevel } from '../../classes/progression.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { getLevelData } from '../../plan/plan-model.js';
@@ -18,7 +18,7 @@ import { extractFeatSkillRules } from './index.js';
 import { getAvailableLanguages } from './context.js';
 import { buildCustomSpellEntryOptions } from './spells.js';
 import { evaluatePredicate } from '../../utils/predicate.js';
-import { normalizeSkillSlug } from '../../utils/skill-slugs.js';
+import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../../utils/skill-slugs.js';
 
 const MANUAL_SPELL_FEATS = new Set([
   'advanced-qi-spells',
@@ -484,7 +484,7 @@ function buildCustomAvailableSkills(planner, levelData, level) {
   const maxRank = level >= 15 ? 4 : level >= 7 ? 3 : 2;
   const currentIncrease = levelData?.skillIncreases?.[0];
 
-  const entries = SKILLS.map((slug) => {
+  const entries = getActiveSkillSlugs().map((slug) => {
     const rank = currentSkills[slug] ?? 0;
     const nextRank = rank + 1;
     return {
@@ -956,14 +956,14 @@ function hydratePlannerChoiceOptions(planner, entry, feat) {
   }));
 
   const isSkillChoiceSet = (entry.choiceType === 'skill')
-    || options.every((option) => SKILLS.includes(String(option?.value ?? '').toLowerCase()));
+    || options.every((option) => isActiveSkillSlug(option?.value));
 
   const hydratedOptions = entry?.grantsSkillTraining === true && isSkillChoiceSet
     ? decoratePlannerSkillChoiceOptions(planner, entry, feat, options)
     : options;
 
   if (!selectedValue || hydratedOptions.some((option) => option.selected)) return hydratedOptions;
-  if (SKILLS.includes(selectedValue)) return hydratedOptions;
+  if (isActiveSkillSlug(selectedValue)) return hydratedOptions;
 
   return [
     ...hydratedOptions,
@@ -977,7 +977,7 @@ function hydratePlannerChoiceOptions(planner, entry, feat) {
 
 function decoratePlannerChoiceSetForRender(planner, entry, feat) {
   const choiceType = entry.choiceType
-    ?? (entry.options.every((option) => SKILLS.includes(String(option.value ?? '').toLowerCase())) ? 'skill' : 'item');
+    ?? (entry.options.every((option) => isActiveSkillSlug(option.value)) ? 'skill' : 'item');
   const hydratedEntry = { ...entry, choiceType };
   const options = hydratePlannerChoiceOptions(planner, hydratedEntry, feat);
   const decorated = {
@@ -1125,7 +1125,7 @@ async function collectGrantPreviewEntries({
       .filter((choiceSet) => !isPlannerChoiceSetSatisfied(choiceSet, storedChoices, preselectedChoiceFlags));
     for (const choiceSet of choiceSets) {
       if (grantChoiceSets.some((entry) => getChoiceSetSignature(entry) === getChoiceSetSignature(choiceSet))) continue;
-      const choiceType = choiceSet.options.every((option) => SKILLS.includes(String(option.value ?? '').toLowerCase())) ? 'skill' : 'item';
+      const choiceType = choiceSet.options.every((option) => isActiveSkillSlug(option.value)) ? 'skill' : 'item';
       grantChoiceSets.push(decoratePlannerChoiceSetForRender(planner, {
         ...choiceSet,
         choiceType,
@@ -1334,11 +1334,11 @@ async function buildPlannerChoiceSetSkillContext(planner) {
     const numericLevel = Number(level);
     if (!Number.isFinite(numericLevel) || numericLevel > Number(planner.selectedLevel ?? 0)) continue;
     for (const skill of planner.plan?.levels?.[level]?.intBonusSkills ?? []) {
-      if (SKILLS.includes(skill)) selectedSkills.add(skill);
+      if (isActiveSkillSlug(skill)) selectedSkills.add(normalizeSkillSlug(skill));
     }
   }
 
-  return SKILLS.map((slug) => ({
+  return getActiveSkillSlugs().map((slug) => ({
     slug,
     label: localizeSkillSlug(slug),
     selected: selectedSkills.has(slug),
@@ -1354,7 +1354,7 @@ function collectPlannerSelectedSkills(planner) {
     if (!Number.isFinite(numericLevel) || numericLevel > Number(planner.selectedLevel ?? 0)) continue;
 
     for (const skill of planner.plan?.levels?.[level]?.intBonusSkills ?? []) {
-      if (SKILLS.includes(skill)) selectedSkills.add(skill);
+      if (isActiveSkillSlug(skill)) selectedSkills.add(normalizeSkillSlug(skill));
     }
   }
 
@@ -1362,18 +1362,18 @@ function collectPlannerSelectedSkills(planner) {
 }
 
 function decoratePlannerSkillChoiceOptions(planner, entry, feat, options) {
-  const selected = String(feat?.choices?.[entry?.flag] ?? '').trim().toLowerCase();
+  const selected = normalizeSkillSlug(feat?.choices?.[entry?.flag]);
   const priorState = computeBuildState(planner.actor, planner.plan, planner.selectedLevel - 1);
   const selectedIntSkills = new Set(collectPlannerSelectedSkills(planner));
   const selectedElsewhere = new Set(
     Object.entries(feat?.choices ?? {})
       .filter(([flag, value]) => flag !== entry?.flag && typeof value === 'string' && value !== '[object Object]')
-      .map(([, value]) => String(value).trim().toLowerCase()),
+      .map(([, value]) => normalizeSkillSlug(value)),
   );
-  const blockedSkills = new Set((entry?.blockedSkills ?? []).map((skill) => String(skill).trim().toLowerCase()));
+  const blockedSkills = new Set((entry?.blockedSkills ?? []).map((skill) => normalizeSkillSlug(skill)));
 
   return options.map((option) => {
-    const value = String(option?.value ?? '').trim().toLowerCase();
+    const value = normalizeSkillSlug(option?.value);
     const selectedHere = value === selected;
     const trainedBeforeLevel = (priorState.skills?.[value] ?? 0) >= 1;
     const selectedByIntBonus = selectedIntSkills.has(value);
@@ -1431,16 +1431,16 @@ async function buildPlannerSkillFallbackChoiceSets(planner, feat, source) {
 }
 
 function buildPlannerSkillFallbackOptions(planner, feat, flag, blockedSkills) {
-  const selected = String(feat?.choices?.[flag] ?? '');
+  const selected = normalizeSkillSlug(feat?.choices?.[flag]);
   const buildState = computeBuildState(planner.actor, planner.plan, planner.selectedLevel - 1);
   const selectedElsewhere = new Set(
     Object.entries(feat?.choices ?? {})
       .filter(([entryFlag, value]) => /^levelerSkillFallback\d+$/i.test(entryFlag) && entryFlag !== flag && typeof value === 'string')
-      .map(([, value]) => value),
+      .map(([, value]) => normalizeSkillSlug(value)),
   );
-  const blocked = new Set(blockedSkills);
+  const blocked = new Set(blockedSkills.map((skill) => normalizeSkillSlug(skill)));
 
-  return SKILLS.map((slug) => {
+  return getActiveSkillSlugs().map((slug) => {
     const selectedHere = slug === selected;
     const trained = (buildState.skills?.[slug] ?? 0) >= 1;
     const disabled = !selectedHere && (trained || blocked.has(slug) || selectedElsewhere.has(slug));
@@ -1457,7 +1457,8 @@ async function getGrantedPlannerSkillSlugs(planner, feat, source) {
   const skills = new Set(
     [...(feat?.skillRules ?? []), ...(feat?.dynamicSkillRules ?? [])]
       .map((rule) => rule?.skill)
-      .filter((skill) => SKILLS.includes(skill)),
+      .map((skill) => normalizeSkillSlug(skill))
+      .filter((skill) => isActiveSkillSlug(skill)),
   );
   const scannedUuids = new Set();
 
@@ -1471,8 +1472,9 @@ async function getGrantedPlannerSkillSlugs(planner, feat, source) {
       const match = String(rule?.path ?? '').match(/^system\.skills\.([^.]+)\.rank$/);
       if (!match) continue;
       if (Number(rule?.value) < 1) continue;
-      if (!SKILLS.includes(match[1])) continue;
-      skills.add(match[1]);
+      const skill = normalizeSkillSlug(match[1]);
+      if (!isActiveSkillSlug(skill)) continue;
+      skills.add(skill);
     }
 
     for (const skill of extractExplicitTrainedSkillsFromDescription(item?.system?.description?.value ?? '')) {
@@ -1502,7 +1504,7 @@ async function getGrantedPlannerSkillSlugs(planner, feat, source) {
     const deitySkill = await resolvePlannerDeitySkill(planner, deityUuid);
     syncFeatDynamicSkillRules(feat, true, deitySkill);
     const normalizedDeitySkill = normalizeSkillSlug(deitySkill);
-    if (SKILLS.includes(normalizedDeitySkill)) skills.add(normalizedDeitySkill);
+    if (isActiveSkillSlug(normalizedDeitySkill)) skills.add(normalizedDeitySkill);
   }
 
   return [...skills];
@@ -1524,7 +1526,7 @@ function extractExplicitTrainedSkillsFromDescription(html) {
   const skills = new Set();
   for (const clause of [...matches, ...orderSkillMatches]) {
     if (clauseDescribesSelectedSkillChoice(clause)) continue;
-    for (const skill of SKILLS) {
+    for (const skill of getActiveSkillSlugs()) {
       const label = localizeSkillSlug(skill).toLowerCase();
       if (clause.includes(label)) skills.add(skill);
     }
@@ -1657,8 +1659,9 @@ function hasSkillFallbackText(html) {
 function syncFeatDynamicSkillRules(feat, shouldAdd, deitySkill) {
   if (!feat) return;
   const otherRules = (feat.dynamicSkillRules ?? []).filter((rule) => rule?.source !== 'deity-associated-skill');
-  if (shouldAdd && SKILLS.includes(deitySkill)) {
-    otherRules.push({ skill: deitySkill, value: 1, source: 'deity-associated-skill' });
+  const skill = normalizeSkillSlug(deitySkill);
+  if (shouldAdd && isActiveSkillSlug(skill)) {
+    otherRules.push({ skill, value: 1, source: 'deity-associated-skill' });
   }
   feat.dynamicSkillRules = otherRules;
 }
@@ -1703,41 +1706,19 @@ function syncPlannerChoiceSetSkillRules(feat, choiceSets) {
 }
 
 function normalizePlannerSkillChoice(value) {
-  const normalized = String(value ?? '').trim().toLowerCase();
-  if (!normalized) return null;
-
-  const aliases = {
-    acr: 'acrobatics',
-    arc: 'arcana',
-    ath: 'athletics',
-    cra: 'crafting',
-    dec: 'deception',
-    dip: 'diplomacy',
-    itm: 'intimidation',
-    med: 'medicine',
-    nat: 'nature',
-    occ: 'occultism',
-    prf: 'performance',
-    rel: 'religion',
-    soc: 'society',
-    ste: 'stealth',
-    sur: 'survival',
-    thi: 'thievery',
-  };
-
-  const candidate = aliases[normalized] ?? normalized;
-  return SKILLS.includes(candidate) ? candidate : null;
+  const candidate = normalizeSkillSlug(value);
+  return isActiveSkillSlug(candidate) ? candidate : null;
 }
 
 function normalizePlannerLoreChoice(value) {
   const normalized = String(value ?? '').trim().toLowerCase();
-  if (!normalized || SKILLS.includes(normalized)) return null;
+  if (!normalized || isActiveSkillSlug(normalized)) return null;
   return normalized.includes('lore') ? normalized : null;
 }
 
 function localizeSkillSlug(slug) {
-  if (!SKILLS.includes(slug)) return humanizeSkillLikeLabel(slug);
-  const raw = globalThis.CONFIG?.PF2E?.skills?.[slug];
+  if (!isActiveSkillSlug(slug)) return humanizeSkillLikeLabel(slug);
+  const raw = getActiveSkillConfigEntry(slug);
   const label = typeof raw === 'string' ? raw : (raw?.label ?? slug);
-  return game.i18n?.has?.(label) ? game.i18n.localize(label) : slug.charAt(0).toUpperCase() + slug.slice(1);
+  return game.i18n?.has?.(label) ? game.i18n.localize(label) : humanizeSkillLikeLabel(slug);
 }

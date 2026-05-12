@@ -1,4 +1,5 @@
 import { getClassFeaturesForLevel } from '../../../scripts/ui/level-planner/level-context.js';
+import { buildSkillContext } from '../../../scripts/ui/level-planner/context.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { ALCHEMIST } from '../../../scripts/classes/alchemist.js';
 import { ROGUE } from '../../../scripts/classes/rogue.js';
@@ -40,5 +41,47 @@ describe('level planner class feature context', () => {
       expect.objectContaining({ name: 'Field Discovery' }),
       expect.objectContaining({ name: 'Weapon Tricks' }),
     ]));
+  });
+
+  test('uses SF2e skills in planner skill increase choices', () => {
+    const originalConfig = global.CONFIG;
+    const originalSystemId = global.game.system.id;
+    global.game.system.id = 'sf2e';
+    global.CONFIG = {
+      SF2E: {
+        skills: {
+          acrobatics: { label: 'Acrobatics' },
+          computers: { label: 'Computers' },
+          piloting: { label: 'Piloting' },
+        },
+      },
+      PF2E: {
+        skills: {
+          acrobatics: { label: 'Acrobatics' },
+          arcana: { label: 'Arcana' },
+        },
+      },
+    };
+
+    try {
+      const actor = createMockActor();
+      actor.system.skills = {
+        acrobatics: { rank: 0 },
+        computers: { rank: 0 },
+        piloting: { rank: 0 },
+      };
+      const context = buildSkillContext({
+        actor,
+        plan: { classSlug: 'envoy', levels: {} },
+      }, { skillIncreases: [] }, 3);
+
+      expect(context.map((entry) => entry.slug)).toEqual(['acrobatics', 'computers', 'piloting']);
+      expect(context.find((entry) => entry.slug === 'computers')).toEqual(expect.objectContaining({
+        label: 'Computers',
+      }));
+    } finally {
+      global.CONFIG = originalConfig;
+      global.game.system.id = originalSystemId;
+    }
   });
 });

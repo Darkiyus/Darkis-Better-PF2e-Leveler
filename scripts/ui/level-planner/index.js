@@ -1,4 +1,4 @@
-import { MODULE_ID, MIN_PLAN_LEVEL, MAX_LEVEL, PLAN_STATUS, PERMANENT_ITEM_TYPES, PROFICIENCY_RANK_NAMES, SKILLS } from '../../constants.js';
+import { MODULE_ID, MIN_PLAN_LEVEL, MAX_LEVEL, PLAN_STATUS, PERMANENT_ITEM_TYPES, PROFICIENCY_RANK_NAMES } from '../../constants.js';
 import { ensureActorClassRegistered, ensureClassItemRegistered, ensureClassRegistry } from '../../classes/ensure.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { getChoicesForLevel, getGradualBoostGroupLevels, getLevelSummary } from '../../classes/progression.js';
@@ -41,6 +41,13 @@ import { isFreeArchetypeEnabled, isMythicEnabled, isABPEnabled, isGradualBoostsE
 import { getDedicationAliasesFromDescription } from '../../utils/feat-aliases.js';
 import { extractFeatSpellcastingMetadata, FEAT_SPELLCASTING_METADATA_VERSION } from '../../utils/spellcasting-support.js';
 import { localize } from '../../utils/i18n.js';
+import {
+  getActiveSkillConfigEntry,
+  getActiveSkillSlugs,
+  isActiveSkillSlug,
+  normalizeSkillSlug,
+  SKILL_ALIASES,
+} from '../../utils/skill-slugs.js';
 import { FeatPicker } from '../feat-picker.js';
 import { captureScrollState, restoreScrollState } from '../shared/scroll-state.js';
 import { scheduleBringApplicationToFront } from '../shared/window-focus.js';
@@ -226,38 +233,20 @@ function resolveSkillSlugsFromText(text) {
 }
 
 function getSkillTextLookup() {
-  const skills = globalThis.CONFIG?.PF2E?.skills ?? {};
   const lookup = new Map();
-  const aliases = {
-    acr: 'acrobatics',
-    arc: 'arcana',
-    ath: 'athletics',
-    cra: 'crafting',
-    dec: 'deception',
-    dip: 'diplomacy',
-    itm: 'intimidation',
-    med: 'medicine',
-    nat: 'nature',
-    occ: 'occultism',
-    prf: 'performance',
-    rel: 'religion',
-    soc: 'society',
-    ste: 'stealth',
-    sur: 'survival',
-    thi: 'thievery',
-  };
 
-  for (const [key, rawEntry] of Object.entries(skills)) {
-    const canonical = aliases[key] ?? key;
-    const rawLabel = typeof rawEntry === 'string' ? rawEntry : (rawEntry?.label ?? key);
+  for (const canonical of getActiveSkillSlugs()) {
+    const rawEntry = getActiveSkillConfigEntry(canonical);
+    const rawLabel = typeof rawEntry === 'string' ? rawEntry : (rawEntry?.label ?? canonical);
     const localized = game.i18n?.has?.(rawLabel) ? game.i18n.localize(rawLabel) : rawLabel;
-    for (const candidate of [key, canonical, rawLabel, localized]) {
+    for (const candidate of [canonical, rawLabel, localized]) {
       const normalized = normalizeSkillText(candidate);
       if (normalized) lookup.set(normalized, canonical);
     }
   }
 
-  for (const [alias, canonical] of Object.entries(aliases)) {
+  for (const [alias, canonical] of Object.entries(SKILL_ALIASES)) {
+    if (!isActiveSkillSlug(canonical)) continue;
     lookup.set(normalizeSkillText(alias), canonical);
     lookup.set(normalizeSkillText(canonical), canonical);
   }
@@ -1923,8 +1912,9 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     const dialogClass = foundry?.applications?.api?.DialogV2 ?? globalThis.Dialog;
     if (!dialogClass?.prompt) return null;
     const currentState = computeBuildState(this.actor, this.plan, this.selectedLevel);
-    const choices = SKILLS
-      .filter((skill) => skill !== source.skill && (currentState.skills?.[skill] ?? 0) < source.toRank)
+    const sourceSkill = normalizeSkillSlug(source.skill);
+    const choices = getActiveSkillSlugs()
+      .filter((skill) => skill !== sourceSkill && (currentState.skills?.[skill] ?? 0) < source.toRank)
       .map((skill) => {
         const fromRank = Number(currentState.skills?.[skill] ?? 0);
         const toRank = Number(source.toRank ?? 0);
@@ -2305,9 +2295,9 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     for (const item of methodologyItems) {
       const rules = await extractFeatSkillRules(item).catch(() => []);
       for (const rule of rules) {
-        const skill = String(rule?.skill ?? '').trim().toLowerCase();
+        const skill = normalizeSkillSlug(rule?.skill);
         const value = Number(rule?.value ?? 0);
-        if (!SKILLS.includes(skill) || !Number.isFinite(value) || value < 1) continue;
+        if (!isActiveSkillSlug(skill) || !Number.isFinite(value) || value < 1) continue;
         skills.add(skill);
       }
     }

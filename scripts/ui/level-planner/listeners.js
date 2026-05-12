@@ -10,9 +10,9 @@ import {
   togglePlanApparition,
 } from '../../plan/plan-model.js';
 import { applyActorSkillRankRules, applyPlannedLevelSkillRankRules, computeBuildState } from '../../plan/build-state.js';
-import { SKILLS } from '../../constants.js';
 import { normalizeLoreSkillName, slugifyLoreSkillName } from '../character-wizard/skills-languages.js';
 import { getMaxSkillRank } from '../../utils/pf2e-api.js';
+import { isActiveSkillSlug, normalizeSkillSlug } from '../../utils/skill-slugs.js';
 
 export function activateLevelPlannerListeners(planner, html) {
   const el = html.querySelectorAll ? html : html[0];
@@ -541,38 +541,14 @@ export function syncSameLevelSkillIncreaseFromFeatRules(planner, rules = []) {
 }
 
 function normalizeSelectedSkillChoice(value) {
-  const normalized = String(value ?? '')
-    .trim()
-    .toLowerCase();
-  if (!normalized) return null;
-
-  const aliases = {
-    acr: 'acrobatics',
-    arc: 'arcana',
-    ath: 'athletics',
-    cra: 'crafting',
-    dec: 'deception',
-    dip: 'diplomacy',
-    itm: 'intimidation',
-    med: 'medicine',
-    nat: 'nature',
-    occ: 'occultism',
-    prf: 'performance',
-    rel: 'religion',
-    soc: 'society',
-    ste: 'stealth',
-    sur: 'survival',
-    thi: 'thievery',
-  };
-
-  const candidate = aliases[normalized] ?? normalized;
-  return SKILLS.includes(candidate) ? candidate : null;
+  const candidate = normalizeSkillSlug(value);
+  return isActiveSkillSlug(candidate) ? candidate : null;
 }
 
 function normalizeSelectedLoreChoice(value) {
   const normalizedName = normalizeLoreSkillName(value);
   if (!normalizedName) return null;
   const slug = slugifyLoreSkillName(normalizedName);
-  if (!slug || SKILLS.includes(slug)) return null;
+  if (!slug || isActiveSkillSlug(slug)) return null;
   return slug;
 }

@@ -1,7 +1,7 @@
-import { SKILLS } from '../constants.js';
 import { getAllPlannedFeats } from '../plan/plan-model.js';
 import { evaluateRuleNumericValue } from '../plan/build-state.js';
 import { getFeatLoreRules, getFeatSkillRules } from '../utils/feat-skill-rules.js';
+import { isActiveSkillSlug, normalizeSkillSlug } from '../utils/skill-slugs.js';
 
 export async function applySkillIncreases(actor, plan, level) {
   const levelData = plan.levels[level];
@@ -16,9 +16,9 @@ export async function applySkillIncreases(actor, plan, level) {
   const loreItemsToCreate = [];
 
   for (const inc of skillIncreases) {
-    const skill = String(inc?.skill ?? '').trim().toLowerCase();
+    const skill = normalizeSkillSlug(inc?.skill);
     if (!skill) continue;
-    if (skill.endsWith('-lore') || !SKILLS.includes(skill)) {
+    if (skill.endsWith('-lore') || !isActiveSkillSlug(skill)) {
       loreItemsToCreate.push({ skill, toRank: inc.toRank, appliedEntry: inc });
       continue;
     }
@@ -26,8 +26,10 @@ export async function applySkillIncreases(actor, plan, level) {
     applied.push(inc);
   }
 
-  for (const skill of intBonusSkills) {
-    if (String(skill ?? '').endsWith('-lore')) {
+  for (const rawSkill of intBonusSkills) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (!skill) continue;
+    if (skill.endsWith('-lore') || !isActiveSkillSlug(skill)) {
       loreItemsToCreate.push({ skill, toRank: 1, intBonus: true, appliedEntry: { skill, toRank: 1, intBonus: true } });
       continue;
     }
@@ -39,7 +41,7 @@ export async function applySkillIncreases(actor, plan, level) {
   }
 
   for (const rule of featSkillRules) {
-    const skill = String(rule?.skill ?? '').trim().toLowerCase();
+    const skill = normalizeSkillSlug(rule?.skill);
     if (!skill) continue;
 
     const currentRank = getPendingSkillRank(actor, updates, skill);
@@ -49,7 +51,7 @@ export async function applySkillIncreases(actor, plan, level) {
     const toRank = evaluateRuleNumericValue(rawTargetRank ?? 1, level, rule);
     if (!Number.isFinite(toRank) || toRank <= currentRank) continue;
 
-    if (skill.endsWith('-lore') || !SKILLS.includes(skill)) {
+    if (skill.endsWith('-lore') || !isActiveSkillSlug(skill)) {
       loreItemsToCreate.push({ skill, toRank, appliedEntry: { skill, toRank, featChoice: true } });
       continue;
     }

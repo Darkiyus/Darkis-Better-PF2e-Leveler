@@ -12,6 +12,7 @@ import {
 import { checkPrerequisites } from '../prerequisites/prerequisite-checker.js';
 import { parseAllPrerequisiteNodes } from '../prerequisites/parsers.js';
 import { isMythicEnabled } from '../utils/pf2e-api.js';
+import { getActiveSkillConfigEntry, getActiveSkillSlugs } from '../utils/skill-slugs.js';
 import { ClassRegistry } from '../classes/registry.js';
 import { annotateGuidance, filterDisallowedForCurrentUser } from '../access/content-guidance.js';
 import {
@@ -952,8 +953,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   _featsHaveSkillRelevance() {
-    const configSkills = globalThis.CONFIG?.PF2E?.skills ?? {};
-    const skillSlugs = new Set(Object.keys(configSkills).map((s) => s.toLowerCase()));
+    const skillSlugs = new Set(getActiveSkillSlugs().map((s) => s.toLowerCase()));
     return this.allFeats.some((feat) => {
       const traits = (feat.system?.traits?.value ?? []).map((t) => String(t).toLowerCase());
       if (traits.some((t) => skillSlugs.has(t))) return true;
@@ -966,8 +966,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _buildSkillOptionsBase() {
     if (this._skillOptionsBase) return this._skillOptionsBase;
-    const configSkills = globalThis.CONFIG?.PF2E?.skills ?? {};
-    const options = Object.entries(configSkills).map(([slug, rawEntry]) => {
+    const options = getActiveSkillSlugs().map((slug) => {
+      const rawEntry = getActiveSkillConfigEntry(slug);
       const rawLabel =
         typeof rawEntry === 'string'
           ? rawEntry

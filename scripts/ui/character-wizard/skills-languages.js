@@ -1,16 +1,19 @@
 import { SKILLS } from '../../constants.js';
 import { getClassSelectionData, getGrantedFeatChoiceValues } from '../../creation/creation-model.js';
 import {
-  ANACHRONISM_MODULE_ID,
-  getActiveSystemId,
-  getActiveSystemProfile,
   getCampaignLanguages,
   getRulesetConfig,
-  SYSTEM_IDS,
 } from '../../system-support/profiles.js';
 import { localize } from '../../utils/i18n.js';
 import { evaluatePredicate } from '../../utils/predicate.js';
-import { normalizeSkillSlug } from '../../utils/skill-slugs.js';
+import {
+  getActiveSkillConfigEntry,
+  getActiveSkillSlugs,
+  normalizeSkillSlug,
+  SKILL_ALIASES,
+} from '../../utils/skill-slugs.js';
+
+export { getActiveSkillConfigEntry, getActiveSkillSlugs };
 
 export async function buildLanguageContext(wizard) {
   const ancestryItem = wizard.data.ancestry?.uuid ? await wizard._getCachedDocument(wizard.data.ancestry.uuid) : null;
@@ -328,27 +331,6 @@ export function buildSelectedLoreSkillContext(wizard) {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-const SKILL_ID_ALIASES = {
-  acr: 'acrobatics',
-  arc: 'arcana',
-  ath: 'athletics',
-  com: 'computers',
-  cra: 'crafting',
-  dec: 'deception',
-  dip: 'diplomacy',
-  itm: 'intimidation',
-  med: 'medicine',
-  nat: 'nature',
-  occ: 'occultism',
-  pil: 'piloting',
-  prf: 'performance',
-  rel: 'religion',
-  soc: 'society',
-  ste: 'stealth',
-  sur: 'survival',
-  thi: 'thievery',
-};
-
 export async function getBackgroundTrainedSkills(wizard) {
   if (!wizard.data.background?.uuid) return [];
   const item = await wizard._getCachedDocument(wizard.data.background.uuid);
@@ -608,58 +590,6 @@ async function resolveWizardDeitySkill(wizard, deity) {
   return skill ? { skill, name: deity?.name ?? matched?.name } : null;
 }
 
-export function getActiveSkillSlugs() {
-  if (usesAnachronismSkillList()) {
-    return [...new Set([...SKILLS, ...Object.keys(getAnachronismAdditionalSkills())])];
-  }
-  if (!usesStarfinderSkillList()) return [...SKILLS];
-
-  const skills = getActiveSkillConfig();
-  if (!skills || typeof skills !== 'object') return [...SKILLS];
-
-  const slugs = Object.keys(skills)
-    .map((slug) => SKILL_ID_ALIASES[slug] ?? slug)
-    .filter((slug) => typeof slug === 'string' && slug.length > 0);
-  return slugs.length > 0 ? [...new Set(slugs)] : [...SKILLS];
-}
-
-export function getActiveSkillConfigEntry(slug) {
-  if (usesAnachronismSkillList()) {
-    const additional = getAnachronismAdditionalSkills()[slug];
-    if (additional) return additional;
-  }
-
-  const skills = getActiveSkillConfig();
-  if (!skills || typeof skills !== 'object') return globalThis.CONFIG?.PF2E?.skills?.[slug];
-
-  const direct = skills[slug];
-  if (direct) return direct;
-
-  const alias = Object.entries(SKILL_ID_ALIASES).find(([, canonical]) => canonical === slug)?.[0];
-  return alias ? skills[alias] : undefined;
-}
-
-function usesStarfinderSkillList() {
-  return getActiveSystemId() === SYSTEM_IDS.SF2E;
-}
-
-function usesAnachronismSkillList() {
-  return getActiveSystemProfile().contentProfile === 'pf2e+sf2e-anachronism';
-}
-
-function getActiveSkillConfig() {
-  if (usesStarfinderSkillList()) return getRulesetConfig({ systemId: SYSTEM_IDS.SF2E }).skills;
-  return getRulesetConfig().skills;
-}
-
-function getAnachronismAdditionalSkills() {
-  const module = globalThis.game?.modules?.get?.(ANACHRONISM_MODULE_ID)
-    ?? globalThis.game?.modules?.contents?.find?.((entry) => entry?.id === ANACHRONISM_MODULE_ID)
-    ?? globalThis.game?.modules?.[ANACHRONISM_MODULE_ID];
-  const additional = module?.flags?.[ANACHRONISM_MODULE_ID]?.['pf2e-homebrew']?.skills?.additional;
-  return additional && typeof additional === 'object' ? additional : {};
-}
-
 function extractLoreLabels(html) {
   const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   const matches = text.match(/\b(?:[\p{Lu}][\p{L}'-]*\s+){0,3}Lore\b/gu) ?? [];
@@ -872,7 +802,7 @@ function getSkillLookup() {
   const skills = getRulesetConfig().skills ?? {};
   const lookup = new Map();
 
-  for (const [alias, full] of Object.entries(SKILL_ID_ALIASES)) {
+  for (const [alias, full] of Object.entries(SKILL_ALIASES)) {
     lookup.set(alias, full);
     lookup.set(normalizeSkillIdentity(full), full);
   }
@@ -880,7 +810,7 @@ function getSkillLookup() {
   for (const [slug, rawEntry] of Object.entries(skills)) {
     const rawLabel = typeof rawEntry === 'string' ? rawEntry : (rawEntry?.label ?? slug);
     const localizedLabel = game.i18n?.has?.(rawLabel) ? game.i18n.localize(rawLabel) : rawLabel;
-    const canonicalSlug = SKILL_ID_ALIASES[slug] ?? slug;
+    const canonicalSlug = SKILL_ALIASES[slug] ?? slug;
     for (const candidate of [slug, canonicalSlug, rawLabel, localizedLabel]) {
       const normalized = normalizeSkillIdentity(candidate);
       if (normalized) lookup.set(normalized, canonicalSlug);

@@ -1,10 +1,11 @@
-import { ATTRIBUTES, PROFICIENCY_RANK_NAMES, SKILLS } from '../../constants.js';
+import { ATTRIBUTES, PROFICIENCY_RANK_NAMES } from '../../constants.js';
 import { getGradualBoostGroupLevels } from '../../classes/progression.js';
 import { computeBuildState, computeSkillPickerState } from '../../plan/build-state.js';
 import { getMaxSkillRank } from '../../utils/pf2e-api.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { annotateGuidanceBySlug, filterDisallowedForCurrentUser } from '../../access/content-guidance.js';
 import { getLanguageRarityMap, getLanguageMap, humanizeSkillLikeLabel } from '../character-wizard/skills-languages.js';
+import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug } from '../../utils/skill-slugs.js';
 
 export function buildAttributeContext(planner, levelData, choices) {
   const selectedBoosts = levelData.abilityBoosts ?? [];
@@ -180,8 +181,10 @@ export function buildIntBonusSkillContext(planner, levelData, level) {
 
   const selected = new Set(levelData.intBonusSkills ?? []);
   const buildState = computeBuildState(planner.actor, planner.plan, level - 1);
+  const activeSkillSlugs = getActiveSkillSlugs();
+  const activeSkillSet = new Set(activeSkillSlugs);
 
-  const entries = SKILLS.map((slug) => {
+  const entries = activeSkillSlugs.map((slug) => {
     const trained = (buildState.skills[slug] ?? 0) >= 1;
     return {
       slug,
@@ -193,7 +196,7 @@ export function buildIntBonusSkillContext(planner, levelData, level) {
   }).filter((entry) => !entry.disabled || entry.selected);
 
   const loreRanks = computeBuildState(planner.actor, planner.plan, level - 1).lores ?? {};
-  const selectedLoreSlugs = (levelData.intBonusSkills ?? []).filter((slug) => !SKILLS.includes(slug));
+  const selectedLoreSlugs = (levelData.intBonusSkills ?? []).filter((slug) => !activeSkillSet.has(slug));
   const loreSlugs = new Set([...Object.keys(loreRanks), ...selectedLoreSlugs]);
   const loreEntries = [...loreSlugs].map((slug) => ({
     slug,
@@ -299,7 +302,7 @@ export function buildSkillContext(planner, levelData, level) {
     };
   });
 
-  const selectedLoreSlug = currentIncrease?.skill && !SKILLS.includes(currentIncrease.skill)
+  const selectedLoreSlug = currentIncrease?.skill && !isActiveSkillSlug(currentIncrease.skill)
     ? String(currentIncrease.skill).toLowerCase()
     : null;
   const loreRanks = { ...(stateBeforeLevel.lores ?? {}) };
@@ -340,7 +343,7 @@ export function buildSkillContext(planner, levelData, level) {
 }
 
 function localizeSkillSlug(slug) {
-  const raw = globalThis.CONFIG?.PF2E?.skills?.[slug];
+  const raw = getActiveSkillConfigEntry(slug);
   const label = typeof raw === 'string' ? raw : (raw?.label ?? slug);
   if (game.i18n?.has?.(label)) return game.i18n.localize(label);
   return humanizeSkillLikeLabel(slug);

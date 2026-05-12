@@ -4,7 +4,6 @@ import {
   MIXED_ANCESTRY_CHOICE_FLAG,
   MIXED_ANCESTRY_UUID,
   MAX_LEVEL,
-  SKILLS,
   PROFICIENCY_RANKS,
 } from '../constants.js';
 import { ClassRegistry } from '../classes/registry.js';
@@ -13,7 +12,7 @@ import { getAllPlannedFeats, getAllPlannedBoosts, getAllPlannedSpells } from './
 import { isDualClassEnabled, slugify } from '../utils/pf2e-api.js';
 import { getDedicationAliasesFromDescription } from '../utils/feat-aliases.js';
 import { evaluatePredicate } from '../utils/predicate.js';
-import { normalizeSkillSlug } from '../utils/skill-slugs.js';
+import { getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../utils/skill-slugs.js';
 import { getFeatLoreRules, getFeatSkillRules, PLAN_FEAT_KEYS } from '../utils/feat-skill-rules.js';
 
 const CLASS_SUBCLASS_TYPES = {
@@ -624,13 +623,15 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
     ? classDef.filter(Boolean)
     : [classDef].filter(Boolean);
   const skills = {};
-  for (const skill of SKILLS) {
+  for (const skill of getActiveSkillSlugs()) {
     skills[skill] = actor?.system?.skills?.[skill]?.rank ?? PROFICIENCY_RANKS.UNTRAINED;
   }
 
   for (const trackedClassDef of trackedClassDefs) {
     if (!trackedClassDef?.trainedSkills?.fixed) continue;
-    for (const skill of trackedClassDef.trainedSkills.fixed) {
+    for (const rawSkill of trackedClassDef.trainedSkills.fixed) {
+      const skill = normalizeSkillSlug(rawSkill);
+      if (!isActiveSkillSlug(skill)) continue;
       if (skills[skill] < PROFICIENCY_RANKS.TRAINED) {
         skills[skill] = PROFICIENCY_RANKS.TRAINED;
       }
@@ -646,8 +647,9 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
 
     if (includePlannedFeatRules) applyPlannedLevelSkillRankRules(skills, plan, level, atLevel);
 
-    for (const skill of levelData.intBonusSkills ?? []) {
-      if (!SKILLS.includes(skill)) continue;
+    for (const rawSkill of levelData.intBonusSkills ?? []) {
+      const skill = normalizeSkillSlug(rawSkill);
+      if (!isActiveSkillSlug(skill)) continue;
       if ((skills[skill] ?? PROFICIENCY_RANKS.UNTRAINED) < PROFICIENCY_RANKS.TRAINED) {
         skills[skill] = PROFICIENCY_RANKS.TRAINED;
       }
@@ -656,8 +658,9 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
     if (level === atLevel && !includeCurrentLevelSkillIncrease) continue;
 
     for (const inc of getEffectiveLevelSkillIncreases(plan, level, atLevel)) {
-      if (inc.skill && inc.toRank > (skills[inc.skill] ?? 0)) {
-        skills[inc.skill] = inc.toRank;
+      const skill = normalizeSkillSlug(inc.skill);
+      if (skill && inc.toRank > (skills[skill] ?? 0)) {
+        skills[skill] = inc.toRank;
       }
     }
   }
@@ -667,7 +670,7 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
 
 function applyActorDeitySkill(skills, actor) {
   const deitySkill = resolveActorDeitySkill(actor);
-  if (!deitySkill || !SKILLS.includes(deitySkill)) return skills;
+  if (!deitySkill || !isActiveSkillSlug(deitySkill)) return skills;
   skills[deitySkill] = Math.max(skills[deitySkill] ?? PROFICIENCY_RANKS.UNTRAINED, PROFICIENCY_RANKS.TRAINED);
   return skills;
 }
@@ -718,7 +721,7 @@ function computeLoreSkills(actor, plan, atLevel) {
       const loreSlug = String(skill ?? '')
         .trim()
         .toLowerCase();
-      if (!loreSlug || SKILLS.includes(loreSlug)) continue;
+      if (!loreSlug || isActiveSkillSlug(loreSlug)) continue;
       lores[loreSlug] = Math.max(lores[loreSlug] ?? 0, 1);
     }
 
@@ -727,7 +730,7 @@ function computeLoreSkills(actor, plan, atLevel) {
         const skill = String(rule?.skill ?? '')
           .trim()
           .toLowerCase();
-        if (!skill || SKILLS.includes(skill)) continue;
+        if (!skill || isActiveSkillSlug(skill)) continue;
         const rank = Number(resolveConditionalLoreRuleValue(rule, skills));
         if (!Number.isFinite(rank) || rank <= 0) continue;
         lores[skill] = Math.max(lores[skill] ?? 0, rank);
@@ -738,7 +741,7 @@ function computeLoreSkills(actor, plan, atLevel) {
       const skill = String(inc?.skill ?? '')
         .trim()
         .toLowerCase();
-      if (!skill || SKILLS.includes(skill)) continue;
+      if (!skill || isActiveSkillSlug(skill)) continue;
       const rank = Number(inc?.toRank ?? 0);
       if (!Number.isFinite(rank) || rank <= 0) continue;
       lores[skill] = Math.max(lores[skill] ?? 0, rank);
@@ -779,8 +782,8 @@ export function applyActorSkillRankRules(skills, actor, atLevel) {
       const match = String(path ?? '').match(/^system\.skills\.([^.]+)\.rank$/);
       if (!match) continue;
 
-      const skill = match[1];
-      if (!SKILLS.includes(skill)) continue;
+      const skill = normalizeSkillSlug(match[1]);
+      if (!isActiveSkillSlug(skill)) continue;
 
       const value = evaluateRuleNumericValue(rule.value, atLevel, item);
       if (!Number.isFinite(value)) continue;
@@ -799,20 +802,22 @@ export function applyPlannedLevelSkillRankRules(skills, plan, level, atLevel = l
   for (const feat of getEffectivePlannedFeatsForLevel(plan, level, atLevel)) {
     for (const rule of getPlannedFeatSkillRules(feat)) {
       if (!matchesRuleAtLevel(rule, atLevel)) continue;
-      if (!SKILLS.includes(rule.skill)) continue;
-      const currentRank = skills[rule.skill] ?? PROFICIENCY_RANKS.UNTRAINED;
+      const skill = normalizeSkillSlug(rule.skill);
+      if (!isActiveSkillSlug(skill)) continue;
+      const currentRank = skills[skill] ?? PROFICIENCY_RANKS.UNTRAINED;
       const valueSource =
         currentRank >= PROFICIENCY_RANKS.TRAINED && rule.valueIfAlreadyTrained != null
           ? rule.valueIfAlreadyTrained
           : rule.value;
       const value = evaluateRuleNumericValue(valueSource, atLevel, feat);
       if (!Number.isFinite(value)) continue;
-      skills[rule.skill] = Math.max(currentRank, value);
+      skills[skill] = Math.max(currentRank, value);
     }
 
-    for (const [flag, selected] of Object.entries(feat?.choices ?? {})) {
+    for (const [flag, rawSelected] of Object.entries(feat?.choices ?? {})) {
       if (!/^levelerSkillFallback\d+$/i.test(flag)) continue;
-      if (!SKILLS.includes(selected)) continue;
+      const selected = normalizeSkillSlug(rawSelected);
+      if (!isActiveSkillSlug(selected)) continue;
       skills[selected] = Math.max(
         skills[selected] ?? PROFICIENCY_RANKS.UNTRAINED,
         PROFICIENCY_RANKS.TRAINED,
