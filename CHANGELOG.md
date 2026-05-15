@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.4.9
+
+### Level Planner
+
+- **Oracle Revelation feats now detect initial Revelation spells** - Prerequisite checks understand initial Revelation spell wording and infer focus-pool capability from owned non-cantrip focus spells, so future Revelation feats can be selected and applied for existing Oracles
+- **Innate spells from ancestry feats now satisfy source-specific prerequisites** - The planner can match requirements such as "at least one innate spell gained from an Elf ancestry feat" by linking innate spell source IDs back to selected or granted spell choices on ancestry feats
+
 ## 3.4.8
 
 ### Level Planner

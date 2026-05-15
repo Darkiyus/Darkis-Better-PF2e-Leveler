@@ -627,6 +627,69 @@ describe('checkPrerequisites', () => {
     expect(result.results[0].met).toBe(true);
   });
 
+  test('meets initial revelation spell prerequisite for oracle mystery spell users', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [{ value: 'initial revelation spell' }],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, {
+      ...buildState,
+      class: { slug: 'oracle', hp: 8, subclassType: 'mystery' },
+      spellcasting: {
+        hasAny: true,
+        hasSpellSlots: true,
+        spellNames: new Set(['ancestral-touch']),
+        spellTraits: new Set(['focus', 'cursebound']),
+        traditions: new Set(['divine']),
+        focusPool: true,
+        focusPointsMax: 1,
+      },
+    });
+    expect(result.met).toBe(true);
+    expect(result.results[0].met).toBe(true);
+  });
+
+  test('meets innate spell from elf ancestry feat prerequisite when source ancestry trait matches', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [{ value: 'At Least One Innate Spell Gained From An Elf Ancestry Feat' }],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, {
+      ...buildState,
+      spellcasting: {
+        ...buildState.spellcasting,
+        innateAncestrySpellSourceTraits: new Set(['elf']),
+      },
+    });
+    expect(result.met).toBe(true);
+    expect(result.results[0].met).toBe(true);
+  });
+
+  test('does not meet innate spell from elf ancestry feat prerequisite from other ancestry traits', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [{ value: 'At Least One Innate Spell Gained From An Elf Ancestry Feat' }],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, {
+      ...buildState,
+      spellcasting: {
+        ...buildState.spellcasting,
+        innateAncestrySpellSourceTraits: new Set(['gnome']),
+      },
+    });
+    expect(result.met).toBe(false);
+    expect(result.results[0].met).toBe(false);
+  });
+
   test('meets healing font prerequisite when healing font is selected', () => {
     const feat = {
       system: {

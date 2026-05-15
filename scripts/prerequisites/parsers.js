@@ -66,6 +66,8 @@ const DEITY_DOMAIN_PATTERN = /^deity with (?:the\s+)?(.+?)\s+domain$/i;
 const NOT_WORSHIPPER_PATTERN = /^not a worshipper of\s+(.+)$/i;
 const FOCUS_POOL_PATTERN = /^(?:a |an )?focus pool$/i;
 const FOCUS_SPELLS_PATTERN = /^ability to cast focus spells$/i;
+const INNATE_SPELL_FROM_ANCESTRY_FEAT_PATTERN =
+  /^at least one innate spell gained from an?\s+(.+?)\s+ancestry feat$/i;
 const SPECIFIC_SPELL_WITH_SLOT_PATTERN = /^able to cast\s+(.+?)\s+with a spell slot$/i;
 const SPELL_SLOTS_PATTERN = /^(?:ability|able) to cast spells (?:from|using) spell slots$/i;
 const SPELL_TRAIT_PATTERN = /^able to cast at least one\s+(.+?)\s+spell$/i;
@@ -114,6 +116,8 @@ const SIGNATURE_TRICK_PATTERN = /^(?:you\s+)?must\s+have\s+(?:a|an)\s+signature\
 const MULTIPLE_ANCESTRY_FEATS_PATTERN =
   /^ability\s+to\s+select\s+ancestry\s+feats?\s+from\s+multiple\s+ancestries\b/i;
 const SUBCLASS_SPELL_PATTERN = /^(?:a\s+)?(bloodline|mystery|patron)\s+spell$/i;
+const ORACLE_REVELATION_SPELL_PATTERN =
+  /^(?:an?\s+|your\s+)?(?:(?:initial|first)\s+)?revelation spell$/i;
 const SENSE_PATTERN =
   /^(low-light vision|darkvision|greater darkvision|scent|tremorsense|echolocation)$/i;
 const DIVINE_FONT_PATTERN = /^(healing|heal|harming|harmful|harm)\s+font$/i;
@@ -485,6 +489,23 @@ function tryParseSpellcastingRequirement(text, fullText = text) {
     return {
       type: 'subclassSpell',
       subclassType: subclassSpellMatch[1].toLowerCase(),
+      text: fullText,
+    };
+  }
+
+  if (ORACLE_REVELATION_SPELL_PATTERN.test(text)) {
+    return {
+      type: 'subclassSpell',
+      subclassType: 'mystery',
+      text: fullText,
+    };
+  }
+
+  const innateAncestrySpellMatch = text.match(INNATE_SPELL_FROM_ANCESTRY_FEAT_PATTERN);
+  if (innateAncestrySpellMatch) {
+    return {
+      type: 'spellcastingState',
+      innateSpellAncestryTrait: slugify(innateAncestrySpellMatch[1]),
       text: fullText,
     };
   }

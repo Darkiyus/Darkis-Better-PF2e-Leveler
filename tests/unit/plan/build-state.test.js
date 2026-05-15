@@ -5,6 +5,7 @@ import { FIGHTER } from '../../../scripts/classes/fighter.js';
 import { GUARDIAN } from '../../../scripts/classes/guardian.js';
 import { INVESTIGATOR } from '../../../scripts/classes/investigator.js';
 import { MAGUS } from '../../../scripts/classes/magus.js';
+import { ORACLE } from '../../../scripts/classes/oracle.js';
 import { ROGUE } from '../../../scripts/classes/rogue.js';
 import { SORCERER } from '../../../scripts/classes/sorcerer.js';
 import { WIZARD } from '../../../scripts/classes/wizard.js';
@@ -36,6 +37,7 @@ beforeAll(() => {
   ClassRegistry.register(GUARDIAN);
   ClassRegistry.register(INVESTIGATOR);
   ClassRegistry.register(MAGUS);
+  ClassRegistry.register(ORACLE);
   ClassRegistry.register(ROGUE);
   ClassRegistry.register(SORCERER);
   ClassRegistry.register(WIZARD);
@@ -717,6 +719,158 @@ describe('computeBuildState', () => {
   test('excludes focus-pool when actor has no focus pool', () => {
     const state = computeBuildState(mockActor, plan, 2);
     expect(state.feats.has('focus-pool')).toBe(false);
+  });
+
+  test('infers focus pool from owned non-cantrip focus spells when actor focus resource is empty', () => {
+    const actor = createMockActor({
+      class: { name: 'Oracle', slug: 'oracle' },
+      system: {
+        ...mockActor.system,
+        resources: { focus: { max: 0, value: 0 } },
+      },
+      items: [
+        {
+          type: 'spell',
+          name: 'Ancestral Touch',
+          slug: 'ancestral-touch',
+          system: {
+            traits: { value: ['focus', 'cursebound'] },
+          },
+        },
+      ],
+    });
+    const oraclePlan = createPlan('oracle');
+
+    const state = computeBuildState(actor, oraclePlan, 2);
+
+    expect(state.spellcasting.focusPool).toBe(true);
+    expect(state.spellcasting.focusPointsMax).toBe(1);
+  });
+
+  test('does not infer focus pool from focus cantrips alone', () => {
+    const actor = createMockActor({
+      system: {
+        ...mockActor.system,
+        resources: { focus: { max: 0, value: 0 } },
+      },
+      items: [
+        {
+          type: 'spell',
+          name: 'Psi Cantrip',
+          slug: 'psi-cantrip',
+          system: {
+            traits: { value: ['cantrip', 'focus'] },
+          },
+        },
+      ],
+    });
+
+    const state = computeBuildState(actor, plan, 2);
+
+    expect(state.spellcasting.focusPool).toBe(false);
+    expect(state.spellcasting.focusPointsMax).toBe(0);
+  });
+
+  test('tracks innate spells gained from elf ancestry feats through selected spell source IDs', () => {
+    const glassShieldUuid = 'Compendium.pf2e.spells-srd.Item.glass-shield';
+    const actor = createMockActor({
+      class: { name: 'Rogue', slug: 'rogue' },
+      ancestry: { name: 'Elf', slug: 'elf' },
+      items: [
+        {
+          id: 'otherworldly-magic-id',
+          type: 'feat',
+          name: 'Otherworldly Magic',
+          slug: 'otherworldly-magic',
+          system: {
+            category: 'ancestry',
+            location: { value: 'ancestry-1' },
+            traits: { value: ['elf'] },
+          },
+          flags: {
+            pf2e: {
+              rulesSelections: {
+                cantrip: glassShieldUuid,
+              },
+            },
+          },
+        },
+        {
+          id: 'innate-entry-id',
+          type: 'spellcastingEntry',
+          name: 'Arcane Innate Spells',
+          system: {
+            prepared: { value: 'innate' },
+            tradition: { value: 'arcane' },
+          },
+        },
+        {
+          id: 'glass-shield-id',
+          type: 'spell',
+          name: 'Glass Shield',
+          slug: 'glass-shield',
+          sourceId: glassShieldUuid,
+          system: {
+            location: { value: 'innate-entry-id' },
+            traits: { value: ['cantrip'], traditions: ['arcane'] },
+          },
+        },
+      ],
+    });
+
+    const state = computeBuildState(actor, createPlan('rogue'), 9);
+
+    expect(state.spellcasting.innateAncestrySpellSourceTraits.has('elf')).toBe(true);
+  });
+
+  test('does not track ancestry spell choices as innate grants without an innate spell item', () => {
+    const actor = createMockActor({
+      ancestry: { name: 'Elf', slug: 'elf' },
+      items: [
+        {
+          id: 'otherworldly-magic-id',
+          type: 'feat',
+          name: 'Otherworldly Magic',
+          slug: 'otherworldly-magic',
+          system: {
+            category: 'ancestry',
+            location: { value: 'ancestry-1' },
+            traits: { value: ['elf'] },
+          },
+          flags: {
+            pf2e: {
+              rulesSelections: {
+                cantrip: 'Compendium.pf2e.spells-srd.Item.glass-shield',
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    const state = computeBuildState(actor, createPlan('alchemist'), 9);
+
+    expect(state.spellcasting.innateAncestrySpellSourceTraits.has('elf')).toBe(false);
+  });
+
+  test('tracks planned innate spell choices from planned elf ancestry feats', () => {
+    const planned = createPlan('alchemist');
+    planned.levels[1] = {};
+    planned.levels[1].ancestryFeats = [
+      {
+        uuid: 'Compendium.pf2e.feats-srd.Item.otherworldly-magic',
+        name: 'Otherworldly Magic',
+        slug: 'otherworldly-magic',
+        traits: ['elf'],
+        choices: {
+          cantrip: 'Compendium.pf2e.spells-srd.Item.glass-shield',
+        },
+      },
+    ];
+
+    const state = computeBuildState(mockActor, planned, 9);
+
+    expect(state.spellcasting.innateAncestrySpellSourceTraits.has('elf')).toBe(true);
   });
 
   test('builds proficiency state from actor and class features', () => {

@@ -764,6 +764,20 @@ describe('parsePrerequisiteNode', () => {
     expect(result.subclassType).toBe('mystery');
   });
 
+  test('parses "initial revelation spell" as oracle subclass spell prerequisite', () => {
+    const result = parsePrerequisiteNode('initial revelation spell');
+    expect(result.kind).toBe('leaf');
+    expect(result.type).toBe('subclassSpell');
+    expect(result.subclassType).toBe('mystery');
+  });
+
+  test('parses innate spell from ancestry feat source prerequisites', () => {
+    const result = parsePrerequisiteNode('At Least One Innate Spell Gained From An Elf Ancestry Feat');
+    expect(result.kind).toBe('leaf');
+    expect(result.type).toBe('spellcastingState');
+    expect(result.innateSpellAncestryTrait).toBe('elf');
+  });
+
   test('does not split unsupported companion prohibition text into fake or alternatives', () => {
     const result = parsePrerequisiteNode(
       "you don't have an animal companion, construct companion, or other companion that functions similarly",

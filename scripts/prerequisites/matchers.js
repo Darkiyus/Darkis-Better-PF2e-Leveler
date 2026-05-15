@@ -246,6 +246,13 @@ export function matchSpellcastingState(parsed, buildState) {
     };
   }
 
+  if (parsed.innateSpellAncestryTrait) {
+    return {
+      met: !!buildState.spellcasting?.innateAncestrySpellSourceTraits?.has(parsed.innateSpellAncestryTrait),
+      text: parsed.text,
+    };
+  }
+
   if (parsed.spellSlots === true) {
     if (parsed.spellSlug) {
       return {

@@ -14,6 +14,7 @@ import { getDedicationAliasesFromDescription } from '../utils/feat-aliases.js';
 import { evaluatePredicate } from '../utils/predicate.js';
 import { getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../utils/skill-slugs.js';
 import { getFeatLoreRules, getFeatSkillRules, PLAN_FEAT_KEYS } from '../utils/feat-skill-rules.js';
+import { isCompendiumUuidInCategory } from '../system-support/profiles.js';
 
 const CLASS_SUBCLASS_TYPES = {
   alchemist: 'research field',
@@ -421,6 +422,14 @@ function computeSpellcastingState(actor, plan, atLevel, classDefs) {
   );
   const spellNames = new Set();
   const spellTraits = new Set();
+  let hasNonCantripFocusSpell = false;
+  const innateAncestrySpellSourceTraits = computeInnateAncestrySpellSourceTraits(
+    actor,
+    plan,
+    atLevel,
+    spells,
+    entries,
+  );
 
   for (const classDef of trackedClassDefs) {
     const classTradition = classDef?.spellcasting?.tradition ?? null;
@@ -441,10 +450,10 @@ function computeSpellcastingState(actor, plan, atLevel, classDefs) {
     const spellSlug = slugify(spell?.slug ?? spell?.name ?? '');
     if (spellSlug) spellNames.add(spellSlug);
 
-    const traits = spell?.system?.traits?.value ?? [];
+    const traits = getSpellTraitValues(spell);
+    if (isNonCantripFocusSpellTraits(traits)) hasNonCantripFocusSpell = true;
     for (const trait of traits) {
-      const normalizedTrait = normalizeEquipmentValue(trait);
-      if (normalizedTrait) spellTraits.add(normalizedTrait);
+      spellTraits.add(trait);
     }
   }
 
@@ -452,9 +461,10 @@ function computeSpellcastingState(actor, plan, atLevel, classDefs) {
     const spellSlug = slugify(spell?.slug ?? spell?.name ?? '');
     if (spellSlug) spellNames.add(spellSlug);
 
-    for (const trait of spell?.traits ?? []) {
-      const normalizedTrait = normalizeEquipmentValue(trait);
-      if (normalizedTrait) spellTraits.add(normalizedTrait);
+    const traits = getSpellTraitValues(spell);
+    if (isNonCantripFocusSpellTraits(traits)) hasNonCantripFocusSpell = true;
+    for (const trait of traits) {
+      spellTraits.add(trait);
     }
   }
 
@@ -469,7 +479,11 @@ function computeSpellcastingState(actor, plan, atLevel, classDefs) {
       });
     }) || trackedClassDefs.some((classDef) => !!classDef?.spellcasting?.slots);
 
-  const focusMax = actor?.system?.resources?.focus?.max ?? 0;
+  const actorFocusMax = Number(actor?.system?.resources?.focus?.max ?? 0);
+  const focusMax = Math.max(
+    Number.isFinite(actorFocusMax) ? actorFocusMax : 0,
+    hasNonCantripFocusSpell ? 1 : 0,
+  );
 
   return {
     hasAny: traditions.size > 0,
@@ -479,7 +493,143 @@ function computeSpellcastingState(actor, plan, atLevel, classDefs) {
     traditions,
     focusPool: focusMax > 0,
     focusPointsMax: focusMax,
+    innateAncestrySpellSourceTraits,
   };
+}
+
+function computeInnateAncestrySpellSourceTraits(actor, plan, atLevel, spells, entries) {
+  const innateSpellSourceIds = getOwnedInnateSpellSourceIds(spells, entries);
+  const traits = new Set();
+
+  for (const entry of getEffectiveAncestryFeatEntries(actor, plan, atLevel)) {
+    const sourceSpellUuids = getFeatSpellGrantUuids(entry.feat);
+    if (sourceSpellUuids.length === 0) continue;
+
+    const hasAppliedInnateSpell = sourceSpellUuids.some((uuid) => innateSpellSourceIds.has(uuid));
+    const hasPlannedInnateSpell = entry.category === 'ancestryFeats';
+    if (!hasAppliedInnateSpell && !hasPlannedInnateSpell) continue;
+
+    for (const trait of getAncestryFeatSourceTraits(entry.feat)) {
+      traits.add(trait);
+    }
+  }
+
+  return traits;
+}
+
+function getOwnedInnateSpellSourceIds(spells, entries) {
+  const innateEntryIds = new Set(
+    entries
+      .filter((entry) => entry?.system?.prepared?.value === 'innate')
+      .flatMap((entry) => getItemIdentityValues(entry)),
+  );
+  const sourceIds = new Set();
+
+  for (const spell of spells) {
+    const location = getSpellLocationValue(spell);
+    if (!location || !innateEntryIds.has(location)) continue;
+
+    const sourceId = getActorItemSourceId(spell);
+    if (sourceId) sourceIds.add(sourceId);
+  }
+
+  return sourceIds;
+}
+
+function getEffectiveAncestryFeatEntries(actor, plan, atLevel) {
+  const entries = getEffectiveActorFeats(actor, plan, atLevel)
+    .filter((feat) => isActorAncestryFeat(feat))
+    .map((feat) => ({ feat, category: 'actor' }));
+
+  for (let level = 1; level <= atLevel; level++) {
+    for (const entry of getEffectivePlannedFeatEntriesForLevel(plan, level, atLevel)) {
+      if (entry.category === 'ancestryFeats') entries.push(entry);
+    }
+  }
+
+  return entries;
+}
+
+function isActorAncestryFeat(feat) {
+  const category = String(feat?.system?.category ?? feat?.category ?? '').trim().toLowerCase();
+  if (category === 'ancestry') return true;
+
+  const location = getActorFeatLocation(feat).toLowerCase();
+  return location.startsWith('ancestry-') || location.startsWith('ancestryparagon-') || location.startsWith('xdy_ancestryparagon-');
+}
+
+function getFeatSpellGrantUuids(feat) {
+  const uuids = new Set();
+
+  collectSpellUuidsFromValue(feat?.choices, uuids);
+  collectSpellUuidsFromValue(feat?.flags?.pf2e?.rulesSelections, uuids);
+
+  for (const item of feat?.grantedItems ?? []) {
+    const uuid = item?.uuid ?? item?.sourceId ?? item?.flags?.core?.sourceId;
+    if (isSpellCompendiumUuid(uuid) || item?.type === 'spell') uuids.add(uuid);
+  }
+
+  for (const rule of feat?.system?.rules ?? []) {
+    if (rule?.key !== 'GrantItem') continue;
+    if (isSpellCompendiumUuid(rule.uuid)) uuids.add(rule.uuid);
+  }
+
+  return [...uuids].filter(Boolean);
+}
+
+function collectSpellUuidsFromValue(value, target) {
+  if (typeof value === 'string') {
+    if (isSpellCompendiumUuid(value)) target.add(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const entry of value) collectSpellUuidsFromValue(entry, target);
+    return;
+  }
+  if (value && typeof value === 'object') {
+    for (const entry of Object.values(value)) collectSpellUuidsFromValue(entry, target);
+  }
+}
+
+function isSpellCompendiumUuid(value) {
+  return typeof value === 'string' && isCompendiumUuidInCategory(value, 'spells');
+}
+
+function getAncestryFeatSourceTraits(feat) {
+  const ignoredTraits = new Set(['ancestry', 'common', 'uncommon', 'rare', 'unique']);
+  return getFeatTraitSlugs(feat).filter((trait) => trait && !ignoredTraits.has(trait));
+}
+
+function getSpellLocationValue(spell) {
+  const location = spell?.system?.location;
+  if (typeof location === 'string') return location.trim();
+  if (location && typeof location === 'object' && typeof location.value === 'string') return location.value.trim();
+  return '';
+}
+
+function getItemIdentityValues(item) {
+  return [item?.id, item?._id, item?.uuid].filter((value) => typeof value === 'string' && value.length > 0);
+}
+
+function getActorItemSourceId(item) {
+  return item?.sourceId
+    ?? item?.flags?.core?.sourceId
+    ?? item?._stats?.compendiumSource
+    ?? item?.uuid
+    ?? null;
+}
+
+function getSpellTraitValues(spell) {
+  return [
+    ...(spell?.system?.traits?.value ?? []),
+    ...(spell?.traits ?? []),
+  ]
+    .map((trait) => normalizeEquipmentValue(trait))
+    .filter(Boolean);
+}
+
+function isNonCantripFocusSpellTraits(traits) {
+  return traits.includes('focus') && !traits.includes('cantrip');
 }
 
 function collectVariableClassTraditions(actor, plan, atLevel, trackedClassDefs) {
