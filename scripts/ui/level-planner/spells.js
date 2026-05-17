@@ -141,6 +141,7 @@ async function buildClassSpellSection(planner, classDef, level, entryType, class
   const cantripSpells = sectionPlannedSpells.filter((spell) => spell.isCantrip === true || spell.rank === 0 || spell.displayRank === 0);
   const grantedSpells = await getGrantedSpellsForLevel(planner, classDef, level, classSlug);
   const selectionAdjustments = getSpellSelectionAdjustments(classDef, level);
+  const selectionOptions = getSpellSelectionOptions(classDef);
   const spellSlots = buildSpellSlotDisplay(
     planner,
     currentSlots,
@@ -148,6 +149,7 @@ async function buildClassSpellSection(planner, classDef, level, entryType, class
     sectionPlannedSpells,
     grantedSpells,
     selectionAdjustments,
+    selectionOptions,
   );
   const hasNewRank = detectNewSpellRank(currentSlots, prevSlots);
   const highestRank = getHighestRank(currentSlots);
@@ -503,6 +505,7 @@ export function buildSpellSlotDisplay(
   plannedSpells,
   grantedSpells = [],
   selectionAdjustments = {},
+  selectionOptions = {},
 ) {
   const plannedByRank = {};
   for (const spell of plannedSpells) {
@@ -545,7 +548,8 @@ export function buildSpellSlotDisplay(
     const gainedSlots = isNew ? total : total - prevTotal;
     const grantedCount = grantedByRank[rankNum] ?? 0;
     const adjustedSelections = Number(selectionAdjustments?.[rankNum] ?? 0);
-    const newSlots = Math.max(0, gainedSlots - grantedCount) + Math.max(0, adjustedSelections);
+    const grantedSelectionOffset = selectionOptions?.subtractGrantedSpells === false ? 0 : grantedCount;
+    const newSlots = Math.max(0, gainedSlots - grantedSelectionOffset) + Math.max(0, adjustedSelections);
     const changed = isNew || prevTotal !== total;
     const planned = plannedByRank[rankNum] ?? 0;
     const isFull = planned >= newSlots;
@@ -579,6 +583,12 @@ function getSpellSelectionAdjustments(classDef, level) {
       .map(([rank, count]) => [Number(rank), Number(count ?? 0)])
       .filter(([rank, count]) => Number.isFinite(rank) && rank > 0 && Number.isFinite(count) && count > 0),
   );
+}
+
+function getSpellSelectionOptions(classDef) {
+  return {
+    subtractGrantedSpells: classDef?.spellcasting?.grantedSpellsReduceSelections !== false,
+  };
 }
 
 export function detectNewSpellRank(currentSlots, prevSlots) {

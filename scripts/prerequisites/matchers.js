@@ -54,7 +54,9 @@ export function matchWeaponFamilyProficiency(parsed, buildState) {
 }
 
 export function matchLore(parsed, buildState) {
-  const currentRank = buildState.lores?.[parsed.loreSlug] ?? 0;
+  const currentRank = parsed.generic === true
+    ? Math.max(0, ...Object.values(buildState.lores ?? {}).map((rank) => Number(rank ?? 0)))
+    : buildState.lores?.[parsed.loreSlug] ?? 0;
   return {
     met: currentRank >= parsed.minRank,
     text: parsed.text,

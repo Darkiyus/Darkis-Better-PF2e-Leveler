@@ -36,6 +36,7 @@ export const ORACLE = {
   spellcasting: {
     tradition: 'divine',
     type: 'spontaneous',
+    grantedSpellsReduceSelections: false,
     slots: {
       1: { cantrips: 5, 1: 3 },
       2: { cantrips: 5, 1: 4 },

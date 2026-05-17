@@ -29,6 +29,24 @@ export const REAL_PREREQUISITE_FIXTURES = [
     expected: true,
   },
   {
+    label: 'Unmistakable Lore generic lore rank requirement',
+    featName: 'Unmistakable Lore',
+    text: 'expert in Lore',
+    buildState: {
+      lores: { 'engineering-lore': 2 },
+    },
+    expected: true,
+  },
+  {
+    label: 'generic lore skill rank requirement',
+    featName: 'generic Lore skill prerequisite',
+    text: 'expert in a Lore skill',
+    buildState: {
+      lores: { 'engineering-lore': 2 },
+    },
+    expected: true,
+  },
+  {
     label: 'armor category requirement',
     featName: 'armor feat style prerequisite',
     text: 'wearing medium or heavy armor',

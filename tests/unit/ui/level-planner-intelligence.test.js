@@ -3,6 +3,7 @@ import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { ALCHEMIST } from '../../../scripts/classes/alchemist.js';
 import { createPlan, setLevelBoosts, setLevelSkillIncrease } from '../../../scripts/plan/plan-model.js';
 import { invalidateGuidanceCache } from '../../../scripts/access/content-guidance.js';
+import { readFileSync } from 'node:fs';
 jest.mock('../../../scripts/plan/plan-store.js', () => ({
   getPlan: jest.fn(() => null),
   savePlan: jest.fn(),
@@ -61,6 +62,16 @@ describe('LevelPlanner intelligence boost planner choices', () => {
       expect.objectContaining({ slug: 'draconic', label: 'Draconic', rarity: 'common', selected: false }),
       expect.objectContaining({ slug: 'elven', label: 'Elven', rarity: 'common', selected: false }),
     ]);
+  });
+
+  it('renders an add-Lore control for Intelligence bonus skill selections', () => {
+    const template = readFileSync('templates/level-planner.hbs', 'utf8');
+    const skillSection = template.slice(
+      template.indexOf('PF2E_LEVELER.CREATION.INTELLIGENCE_BONUS_SKILLS'),
+      template.indexOf('{{#if intBonusLanguageOptions}}'),
+    );
+
+    expect(skillSection).toContain('data-action="addIntBonusLoreSkill"');
   });
 
   it('includes language rarity and GM guidance in planner intelligence language choices', () => {

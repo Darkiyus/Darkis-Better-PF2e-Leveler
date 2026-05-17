@@ -353,11 +353,13 @@ function tryParseRankRequirement(text, fullText = text) {
     return { type: 'skill', skill: skillSlug, minRank, text: fullText };
   }
 
-  if (/\blore$/i.test(subject)) {
+  const genericLore = isGenericLoreRequirementSubject(subject);
+  if (genericLore || /\blore$/i.test(subject)) {
     return {
       type: 'lore',
       lore: subject,
       loreSlug: slugify(subject),
+      generic: genericLore,
       minRank,
       text: fullText,
     };
@@ -369,6 +371,10 @@ function tryParseRankRequirement(text, fullText = text) {
     .trim();
   const key = PROFICIENCY_SUBJECT_ALIASES[normalizedSubject] ?? slugify(normalizedSubject);
   return { type: 'proficiency', key, minRank, text: fullText };
+}
+
+function isGenericLoreRequirementSubject(subject) {
+  return /^(?:a|an|any|the)?\s*lore(?:\s+skill)?$/iu.test(subject);
 }
 
 function tryParseWeaponFamilyProficiency(text, fullText = text) {

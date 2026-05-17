@@ -1,6 +1,7 @@
 import { buildSpellContext, buildSpellSlotDisplay, shouldExcludeOwnedSpellIdentityForPlanner } from '../../../scripts/ui/level-planner/spells.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { DRUID } from '../../../scripts/classes/druid.js';
+import { ORACLE } from '../../../scripts/classes/oracle.js';
 import { SORCERER } from '../../../scripts/classes/sorcerer.js';
 import { WIZARD } from '../../../scripts/classes/wizard.js';
 
@@ -43,6 +44,9 @@ beforeAll(() => {
   }
   if (!ClassRegistry.get('sorcerer')) {
     ClassRegistry.register(SORCERER);
+  }
+  if (!ClassRegistry.get('oracle')) {
+    ClassRegistry.register(ORACLE);
   }
 });
 
@@ -158,6 +162,37 @@ describe('level planner spell context', () => {
     expect(rankTwo.gainedSlots).toBe(3);
     expect(rankTwo.grantedCount).toBe(1);
     expect(rankTwo.newSlots).toBe(2);
+  });
+
+  test('oracle mystery granted spells do not reduce new-rank repertoire picks', async () => {
+    resolveSubclassSpells.mockReturnValueOnce({ grantedSpell: 'granted-rank-2' });
+    global.fromUuid = jest.fn(async (uuid) => ({
+      uuid,
+      name: 'Moonlight Ray',
+      img: 'icons/svg/mystery-man.svg',
+    }));
+
+    const planner = {
+      actor: {
+        items: [
+          {
+            type: 'feat',
+            slug: 'cosmos',
+            system: { traits: { otherTags: ['oracle-mystery'] } },
+          },
+        ],
+      },
+      plan: { classSlug: 'oracle' },
+      _ordinalRank: (rank) => `${rank}th`,
+    };
+
+    const context = await buildSpellContext(planner, ORACLE, 3);
+    const rankTwo = context.spellSlots.find((slot) => slot.rankNum === 2);
+
+    expect(resolveSubclassSpells).toHaveBeenCalledWith('cosmos', {}, 2);
+    expect(rankTwo.gainedSlots).toBe(3);
+    expect(rankTwo.grantedCount).toBe(1);
+    expect(rankTwo.newSlots).toBe(3);
   });
 
   test('buildSpellSlotDisplay subtracts granted spells from new spontaneous picks', () => {

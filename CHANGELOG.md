@@ -6,6 +6,12 @@
 
 - **Ancestry feat pickers no longer include unrelated creature-trait feats** - Character creation now separates ancestry feat access traits from broader creature traits, so Leshy characters keep `plant` for prerequisite checks without surfacing unrelated feats such as Timber Sentinel in ancestry feat slots
 
+### Level Planner
+
+- **Intelligence skill increases can now add new Lore skills** - Intelligence increases at levels 5, 10, 15, and 20 no longer limit choices to existing regular skills when a new Lore skill is valid
+- **Generic Lore prerequisites now match named Lore skills** - Feat prerequisites such as Expert Lore now accept named Lore entries like Engineering Lore, allowing feats such as Unmistakable Lore to be selected when a qualifying Lore skill exists
+- **Oracle mystery granted spells no longer reduce repertoire picks** - Oracle spell selection now keeps granted curse spells separate from chosen repertoire slots, matching the Spring 2026 errata so a 3rd-level cosmos oracle can choose three 2nd-rank spells in addition to the granted spell
+
 ## 3.4.9
 
 ### Level Planner

@@ -221,7 +221,7 @@
         </div>
         {{/if}}
 
-        {{#if intBonusSkillOptions}}
+        {{#if intelligenceBenefit}}
         <div class="level-section">
           <div class="section-header">
             <i class="section-header__icon fa-solid fa-brain"></i>
@@ -245,6 +245,9 @@
               </button>
               {{/each}}
             </div>
+            <button type="button" class="spell-add-btn" data-action="addIntBonusLoreSkill" style="margin-top: var(--leveler-spacing-sm); padding: 4px 12px;">
+              <i class="fa-solid fa-plus"></i> {{localize "PF2E_LEVELER.UI.ADD"}} {{localize "PF2E_LEVELER.CREATION.LORE_SKILLS"}}
+            </button>
           </div>
         </div>
         {{/if}}
