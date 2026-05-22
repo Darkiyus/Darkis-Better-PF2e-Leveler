@@ -378,35 +378,59 @@ function isSubclassSelectionItem(wizard, item, parsedChoiceSets) {
 }
 
 function isHandlerManagedFocusSpellChoiceSection(wizard, item, parsedChoiceSets) {
-  if (wizard.data.class?.slug !== 'champion') return false;
-  if (wizard.classHandler?.isFocusSpellChoice?.() !== true) return false;
+  const config = getManagedFocusSpellChoiceConfig(wizard);
+  if (!config) return false;
   if (!Array.isArray(parsedChoiceSets) || parsedChoiceSets.length === 0) return false;
   if (!parsedChoiceSets.every(isSpellChoiceSet)) return false;
 
-  const slug = String(item?.slug ?? '').trim().toLowerCase();
-  const name = String(item?.name ?? '').trim().toLowerCase();
-  return slug === 'devotion-spells' || name === 'devotion spells';
+  return hasManagedFocusSpellChoiceLabel(config, [
+    item?.slug,
+    item?.name,
+    item?.uuid,
+  ]);
 }
 
 export function isHandlerManagedFocusSpellChoiceRenderSection(wizard, section) {
-  if (wizard.data.class?.slug !== 'champion') return false;
-  if (wizard.classHandler?.isFocusSpellChoice?.() !== true) return false;
+  const config = getManagedFocusSpellChoiceConfig(wizard);
+  if (!config) return false;
   if (!Array.isArray(section?.choiceSets) || section.choiceSets.length === 0) return false;
   if (!section.choiceSets.every(isSpellChoiceSet)) return false;
 
-  const labels = [
+  return hasManagedFocusSpellChoiceLabel(config, [
     section?.slug,
     section?.featName,
     section?.name,
     section?.sourceName,
     section?.slot,
-  ].map((value) => String(value ?? '').trim().toLowerCase());
+  ]);
+}
 
-  return labels.some((label) =>
-    label === 'devotion-spells'
-    || label === 'devotion spells'
-    || label.endsWith('-> devotion spells')
-    || label.includes('feature-devotion-spells'));
+function getManagedFocusSpellChoiceConfig(wizard) {
+  const classSlug = String(wizard?.data?.class?.slug ?? '').trim().toLowerCase();
+  if (classSlug === 'champion' && wizard.classHandler?.isFocusSpellChoice?.() === true) {
+    return {
+      labels: new Set(['devotion-spells', 'devotion spells']),
+      suffixes: ['-> devotion spells'],
+      fragments: ['feature-devotion-spells'],
+    };
+  }
+  if (classSlug === 'bard') {
+    return {
+      labels: new Set(['composition-spells', 'composition spells']),
+      suffixes: ['-> composition spells'],
+      fragments: ['feature-composition-spells'],
+    };
+  }
+  return null;
+}
+
+function hasManagedFocusSpellChoiceLabel(config, labels) {
+  return labels
+    .map((value) => String(value ?? '').trim().toLowerCase())
+    .some((label) =>
+      config.labels.has(label)
+      || config.suffixes.some((suffix) => label.endsWith(suffix))
+      || config.fragments.some((fragment) => label.includes(fragment)));
 }
 
 function isSpellChoiceSet(choiceSet) {

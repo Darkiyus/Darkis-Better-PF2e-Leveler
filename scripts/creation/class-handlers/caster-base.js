@@ -227,6 +227,19 @@ export class CasterBaseHandler extends BaseClassHandler {
 
     if (focusSpells.length === 0) return;
 
+    const existingSpellSources = new Set(
+      getActorItems(actor)
+        .filter((item) => item?.type === 'spell')
+        .flatMap((item) => getItemSourceIds(item)),
+    );
+    const focusSpellsToCreate = focusSpells.filter((spell) =>
+      !getItemSourceIds(spell).some((id) => existingSpellSources.has(id)),
+    );
+    if (focusSpellsToCreate.length === 0) {
+      await ensureFocusResource(actor);
+      return;
+    }
+
     const classDef = data.class?.slug ? ClassRegistry.get(data.class.slug) : null;
     const tradition = classDef?.spellcasting ? this._resolveTradition(classDef.spellcasting.tradition, data.subclass) : 'arcane';
     const ability = classDef?.keyAbility?.length === 1 ? classDef.keyAbility[0] : 'cha';
@@ -253,20 +266,15 @@ export class CasterBaseHandler extends BaseClassHandler {
       focusEntry = created[0];
     }
 
-    for (const spell of focusSpells) {
+    for (const spell of focusSpellsToCreate) {
+      const spellSourceIds = getItemSourceIds(spell);
       const spellData = foundry.utils.deepClone(spell.toObject());
       spellData.system.location = { value: focusEntry.id };
       await actor.createEmbeddedDocuments('Item', [spellData]);
+      for (const id of spellSourceIds) existingSpellSources.add(id);
     }
 
-    const currentMax = actor.system?.resources?.focus?.max ?? 0;
-    const currentValue = actor.system?.resources?.focus?.value ?? 0;
-    if (currentMax < 1 || currentValue < 1) {
-      await actor.update({
-        'system.resources.focus.max': Math.max(1, currentMax),
-        'system.resources.focus.value': Math.max(1, currentValue),
-      });
-    }
+    await ensureFocusResource(actor);
   }
 
   _resolveTradition(tradition, subclass) {
@@ -394,6 +402,36 @@ export class CasterBaseHandler extends BaseClassHandler {
     return String(item?.name ?? '')
       .toLowerCase()
       .includes('studious');
+  }
+}
+
+function getActorItems(actor) {
+  if (!actor?.items) return [];
+  if (Array.isArray(actor.items)) return actor.items;
+  if (Array.isArray(actor.items.contents)) return actor.items.contents;
+  if (typeof actor.items.filter === 'function') return actor.items.filter(() => true);
+  return Array.from(actor.items);
+}
+
+function getItemSourceIds(item) {
+  return [
+    item?.uuid,
+    item?.sourceId,
+    item?.flags?.core?.sourceId,
+    item?._stats?.compendiumSource,
+  ]
+    .map((value) => String(value ?? '').trim())
+    .filter(Boolean);
+}
+
+async function ensureFocusResource(actor) {
+  const currentMax = actor.system?.resources?.focus?.max ?? 0;
+  const currentValue = actor.system?.resources?.focus?.value ?? 0;
+  if (currentMax < 1 || currentValue < 1) {
+    await actor.update({
+      'system.resources.focus.max': Math.max(1, currentMax),
+      'system.resources.focus.value': Math.max(1, currentValue),
+    });
   }
 }
 

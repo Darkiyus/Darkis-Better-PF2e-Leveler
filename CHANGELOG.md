@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.4.13
+
+### Character Wizard
+
+- **Bard composition spells no longer appear as feat choices** - Composition Spells is now treated as class-managed focus spell setup, so bards receive both Courageous Anthem and Counter Performance without choosing one from Feat Choices or duplicating Courageous Anthem after creation
+
+### Level Planner
+
+- **Healing Font prerequisites now detect selected divine font choices** - Feats such as Healing Hands can be picked when the cleric already has the Healing Font class feature selection, including creation and planning states where no separate Divine Font spellcasting entry exists yet
+
 ## 3.4.12
 
 ### Level Planner

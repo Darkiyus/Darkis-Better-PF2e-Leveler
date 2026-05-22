@@ -708,6 +708,30 @@ describe('computeBuildState', () => {
     expect(state.divineFont).toBe('healing');
   });
 
+  test('detects healing divine font from owned class feature choice', () => {
+    mockActor.items = [
+      {
+        type: 'feat',
+        name: 'Divine Font',
+        slug: 'divine-font',
+        system: {
+          category: { value: 'classfeature' },
+          level: { value: 1 },
+        },
+        flags: {
+          pf2e: {
+            rulesSelections: {
+              divineFont: 'healing-font',
+            },
+          },
+        },
+      },
+    ];
+
+    const state = computeBuildState(mockActor, plan, 2);
+    expect(state.divineFont).toBe('healing');
+  });
+
   test('collects spell traits from owned spell items', () => {
     mockActor.items = [
       {

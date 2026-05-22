@@ -1045,17 +1045,47 @@ function isSpellChoiceOption(option, uuid) {
 }
 
 function isHandlerManagedFocusSpellChoiceSection(data, section) {
-  if (data?.class?.slug !== 'champion') return false;
+  const configs = getManagedFocusSpellChoiceConfigs(data);
+  if (configs.length === 0) return false;
   if (!Array.isArray(section?.choiceSets) || section.choiceSets.length === 0) return false;
   if (!section.choiceSets.every(isStoredSpellChoiceSet)) return false;
 
-  const labels = [section?.slug, section?.featName, section?.name, section?.sourceName, section?.slot].map((value) =>
-    String(value ?? '')
-      .trim()
-      .toLowerCase(),
-  );
+  const labels = [section?.slug, section?.featName, section?.name, section?.sourceName, section?.slot];
 
-  return labels.some((label) => label === 'devotion-spells' || label === 'devotion spells' || label.endsWith('-> devotion spells') || label.includes('feature-devotion-spells'));
+  return configs.some((config) => hasManagedFocusSpellChoiceLabel(config, labels));
+}
+
+function getManagedFocusSpellChoiceConfigs(data) {
+  const classSlugs = [data?.class?.slug, data?.dualClass?.slug]
+    .map((value) => String(value ?? '').trim().toLowerCase())
+    .filter(Boolean);
+  const configs = [];
+
+  if (classSlugs.includes('champion')) {
+    configs.push({
+      labels: new Set(['devotion-spells', 'devotion spells']),
+      suffixes: ['-> devotion spells'],
+      fragments: ['feature-devotion-spells'],
+    });
+  }
+  if (classSlugs.includes('bard')) {
+    configs.push({
+      labels: new Set(['composition-spells', 'composition spells']),
+      suffixes: ['-> composition spells'],
+      fragments: ['feature-composition-spells'],
+    });
+  }
+
+  return configs;
+}
+
+function hasManagedFocusSpellChoiceLabel(config, labels) {
+  return labels
+    .map((value) => String(value ?? '').trim().toLowerCase())
+    .some((label) =>
+      config.labels.has(label)
+      || config.suffixes.some((suffix) => label.endsWith(suffix))
+      || config.fragments.some((fragment) => label.includes(fragment)));
 }
 
 function isStoredSpellChoiceSet(choiceSet) {

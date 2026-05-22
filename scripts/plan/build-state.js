@@ -398,14 +398,94 @@ function isHeritageItemLike(item) {
 
 function computeDivineFontState(actor) {
   for (const item of getOwnedItems(actor)) {
-    if (item?.type !== 'spellcastingEntry') continue;
+    const font = inferDivineFontFromOwnedItem(item);
+    if (font) return font;
+  }
 
-    const normalizedName = String(item?.name ?? '')
-      .trim()
-      .toLowerCase();
-    if (!normalizedName.includes('divine font')) continue;
-    if (/\bhealing\b/.test(normalizedName) || /\bheal\b/.test(normalizedName)) return 'healing';
-    if (/\bharmful\b/.test(normalizedName) || /\bharming\b/.test(normalizedName) || /\bharm\b/.test(normalizedName)) return 'harmful';
+  return null;
+}
+
+function inferDivineFontFromOwnedItem(item) {
+  if (item?.type === 'spellcastingEntry') {
+    return inferDivineFontFromText(item?.name, { requireFont: true, requireDivine: true });
+  }
+
+  if (!isOwnedClassFeatureItem(item, Number.POSITIVE_INFINITY)) return null;
+
+  const selectionFont = inferDivineFontFromSelections(item);
+  if (selectionFont) return selectionFont;
+
+  return inferDivineFontFromText([
+    item?.name,
+    item?.slug,
+    item?.system?.slug,
+    item?.sourceId,
+    item?.flags?.core?.sourceId,
+    item?._stats?.compendiumSource,
+  ].join(' '), { requireFont: true });
+}
+
+function inferDivineFontFromSelections(item) {
+  const itemSlug = slugify(item?.slug ?? item?.name ?? '');
+  const canTrustUnqualifiedSelection = itemSlug.includes('divine-font') || itemSlug.includes('font');
+  const sources = [
+    item?.flags?.pf2e?.rulesSelections,
+    item?.flags?.system?.rulesSelections,
+    item?.flags?.['pf2e-leveler']?.classFeatureChoices,
+  ];
+
+  for (const source of sources) {
+    for (const [key, value] of Object.entries(source ?? {})) {
+      const keySlug = slugify(key);
+      if (!canTrustUnqualifiedSelection && !keySlug.includes('font')) continue;
+      const font = inferDivineFontFromChoiceValue(value);
+      if (font) return font;
+    }
+  }
+
+  return null;
+}
+
+function inferDivineFontFromChoiceValue(value) {
+  if (typeof value === 'string') return inferDivineFontFromText(value);
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const font = inferDivineFontFromChoiceValue(entry);
+      if (font) return font;
+    }
+    return null;
+  }
+  if (value && typeof value === 'object') {
+    for (const key of ['value', 'slug', 'name', 'label', 'uuid']) {
+      const font = inferDivineFontFromChoiceValue(value[key]);
+      if (font) return font;
+    }
+  }
+  return null;
+}
+
+function inferDivineFontFromText(value, { requireFont = false, requireDivine = false } = {}) {
+  const slug = slugify(String(value ?? ''));
+  if (!slug) return null;
+  if (requireFont && !slug.includes('font')) return null;
+  if (requireDivine && !slug.includes('divine-font')) return null;
+
+  const isHealingFont = /(^|-)healing-font($|-)/u.test(slug)
+    || /(^|-)heal-font($|-)/u.test(slug)
+    || slug.includes('divine-font-healing')
+    || slug.includes('divine-font-heal');
+  if (isHealingFont) return 'healing';
+
+  const isHarmfulFont = /(^|-)harmful-font($|-)/u.test(slug)
+    || /(^|-)harming-font($|-)/u.test(slug)
+    || /(^|-)harm-font($|-)/u.test(slug)
+    || slug.includes('divine-font-harmful')
+    || slug.includes('divine-font-harm');
+  if (isHarmfulFont) return 'harmful';
+
+  if (!requireFont) {
+    if (['healing', 'heal'].includes(slug)) return 'healing';
+    if (['harmful', 'harming', 'harm'].includes(slug)) return 'harmful';
   }
 
   return null;

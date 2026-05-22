@@ -265,6 +265,65 @@ describe('CasterBaseHandler._applyFocusSpells', () => {
       }),
     ]));
   });
+
+  it('does not add a focus spell the actor already owns from the same source', async () => {
+    const spellUuid = 'Compendium.pf2e.spells-srd.Item.courageous-anthem';
+    global.fromUuid = jest.fn(async (uuid) => ({
+      uuid,
+      name: 'Courageous Anthem',
+      img: 'courageous-anthem.webp',
+      toObject: () => ({
+        name: 'Courageous Anthem',
+        type: 'spell',
+        system: { traits: { value: ['focus'] } },
+      }),
+    }));
+
+    const createdDocs = [];
+    const actor = {
+      items: [
+        {
+          id: 'focus-druid',
+          type: 'spellcastingEntry',
+          name: 'Druid Focus Spells',
+          system: {
+            tradition: { value: 'primal' },
+            prepared: { value: 'focus' },
+            ability: { value: 'wis' },
+          },
+        },
+        {
+          type: 'spell',
+          name: 'Courageous Anthem',
+          sourceId: spellUuid,
+          system: { traits: { value: ['focus'] } },
+        },
+      ],
+      createEmbeddedDocuments: jest.fn(async (_type, docs) => {
+        createdDocs.push(...docs);
+        return docs.map((doc, index) => ({ id: `created-${index}`, ...doc }));
+      }),
+      update: jest.fn(async () => {}),
+      system: {
+        resources: {
+          focus: { max: 1, value: 1 },
+        },
+      },
+    };
+
+    const handler = new CasterBaseHandler();
+    jest.spyOn(handler, 'resolveFocusSpells').mockResolvedValue([
+      { uuid: spellUuid, name: 'Courageous Anthem', img: 'courageous-anthem.webp' },
+    ]);
+
+    await handler._applyFocusSpells(actor, {
+      class: { slug: 'druid', name: 'Druid' },
+      subclass: null,
+    });
+
+    expect(createdDocs).toEqual([]);
+    expect(actor.createEmbeddedDocuments).not.toHaveBeenCalled();
+  });
 });
 
 describe('WitchHandler._applyChosenHex', () => {

@@ -62,6 +62,39 @@ describe('CharacterWizard feat grant choices', () => {
           },
         };
       }
+      if (uuid === 'class-bard') {
+        return {
+          uuid,
+          name: 'Bard',
+          system: {
+            items: {
+              composition: {
+                uuid: 'feature-composition-spells',
+                name: 'Composition Spells',
+                level: 1,
+              },
+            },
+          },
+        };
+      }
+      if (uuid === 'feature-composition-spells') {
+        return {
+          uuid,
+          name: 'Composition Spells',
+          slug: 'composition-spells',
+          system: {
+            rules: [{
+              key: 'ChoiceSet',
+              flag: 'compositionSpell',
+              prompt: 'Select a spell.',
+              choices: {
+                itemType: 'spell',
+                filter: ['item:type:spell'],
+              },
+            }],
+          },
+        };
+      }
       return null;
     });
   });
@@ -156,6 +189,73 @@ describe('CharacterWizard feat grant choices', () => {
           value: 'shield-spirit',
           uuid: 'shield-spirit',
           label: 'Shields of the Spirit',
+          type: 'spell',
+        }],
+      }],
+    }];
+
+    const context = await wizard._buildFeatChoicesContext();
+
+    expect(context.featChoiceSections).toEqual([]);
+    expect(wizard._hasFeatChoices()).toBe(false);
+    expect(wizard._isStepComplete('featChoices')).toBe(true);
+  });
+
+  it('does not show Bard composition spells as feat choices', async () => {
+    const wizard = new CharacterWizard(createMockActor());
+    wizard.data.class = { uuid: 'class-bard', slug: 'bard', name: 'Bard' };
+    wizard.classHandler = {
+      getExtraSteps: () => [],
+      isFocusSpellChoice: () => false,
+      isStepComplete: () => null,
+    };
+    wizard._loadCompendiumCategory = jest.fn(async (category) => {
+      if (category !== 'spells') return [];
+      return [
+        {
+          uuid: 'courageous-anthem',
+          name: 'Courageous Anthem',
+          type: 'spell',
+          traits: ['bard', 'cantrip', 'composition'],
+          traditions: [],
+        },
+        {
+          uuid: 'counter-performance',
+          name: 'Counter Performance',
+          type: 'spell',
+          traits: ['bard', 'composition', 'focus'],
+          traditions: [],
+        },
+      ];
+    });
+
+    await wizard._refreshGrantedFeatChoiceSections();
+
+    expect(wizard.data.grantedFeatSections).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ featName: 'Composition Spells' }),
+    ]));
+    expect(wizard._hasFeatChoices()).toBe(false);
+  });
+
+  it('hides stale Bard composition spell sections from feat choices', async () => {
+    const wizard = new CharacterWizard(createMockActor());
+    wizard.data.class = { uuid: 'class-bard', slug: 'bard', name: 'Bard' };
+    wizard.classHandler = {
+      getExtraSteps: () => [],
+      isFocusSpellChoice: () => false,
+      isStepComplete: () => null,
+    };
+    wizard.data.grantedFeatSections = [{
+      slot: 'feature-composition-spells',
+      featName: 'Composition Spells',
+      sourceName: 'Bard -> Composition Spells',
+      choiceSets: [{
+        flag: 'compositionSpell',
+        prompt: 'Select a spell.',
+        options: [{
+          value: 'courageous-anthem',
+          uuid: 'courageous-anthem',
+          label: 'Courageous Anthem',
           type: 'spell',
         }],
       }],
