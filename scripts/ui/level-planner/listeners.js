@@ -212,6 +212,14 @@ export function activateLevelPlannerListeners(planner, html) {
       if (btn.dataset.locked === 'true') return;
       const slug = btn.dataset.skill;
       if (!slug) return;
+      const levelData = getLevelData(planner.plan, planner.selectedLevel);
+      const currentIncrease = levelData?.skillIncreases?.[0];
+      if (
+        normalizeSkillSlug(currentIncrease?.skill) === normalizeSkillSlug(slug)
+        && Number.isFinite(Number(currentIncrease?.toRank))
+      ) {
+        return;
+      }
       const currentRank = getSelectableSkillRank(planner, slug);
       setLevelSkillIncrease(planner.plan, planner.selectedLevel, {
         skill: slug,

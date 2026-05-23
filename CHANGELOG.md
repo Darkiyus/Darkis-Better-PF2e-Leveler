@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.15
+
+### Level Planner
+
+- **Granted feat choices now satisfy later prerequisites** - Planned feats granted through choices such as Natural Ambition and Multitalented now add their selected feat aliases to build state, allowing later feats that require qi spells, dedications, or similar granted capabilities to become eligible
+- **Adopted Ancestry ancestry selection now opens an ancestry picker** - Cultural Adaptability now routes the granted Adopted Ancestry ancestry choice through the generic item-document picker instead of the feat picker, so common ancestries appear and save correctly
+- **Applied skill increases stay fulfilled in the planner** - Previously applied planned skill increases no longer re-render as another unavailable rank-up or overwrite themselves if clicked again
+
 ## 3.4.14
 
 ### Level Planner

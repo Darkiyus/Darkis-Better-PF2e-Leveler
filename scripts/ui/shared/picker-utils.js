@@ -127,6 +127,10 @@ export function normalizeItemCategory(item) {
     (typeof rawCategory === 'object' && rawCategory !== null ? rawCategory.value : rawCategory) ?? item?.category ?? '',
   ).toLowerCase();
 
+  if (type === 'ancestry' || category === 'ancestry') return 'ancestry';
+  if (type === 'heritage' || category === 'heritage') return 'heritage';
+  if (type === 'deity' || category === 'deity') return 'deity';
+  if (type === 'classfeature' || category === 'classfeature' || category === 'class-feature') return 'classfeature';
   if (type === 'weapon' || category === 'weapon') return 'weapon';
   if (type === 'shield' || category === 'shield') return 'shield';
   if (type === 'armor' || category === 'armor') return 'armor';

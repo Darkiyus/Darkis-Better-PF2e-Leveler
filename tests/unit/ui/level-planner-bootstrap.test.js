@@ -5,6 +5,7 @@ import { getPlan, savePlan } from '../../../scripts/plan/plan-store.js';
 import { createPlan } from '../../../scripts/plan/plan-model.js';
 import { computeBuildState } from '../../../scripts/plan/build-state.js';
 import { loadFeats } from '../../../scripts/feats/feat-cache.js';
+import { ItemPicker } from '../../../scripts/ui/item-picker.js';
 
 jest.mock('../../../scripts/plan/plan-store.js', () => ({
   getPlan: jest.fn(() => null),
@@ -1117,6 +1118,49 @@ describe('LevelPlanner bootstrap from existing actor', () => {
 
     const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
     expect(context.showSkillIncrease).toBe(true);
+  });
+
+  it('keeps an applied planned skill increase fulfilled instead of asking for another rank', async () => {
+    getPlan.mockReturnValue({
+      ...createPlan('alchemist'),
+      levels: {
+        ...createPlan('alchemist').levels,
+        3: {
+          ...createPlan('alchemist').levels[3],
+          generalFeats: [{ slug: 'toughness', name: 'Toughness' }],
+          skillIncreases: [{ skill: 'stealth', toRank: 2 }],
+        },
+      },
+    });
+
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 3 },
+          xp: { value: 0, max: 1000 },
+        },
+        skills: {
+          ...createMockActor().system.skills,
+          stealth: { rank: 2, value: 2 },
+        },
+      },
+    });
+    actor.class.slug = 'alchemist';
+    actor.items = [];
+
+    const planner = new LevelPlanner(actor);
+    planner.selectedLevel = 3;
+
+    const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
+    const stealth = context.availableSkills.find((entry) => entry.slug === 'stealth');
+
+    expect(stealth).toEqual(expect.objectContaining({
+      selected: true,
+      rank: 1,
+      rankName: 'trained',
+      nextRankName: 'expert',
+      disabled: false,
+    }));
   });
 
   it('migrates legacy pulled-in plans to hide past skill increases', async () => {
@@ -2250,6 +2294,18 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       expect(context.ancestryFeat.grantChoiceSets).toEqual(expect.arrayContaining([
         expect.objectContaining({
           flag: 'ancestry',
+          choicePicker: expect.objectContaining({
+            kind: 'item',
+            allowedUuids: ['Compendium.pf2e.ancestries.Item.dwarf'],
+            items: [
+              expect.objectContaining({
+                uuid: 'Compendium.pf2e.ancestries.Item.dwarf',
+                name: 'Dwarf',
+                type: 'ancestry',
+                levelerChoiceValue: 'dwarf',
+              }),
+            ],
+          }),
           options: expect.arrayContaining([
             expect.objectContaining({ value: 'dwarf', label: 'Dwarf', selected: true }),
           ]),
@@ -2273,6 +2329,75 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       ]);
     } finally {
       global.fromUuid = originalFromUuid;
+    }
+  });
+
+  it('opens non-feat planned item choices with ItemPicker and stores the choice-set value', async () => {
+    const actor = createMockActor({ items: [] });
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.selectedLevel = 5;
+    planner.render = jest.fn();
+    planner.plan.levels[5].ancestryFeats = [{
+      uuid: 'Compendium.pf2e.feats-srd.Item.cultural-adaptability',
+      slug: 'cultural-adaptability',
+      name: 'Cultural Adaptability',
+      choices: {},
+    }];
+    planner._buildLevelContext = jest.fn(async () => ({
+      ancestryFeat: {
+        grantChoiceSets: [
+          {
+            flag: 'ancestry',
+            prompt: 'Select a common ancestry.',
+            choicePicker: {
+              kind: 'item',
+              title: 'Select a common ancestry.',
+              allowedUuids: ['Compendium.pf2e.ancestries.Item.dwarf'],
+              items: [
+                {
+                  uuid: 'Compendium.pf2e.ancestries.Item.dwarf',
+                  name: 'Dwarf',
+                  img: 'dwarf.webp',
+                  type: 'ancestry',
+                  levelerChoiceValue: 'dwarf',
+                  system: {
+                    level: { value: 0 },
+                    traits: { value: [], rarity: 'common' },
+                  },
+                },
+              ],
+            },
+            options: [],
+          },
+        ],
+      },
+    }));
+    let pickerInstance = null;
+    const renderSpy = jest.spyOn(ItemPicker.prototype, 'render').mockImplementation(function render() {
+      pickerInstance = this;
+    });
+
+    try {
+      await planner._openPlannedFeatChoicePicker({
+        category: 'ancestryFeats',
+        flag: 'ancestry',
+      });
+
+      expect(pickerInstance).toBeInstanceOf(ItemPicker);
+      expect(pickerInstance.allItems).toEqual([
+        expect.objectContaining({
+          uuid: 'Compendium.pf2e.ancestries.Item.dwarf',
+          levelerChoiceValue: 'dwarf',
+        }),
+      ]);
+
+      await pickerInstance.onSelect(pickerInstance.allItems[0]);
+
+      expect(planner.plan.levels[5].ancestryFeats[0].choices.ancestry).toBe('dwarf');
+      expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
+    } finally {
+      renderSpy.mockRestore();
     }
   });
 

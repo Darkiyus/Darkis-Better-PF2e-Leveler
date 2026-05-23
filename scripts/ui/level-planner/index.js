@@ -1975,8 +1975,10 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!pickerConfig?.allowedUuids?.length) return;
 
     const selectChoice = async (item) => {
-      feat.choices = { ...(feat.choices ?? {}), [flag]: item.uuid };
-      const selectedRules = await syncPlannedFeatChoiceSkillRules(feat, flag, item.uuid, {
+      const selectedValue = item?.levelerChoiceValue ?? item?.uuid;
+      if (!selectedValue) return;
+      feat.choices = { ...(feat.choices ?? {}), [flag]: selectedValue };
+      const selectedRules = await syncPlannedFeatChoiceSkillRules(feat, flag, selectedValue, {
         grantsSkillTraining: choiceSet.grantsSkillTraining === true,
       });
       syncSameLevelSkillIncreaseFromFeatRules(this, selectedRules);
@@ -1997,6 +1999,19 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
             : {}),
         },
         title: pickerConfig.title,
+      });
+      picker.render(true);
+      return;
+    }
+
+    if (pickerConfig.kind === 'item') {
+      const { ItemPicker } = await import('../item-picker.js');
+      const picker = new ItemPicker(this.actor, selectChoice, {
+        items: pickerConfig.items ?? [],
+        title: pickerConfig.title,
+        preset: {
+          selectedRarities: ['common', 'uncommon', 'rare', 'unique'],
+        },
       });
       picker.render(true);
       return;

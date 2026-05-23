@@ -1217,6 +1217,7 @@ async function resolveChoiceSetOptions(wizard, rule, currentChoices = {}, source
       value: slugsAsValues ? (item.slug ?? item.uuid) : (item.uuid ?? item.slug),
       label: item.name,
       uuid: item.uuid ?? null,
+      slug: item.slug ?? null,
       img: item.img ?? null,
       traits: item.traits ?? [],
       rarity: item.rarity ?? 'common',

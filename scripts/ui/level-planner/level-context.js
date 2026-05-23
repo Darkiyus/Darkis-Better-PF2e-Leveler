@@ -783,6 +783,7 @@ async function buildNaturalAmbitionChoiceSet(planner) {
       value: item.uuid ?? item.slug,
       label: item.name,
       uuid: item.uuid ?? null,
+      slug: item.slug ?? null,
       img: item.img ?? null,
       traits: item.traits ?? [],
       rarity: item.rarity ?? 'common',
@@ -826,6 +827,7 @@ async function buildAdvancedMulticlassClassFeatChoiceSet(planner, feat, source, 
       value: item.uuid ?? item.slug,
       label: item.name,
       uuid: item.uuid ?? null,
+      slug: item.slug ?? null,
       img: item.img ?? null,
       traits: item.traits ?? [],
       rarity: item.rarity ?? 'common',
@@ -1010,6 +1012,16 @@ function buildPlannerChoicePickerMetadata(choiceSet) {
     };
   }
 
+  if (!options.every(isFeatPickerChoiceOption)) {
+    return {
+      kind: 'item',
+      allowedUuids,
+      items: options.map(choiceOptionToPickerItem),
+      title: choiceSet.prompt,
+      selectedOption,
+    };
+  }
+
   return {
     kind: 'feat',
     allowedUuids,
@@ -1018,6 +1030,65 @@ function buildPlannerChoicePickerMetadata(choiceSet) {
     title: choiceSet.prompt,
     selectedOption,
   };
+}
+
+function isFeatPickerChoiceOption(option) {
+  const uuid = String(option?.uuid ?? option?.value ?? '').toLowerCase();
+  if (uuid.includes('.classfeatures.')) return false;
+  if (uuid.includes('.feats')) return true;
+
+  const type = String(option?.type ?? '').toLowerCase();
+  const category = normalizeChoiceOptionCategory(option?.category);
+  return type === 'feat' && !['classfeature', 'class-feature'].includes(category);
+}
+
+function choiceOptionToPickerItem(option) {
+  const uuid = option.uuid ?? option.value;
+  const type = String(option.type ?? inferItemTypeFromUuid(uuid) ?? 'equipment').toLowerCase();
+  const category = normalizeChoiceOptionCategory(option.category) ?? type;
+  const rarity = String(option.rarity ?? 'common').toLowerCase();
+  const level = Number(option.level ?? option.rank ?? option.system?.level?.value ?? 0);
+
+  return {
+    uuid,
+    name: option.label ?? option.name ?? option.slug ?? uuid,
+    img: option.img ?? 'icons/svg/item-bag.svg',
+    type,
+    slug: option.slug ?? (typeof option.value === 'string' && !isItemUuid(option.value) ? option.value : null),
+    category,
+    levelerChoiceValue: option.value ?? uuid,
+    system: {
+      slug: option.slug ?? null,
+      category,
+      level: { value: Number.isFinite(level) ? level : 0 },
+      traits: {
+        value: (option.traits ?? []).map((trait) => String(trait).toLowerCase()),
+        rarity,
+      },
+    },
+  };
+}
+
+function inferItemTypeFromUuid(uuid) {
+  const text = String(uuid ?? '').toLowerCase();
+  if (text.includes('.ancestries.')) return 'ancestry';
+  if (text.includes('.heritages.')) return 'heritage';
+  if (text.includes('.deities.')) return 'deity';
+  if (text.includes('.classfeatures.')) return 'classfeature';
+  if (text.includes('.equipment')) return 'equipment';
+  return null;
+}
+
+function normalizeChoiceOptionCategory(category) {
+  if (category && typeof category === 'object') {
+    return String(category.value ?? category.slug ?? category.name ?? '')
+      .trim()
+      .toLowerCase();
+  }
+  const normalized = String(category ?? '')
+    .trim()
+    .toLowerCase();
+  return normalized || null;
 }
 
 function inferChoiceSetSpellRank(choiceSet) {

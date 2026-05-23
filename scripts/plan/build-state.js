@@ -1653,6 +1653,33 @@ function getSubclassAliases(feat) {
 }
 
 function addFeatChoiceAlias(target, selected) {
+  if (selected && typeof selected === 'object') {
+    if (!isFeatLikeChoiceOption(selected)) return;
+
+    const candidates = [
+      selected.slug,
+      selected.system?.slug,
+      selected.value?.slug,
+      selected.name,
+      selected.label,
+      selected.value?.name,
+      selected.value?.label,
+    ];
+    let added = false;
+    for (const candidate of candidates) {
+      const normalized = slugify(String(candidate ?? ''));
+      if (!normalized) continue;
+      target.add(normalized);
+      added = true;
+    }
+
+    if (!added) {
+      const fallback = selected.uuid ?? selected.value?.uuid ?? selected.value;
+      if (typeof fallback === 'string') addFeatChoiceAlias(target, fallback);
+    }
+    return;
+  }
+
   if (typeof selected !== 'string' || selected.length === 0 || selected === '[object Object]') return;
 
   if (selected.startsWith('Compendium.')) {
@@ -1667,7 +1694,117 @@ function addFeatChoiceAlias(target, selected) {
 }
 
 function getFeatChoiceSelections(feat) {
-  return [...Object.values(feat?.choices ?? {}), ...Object.values(feat?.flags?.pf2e?.rulesSelections ?? {})];
+  return [
+    ...Object.values(feat?.choices ?? {}),
+    ...Object.values(feat?.flags?.pf2e?.rulesSelections ?? {}),
+    ...Object.values(feat?.flags?.system?.rulesSelections ?? {}),
+    ...getSelectedChoiceSetOptions(feat),
+    ...getGrantedFeatLikeItems(feat),
+  ];
+}
+
+function getSelectedChoiceSetOptions(feat) {
+  const selections = getFeatChoiceSelectionMap(feat);
+  const selectedOptions = [];
+
+  for (const choiceSet of getStoredChoiceSets(feat)) {
+    const flag = String(choiceSet?.flag ?? '').trim();
+    if (!flag || !selections.has(flag)) continue;
+
+    const selectedValue = selections.get(flag);
+    for (const option of choiceSet?.options ?? []) {
+      if (!isFeatLikeChoiceOption(option)) continue;
+      if (choiceOptionMatchesSelection(option, selectedValue)) selectedOptions.push(option);
+    }
+  }
+
+  return selectedOptions;
+}
+
+function getFeatChoiceSelectionMap(feat) {
+  const selections = new Map();
+  for (const source of [
+    feat?.choices,
+    feat?.flags?.pf2e?.rulesSelections,
+    feat?.flags?.system?.rulesSelections,
+  ]) {
+    for (const [flag, value] of Object.entries(source ?? {})) {
+      if (typeof value === 'string' && value.length > 0 && value !== '[object Object]') {
+        selections.set(flag, value);
+      }
+    }
+  }
+  return selections;
+}
+
+function getStoredChoiceSets(feat) {
+  return [
+    ...(Array.isArray(feat?.choiceSets) ? feat.choiceSets : []),
+    ...(Array.isArray(feat?.grantChoiceSets) ? feat.grantChoiceSets : []),
+  ].filter((entry) => entry && typeof entry === 'object');
+}
+
+function choiceOptionMatchesSelection(option, selectedValue) {
+  const selected = normalizeChoiceIdentity(selectedValue);
+  if (!selected) return false;
+
+  return getChoiceOptionIdentityValues(option).some((candidate) =>
+    normalizeChoiceIdentity(candidate) === selected);
+}
+
+function getChoiceOptionIdentityValues(option) {
+  const rawValue = option?.value;
+  const values = [
+    rawValue,
+    option?.uuid,
+    option?.slug,
+    option?.label,
+    option?.name,
+    rawValue?.uuid,
+    rawValue?.slug,
+    rawValue?.value,
+    rawValue?.label,
+    rawValue?.name,
+  ];
+  return values.filter((value) => typeof value === 'string' && value.length > 0);
+}
+
+function getGrantedFeatLikeItems(feat) {
+  return (Array.isArray(feat?.grantedItems) ? feat.grantedItems : []).filter(isFeatLikeChoiceOption);
+}
+
+function isFeatLikeChoiceOption(option) {
+  if (!option || typeof option !== 'object') return false;
+
+  const rawValue = option.value;
+  const uuid = String(
+    option.uuid
+      ?? option.sourceId
+      ?? option.flags?.core?.sourceId
+      ?? rawValue?.uuid
+      ?? (typeof rawValue === 'string' ? rawValue : '')
+      ?? '',
+  ).toLowerCase();
+  if (uuid.includes('.feats') || uuid.includes('.classfeatures')) return true;
+
+  const type = String(option.type ?? option.itemType ?? rawValue?.type ?? '').toLowerCase();
+  if (['feat', 'action', 'classfeature'].includes(type)) return true;
+
+  const category = String(
+    option.category
+      ?? option.system?.category?.value
+      ?? option.system?.category
+      ?? rawValue?.category
+      ?? '',
+  ).toLowerCase();
+  return ['class', 'skill', 'general', 'ancestry', 'archetype', 'mythic', 'bonus', 'classfeature', 'class-feature'].includes(category);
+}
+
+function normalizeChoiceIdentity(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/^Compendium\.pf2e\.([a-z]+)Srd\.Item\./u, (_match, pack) => `Compendium.pf2e.${pack}-srd.Item.`)
+    .toLowerCase();
 }
 
 function matchesTagFamily(feat, tag) {

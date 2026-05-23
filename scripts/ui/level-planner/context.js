@@ -5,7 +5,7 @@ import { getMaxSkillRank } from '../../utils/pf2e-api.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { annotateGuidanceBySlug, filterDisallowedForCurrentUser } from '../../access/content-guidance.js';
 import { getLanguageRarityMap, getLanguageMap, humanizeSkillLikeLabel } from '../character-wizard/skills-languages.js';
-import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug } from '../../utils/skill-slugs.js';
+import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../../utils/skill-slugs.js';
 
 export function buildAttributeContext(planner, levelData, choices) {
   const selectedBoosts = levelData.abilityBoosts ?? [];
@@ -282,7 +282,8 @@ export function buildSkillContext(planner, levelData, level) {
   });
   const currentIncrease = levelData.skillIncreases?.[0];
 
-  const skills = Object.entries(currentSkills).map(([slug, rank]) => {
+  const skills = Object.entries(currentSkills).map(([slug, rawRank]) => {
+    const rank = getRankBeforeCurrentSkillIncrease(slug, rawRank, currentIncrease);
     const nextRank = rank + 1;
     const featGranted = rank > (baseSkills[slug] ?? 0);
     const featSourceName = featGranted ? findSkillGrantingFeatName(planner.plan, slug, level) : null;
@@ -316,7 +317,7 @@ export function buildSkillContext(planner, levelData, level) {
   }
 
   const lores = [...loreSlugs].map((slug) => {
-    const rank = loreRanks[slug] ?? 0;
+    const rank = getRankBeforeCurrentSkillIncrease(slug, loreRanks[slug] ?? 0, currentIncrease);
     const nextRank = rank + 1;
     return {
       slug,
@@ -340,6 +341,16 @@ export function buildSkillContext(planner, levelData, level) {
     ...entry,
     disabled: entry.disabled || entry.guidanceSelectionBlocked === true,
   }));
+}
+
+function getRankBeforeCurrentSkillIncrease(slug, rank, currentIncrease) {
+  const selectedSkill = normalizeSkillSlug(currentIncrease?.skill);
+  if (!selectedSkill || selectedSkill !== normalizeSkillSlug(slug)) return rank;
+
+  const targetRank = Number(currentIncrease?.toRank);
+  if (!Number.isFinite(targetRank) || targetRank <= 0) return rank;
+
+  return Math.max(0, targetRank - 1);
 }
 
 function localizeSkillSlug(slug) {

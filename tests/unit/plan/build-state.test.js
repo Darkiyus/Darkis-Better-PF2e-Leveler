@@ -1475,6 +1475,90 @@ describe('computeBuildState', () => {
     expect(state.classArchetypeTraits.has('druid')).toBe(true);
   });
 
+  test('tracks planned Natural Ambition granted class feats from choice set metadata', () => {
+    const qiSpellsUuid = 'Compendium.pf2e.feats-srd.Item.liveQiSpellsId';
+    const plan = {
+      levels: {
+        5: {
+          ancestryFeats: [
+            {
+              uuid: 'Compendium.pf2e.feats-srd.Item.naturalAmbitionId',
+              name: 'Natural Ambition',
+              slug: 'natural-ambition',
+              choices: {
+                naturalAmbition: qiSpellsUuid,
+              },
+              grantChoiceSets: [
+                {
+                  flag: 'naturalAmbition',
+                  options: [
+                    {
+                      value: qiSpellsUuid,
+                      uuid: qiSpellsUuid,
+                      slug: 'qi-spells',
+                      label: 'Qi Spells',
+                      type: 'feat',
+                      category: 'class',
+                      traits: ['monk'],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const state = computeBuildState(mockActor, plan, 10);
+
+    expect(state.feats.has('qi-spells')).toBe(true);
+    expect(state.featAliasSources.get('qi-spells')?.get('natural-ambition')).toBe('Natural Ambition');
+  });
+
+  test('tracks planned Multitalented dedication choices from choice set metadata with random compendium ids', () => {
+    const druidDedicationUuid = 'Compendium.pf2e.feats-srd.Item.liveDruidDedicationId';
+    const plan = {
+      levels: {
+        9: {
+          ancestryFeats: [
+            {
+              uuid: 'Compendium.pf2e.feats-srd.Item.multitalentedId',
+              name: 'Multitalented',
+              slug: 'multitalented',
+              choices: {
+                multiclassDedication: druidDedicationUuid,
+              },
+              grantChoiceSets: [
+                {
+                  flag: 'multiclassDedication',
+                  options: [
+                    {
+                      value: druidDedicationUuid,
+                      uuid: druidDedicationUuid,
+                      slug: 'druid-dedication',
+                      label: 'Druid Dedication',
+                      type: 'feat',
+                      category: 'archetype',
+                      traits: ['archetype', 'dedication', 'druid', 'multiclass'],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const state = computeBuildState(mockActor, plan, 10);
+
+    expect(state.feats.has('druid-dedication')).toBe(true);
+    expect(state.archetypeDedications.has('druid-dedication')).toBe(true);
+    expect(state.classArchetypeDedications.has('druid-dedication')).toBe(true);
+    expect(state.classArchetypeTraits.has('druid')).toBe(true);
+  });
+
   test('tracks applied Multitalented dedication choices from PF2E rules selections', () => {
     const actor = createMockActor();
     actor.items = {

@@ -24,11 +24,15 @@ const FORMULA_VARIANT_RANKS = ['minor', 'lesser', 'moderate', 'greater', 'major'
 const FORMULA_VARIANT_PATTERN = FORMULA_VARIANT_RANKS.join('|');
 
 const CATEGORY_LABELS = {
+  ancestry: 'Ancestry',
   ammunition: 'Ammunition',
   armor: 'Armor',
+  classfeature: 'Class Feature',
   consumable: 'Consumable',
   container: 'Container',
+  deity: 'Deity',
   equipment: 'Equipment',
+  heritage: 'Heritage',
   shield: 'Shield',
   weapon: 'Weapon',
 };

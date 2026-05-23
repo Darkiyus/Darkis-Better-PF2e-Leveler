@@ -71,6 +71,45 @@ describe('Level planner skill increase listeners', () => {
     expect(planner._savePlanAndRender).toHaveBeenCalled();
   });
 
+  it('keeps an already-selected applied skill increase when clicked again', () => {
+    document.body.innerHTML = '<button type="button" data-action="selectSkillIncrease" data-skill="stealth"></button>';
+
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 3 },
+          xp: { value: 0, max: 1000 },
+        },
+        skills: {
+          ...createMockActor().system.skills,
+          stealth: { rank: 2, value: 2 },
+        },
+      },
+    });
+    actor.items = [];
+
+    const planner = {
+      actor,
+      plan: {
+        levels: {
+          3: {
+            skillIncreases: [{ skill: 'stealth', toRank: 2 }],
+          },
+        },
+      },
+      selectedLevel: 3,
+      _savePlanAndRender: jest.fn(),
+    };
+
+    activateLevelPlannerListeners(planner, document.body);
+    document.querySelector('[data-action="selectSkillIncrease"]').click();
+
+    expect(planner.plan.levels[3].skillIncreases).toEqual([
+      { skill: 'stealth', toRank: 2 },
+    ]);
+    expect(planner._savePlanAndRender).not.toHaveBeenCalled();
+  });
+
   it('stores planned class feature choices', () => {
     document.body.innerHTML = '<button type="button" data-action="selectPlannedClassFeatureChoice" data-feature-key="blessing-of-the-devoted" data-flag="blessing" data-value="Compendium.pf2e.classfeatures.Item.blessing-swiftness" data-label="Blessing of Swiftness" data-slug="blessing-of-swiftness"></button>';
 
