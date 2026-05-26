@@ -581,6 +581,163 @@
   opacity: 0.75;
 }
 
+.pf2e-leveler.imported-initial-skills-dialog {
+  box-sizing: border-box;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 560px);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  color: var(--leveler-text);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skills-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--leveler-border);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skills-dialog__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--leveler-text-bright);
+  font-weight: 800;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skills-dialog__count {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border: 1px solid var(--leveler-accent);
+  border-radius: 999px;
+  background: var(--leveler-accent-dim);
+  color: var(--leveler-accent-light);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skills-dialog__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  max-height: min(420px, 58vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 8px 10px;
+  border: 1px solid var(--leveler-border);
+  border-left: 3px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-sm);
+  background: var(--leveler-bg-surface);
+  color: var(--leveler-text);
+  min-width: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card:hover:not(.disabled) {
+  background: var(--leveler-bg-hover);
+  border-color: var(--leveler-border-light);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card.selected {
+  background: var(--leveler-accent-dim);
+  border-color: var(--leveler-accent);
+  border-left-color: var(--leveler-accent);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card.disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card.rank-bg-trained {
+  border-left-color: var(--leveler-rank-trained);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card.selected.rank-bg-trained {
+  border-left-color: var(--leveler-accent);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog [data-imported-initial-skill-input] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--leveler-border-light);
+  border-radius: 4px;
+  color: transparent;
+  font-size: 11px;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card.selected .imported-initial-skill-card__check {
+  background: var(--leveler-accent);
+  border-color: var(--leveler-accent);
+  color: var(--leveler-bg);
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card__body {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--leveler-text-bright);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card__rank {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .pf2e-leveler.imported-initial-skills-dialog {
+    min-width: 0;
+  }
+
+  .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skills-dialog__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .retrain-rank-text {
   font-weight: 800;
 }

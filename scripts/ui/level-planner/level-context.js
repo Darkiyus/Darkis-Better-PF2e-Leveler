@@ -8,14 +8,14 @@ import {
   getFeatGrantCompletion,
   getFeatGrantSelections,
 } from '../../plan/feat-grants.js';
-import { computeBuildState } from '../../plan/build-state.js';
+import { computeBuildState, getImportedInitialSkillTraining } from '../../plan/build-state.js';
 import { isCantripExpansionFeat } from '../../plan/spellbook-feats.js';
 import { loadCompendium, loadCompendiumCategory, loadDeities, loadTaggedClassFeatures } from '../character-wizard/loaders.js';
 import { extractGrantedTrainedSkills, normalizePf2eCompendiumUuid, parseChoiceSets } from '../character-wizard/choice-sets.js';
 import { humanizeSkillLikeLabel, normalizeLoreSkillName, slugifyLoreSkillName } from '../character-wizard/skills-languages.js';
 import { annotateGuidanceBySlug, filterDisallowedForCurrentUser } from '../../access/content-guidance.js';
 import { extractFeatSkillRules } from './index.js';
-import { getAvailableLanguages } from './context.js';
+import { buildImportedInitialSkillSummary, getAvailableLanguages, shouldShowImportedInitialSkillButton } from './context.js';
 import { buildCustomSpellEntryOptions } from './spells.js';
 import { evaluatePredicate } from '../../utils/predicate.js';
 import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug, SKILL_ALIASES } from '../../utils/skill-slugs.js';
@@ -81,6 +81,7 @@ export async function buildLevelContext(planner, classDef, options) {
   const customAvailableSkills = buildCustomAvailableSkills(planner, levelData, level);
   const customSpellEntryOptions = buildCustomSpellEntryOptions(planner, level);
   const customSpellGroups = buildCustomSpellGroups(levelData.customSpells ?? [], customSpellEntryOptions);
+  const importedInitialSkillSummary = buildImportedInitialSkillSummary(planner);
 
   return {
     classFeatures: await buildClassFeatureEntries(planner, level, levelData),
@@ -111,7 +112,9 @@ export async function buildLevelContext(planner, classDef, options) {
     showGeneralFeatGrantedAncestryFeat: generalFeatGrantsAncestryFeat
       && !!generalFeatGrantedAncestryFeat,
     generalFeatGrantedAncestryFeat,
-    showSkillIncrease: choiceTypes.has('skillIncrease') && !planner._shouldHideHistoricalSkillIncrease(level),
+    showImportedInitialSkillButton: shouldShowImportedInitialSkillButton(planner, level),
+    ...importedInitialSkillSummary,
+    showSkillIncrease: choiceTypes.has('skillIncrease'),
     availableSkills: planner._buildSkillContext(levelData, level),
     showArchetypeFeat: choiceTypes.has('archetypeFeat'),
     archetypeFeat,
@@ -197,11 +200,15 @@ export function buildSkillRetrainSources(planner, level) {
 function buildInitialSkillRetrainSources(planner) {
   const creationData = getCreationData(planner.actor);
   const creationSkills = Array.isArray(creationData?.skills) ? creationData.skills : [];
+  const importedInitialSkills = getImportedInitialSkillTraining(planner.plan);
   const sources = [];
   const seen = new Set();
 
   for (const rawSkill of creationSkills) {
     addInitialSkillRetrainSource(sources, seen, planner, rawSkill, { allowHigherRanks: true });
+  }
+  for (const rawSkill of importedInitialSkills) {
+    addInitialSkillRetrainSource(sources, seen, planner, rawSkill, { allowHigherRanks: true, forceEligible: true });
   }
 
   if (sources.length === 0) {
@@ -213,13 +220,13 @@ function buildInitialSkillRetrainSources(planner) {
   return sources;
 }
 
-function addInitialSkillRetrainSource(sources, seen, planner, rawSkill, { allowHigherRanks }) {
+function addInitialSkillRetrainSource(sources, seen, planner, rawSkill, { allowHigherRanks, forceEligible = false }) {
   const skill = normalizeSkillSlug(rawSkill);
   if (!isActiveSkillSlug(skill) || seen.has(skill)) return;
   const actorRank = getActorSkillRank(planner.actor, skill);
-  const eligible = allowHigherRanks
+  const eligible = forceEligible || (allowHigherRanks
     ? actorRank >= PROFICIENCY_RANKS.TRAINED
-    : actorRank === PROFICIENCY_RANKS.TRAINED;
+    : actorRank === PROFICIENCY_RANKS.TRAINED);
   if (!eligible) return;
   seen.add(skill);
   sources.push({

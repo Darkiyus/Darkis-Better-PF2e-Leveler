@@ -1,4 +1,5 @@
 import { LevelPlanner } from '../../../scripts/ui/level-planner/index.js';
+import { PLAN_STATUS } from '../../../scripts/constants.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { ALCHEMIST } from '../../../scripts/classes/alchemist.js';
 import { getPlan, savePlan } from '../../../scripts/plan/plan-store.js';
@@ -6,6 +7,7 @@ import { createPlan } from '../../../scripts/plan/plan-model.js';
 import { computeBuildState } from '../../../scripts/plan/build-state.js';
 import { loadFeats } from '../../../scripts/feats/feat-cache.js';
 import { ItemPicker } from '../../../scripts/ui/item-picker.js';
+import { readFileSync } from 'node:fs';
 
 jest.mock('../../../scripts/plan/plan-store.js', () => ({
   getPlan: jest.fn(() => null),
@@ -1080,7 +1082,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     }));
   });
 
-  it('hides historical skill increases for imported higher-level plans', async () => {
+  it('shows historical skill increases for imported higher-level plans so users can fill unknown history', async () => {
     const actor = createMockActor({
       items: [],
       system: {
@@ -1099,11 +1101,187 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       actorLevel: 5,
       hideHistoricalSkillIncreases: true,
     });
-    expect(planner._shouldHideHistoricalSkillIncrease(5)).toBe(true);
-    expect(planner._shouldHideHistoricalSkillIncrease(6)).toBe(false);
+    const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
+    expect(context.showSkillIncrease).toBe(true);
+    expect(context.availableSkills.length).toBeGreaterThan(0);
+  });
+
+  it('builds historical skill increases from manual starting skills and prior planned increases instead of final actor ranks', async () => {
+    getPlan.mockReturnValue({
+      ...createPlan('alchemist'),
+      importedFromActor: {
+        actorLevel: 8,
+        hideHistoricalSkillIncreases: true,
+        initialSkills: ['acrobatics'],
+      },
+      levels: {
+        ...createPlan('alchemist').levels,
+        3: {
+          ...createPlan('alchemist').levels[3],
+          generalFeats: [{ slug: 'toughness', name: 'Toughness' }],
+          skillIncreases: [{ skill: 'acrobatics', toRank: 2 }],
+        },
+      },
+    });
+
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 8 },
+          xp: { value: 0, max: 1000 },
+        },
+        skills: {
+          ...createMockActor().system.skills,
+          acrobatics: { rank: 3, value: 3 },
+          intimidation: { rank: 2, value: 2 },
+        },
+      },
+    });
+    actor.class.slug = 'alchemist';
+    actor.class.system.trainedSkills = { value: ['crafting'], additional: 3 };
+    actor.items = [];
+
+    const planner = new LevelPlanner(actor);
+    planner.selectedLevel = 7;
 
     const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
-    expect(context.showSkillIncrease).toBe(false);
+    const acrobatics = context.availableSkills.find((entry) => entry.slug === 'acrobatics');
+    const intimidation = context.availableSkills.find((entry) => entry.slug === 'intimidation');
+
+    expect(context.showImportedInitialSkillButton).toBe(false);
+    expect(acrobatics).toEqual(expect.objectContaining({
+      rank: 2,
+      rankName: 'expert',
+      nextRankName: 'master',
+      disabled: false,
+    }));
+    expect(intimidation).toEqual(expect.objectContaining({
+      rank: 0,
+      rankName: 'untrained',
+      nextRankName: 'trained',
+      disabled: false,
+    }));
+  });
+
+  it('only offers the imported starting skill dialog button from the level 2 header with class cap summary', async () => {
+    getPlan.mockReturnValue({
+      ...createPlan('alchemist'),
+      importedFromActor: {
+        actorLevel: 8,
+        hideHistoricalSkillIncreases: true,
+        initialSkills: ['acrobatics', 'athletics', 'stealth', 'crafting'],
+      },
+    });
+
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 8 },
+          xp: { value: 0, max: 1000 },
+        },
+      },
+    });
+    actor.class.slug = 'alchemist';
+    actor.class.system.trainedSkills = { value: ['crafting'], additional: 3 };
+    actor.items = [];
+
+    const planner = new LevelPlanner(actor);
+    planner.selectedLevel = 2;
+
+    const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
+
+    expect(context.showImportedInitialSkillButton).toBe(true);
+    expect(context.showImportedInitialSkills).toBeUndefined();
+    expect(context.importedInitialSkills).toBeUndefined();
+    expect(context.importedInitialSkillCount).toBe(4);
+    expect(context.importedInitialSkillLimit).toBe(4);
+  });
+
+  it('opens an imported starting skill dialog and stores selected training', async () => {
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 8 },
+          xp: { value: 0, max: 1000 },
+        },
+      },
+    });
+    actor.class.slug = 'alchemist';
+    actor.class.system.trainedSkills = { value: ['crafting'], additional: 3 };
+    actor.items = [];
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = {
+      ...createPlan('alchemist'),
+      importedFromActor: {
+        actorLevel: 8,
+        hideHistoricalSkillIncreases: true,
+        initialSkills: ['acrobatics'],
+      },
+    };
+    const prompt = jest.fn(async (config) => {
+      const container = document.createElement('div');
+      container.innerHTML = config.content;
+      container.querySelector('input[name="importedInitialSkills"][value="crafting"]').checked = true;
+      container.querySelector('input[name="importedInitialSkills"][value="stealth"]').checked = true;
+      return config.ok.callback(null, null, { element: container });
+    });
+    global.foundry.applications.api.DialogV2 = { prompt };
+
+    await planner._openImportedInitialSkillDialog();
+
+    expect(prompt).toHaveBeenCalled();
+    const content = prompt.mock.calls[0][0].content;
+    expect(content).toContain('Starting Skill Training');
+    expect(content).toContain('Acrobatics');
+    expect(content).toContain('data-imported-initial-skills');
+    expect(content).toContain('pf2e-leveler imported-initial-skills-dialog');
+    expect(content).toContain('imported-initial-skill-card');
+    expect(content).toContain('imported-initial-skill-card__check');
+    expect(content).not.toContain('class="skill-btn');
+    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'crafting', 'stealth']);
+    expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
+  });
+
+  it('keeps imported starting skill dialog content within the Foundry prompt width', () => {
+    const css = readFileSync('styles/level-planner.css', 'utf8');
+
+    expect(css).toContain('width: min(100%, 560px);');
+    expect(css).toContain('max-width: 100%;');
+    expect(css).toContain('grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));');
+    expect(css).not.toContain('min-width: min(560px, calc(100vw - 64px));');
+    expect(css).not.toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+  });
+
+  it('caps imported starting skill dialog selections to the class training allowance', async () => {
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 8 },
+          xp: { value: 0, max: 1000 },
+        },
+      },
+    });
+    actor.class.slug = 'alchemist';
+    actor.class.system.trainedSkills = { value: ['crafting'], additional: 2 };
+    actor.items = [];
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = {
+      ...createPlan('alchemist'),
+      importedFromActor: {
+        actorLevel: 8,
+        hideHistoricalSkillIncreases: true,
+        initialSkills: ['acrobatics'],
+      },
+    };
+    const prompt = jest.fn(async () => ['acrobatics', 'athletics', 'crafting', 'stealth']);
+    global.foundry.applications.api.DialogV2 = { prompt };
+
+    await planner._openImportedInitialSkillDialog();
+
+    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'athletics', 'crafting']);
+    expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
   });
 
   it('still shows skill increases for normal non-imported plans', async () => {
@@ -1113,8 +1291,6 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     const planner = new LevelPlanner(actor);
     planner.plan = createPlan('alchemist');
     planner.selectedLevel = 5;
-
-    expect(planner._shouldHideHistoricalSkillIncrease(5)).toBe(false);
 
     const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
     expect(context.showSkillIncrease).toBe(true);
@@ -1163,7 +1339,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     }));
   });
 
-  it('migrates legacy pulled-in plans to hide past skill increases', async () => {
+  it('migrates legacy pulled-in plans while keeping past skill increases optional to fill', async () => {
     getPlan.mockReturnValue({
       classSlug: 'alchemist',
       levels: {
@@ -1195,7 +1371,11 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     });
 
     const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
-    expect(context.showSkillIncrease).toBe(false);
+    expect(context.showSkillIncrease).toBe(true);
+
+    const level3 = planner._buildSidebarLevels(ClassRegistry.get('alchemist'), planner._getVariantOptions())
+      .find((entry) => entry.level === 3);
+    expect(level3.status).toBe(PLAN_STATUS.COMPLETE);
   });
 
   it('stops treating pulled-in data as bootstrap once future levels are planned', async () => {

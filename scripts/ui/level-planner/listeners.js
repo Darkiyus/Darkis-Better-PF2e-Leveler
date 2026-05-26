@@ -9,10 +9,12 @@ import {
   setLevelSkillIncrease,
   togglePlanApparition,
 } from '../../plan/plan-model.js';
-import { applyActorSkillRankRules, applyPlannedLevelSkillRankRules, computeBuildState } from '../../plan/build-state.js';
+import { applyActorSkillRankRules, applyPlannedLevelSkillRankRules, computeBuildState, computeSkillPickerState, getImportedInitialSkillTraining, isImportedHistoricalSkillLevel } from '../../plan/build-state.js';
+import { ClassRegistry } from '../../classes/registry.js';
 import { normalizeLoreSkillName, slugifyLoreSkillName } from '../character-wizard/skills-languages.js';
 import { getMaxSkillRank } from '../../utils/pf2e-api.js';
 import { isActiveSkillSlug, normalizeSkillSlug } from '../../utils/skill-slugs.js';
+import { getCreationData } from '../../creation/creation-store.js';
 
 export function activateLevelPlannerListeners(planner, html) {
   const el = html.querySelectorAll ? html : html[0];
@@ -226,6 +228,12 @@ export function activateLevelPlannerListeners(planner, html) {
         toRank: currentRank + 1,
       });
       planner._savePlanAndRender();
+    });
+  });
+
+  el.querySelectorAll('[data-action="openImportedInitialSkillDialog"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      planner._openImportedInitialSkillDialog?.();
     });
   });
 
@@ -452,6 +460,10 @@ function syncSameLevelSkillIncreaseFromFeatChoice(planner, value, { grantsSkillT
 }
 
 export function getSelectableSkillRank(planner, slug) {
+  if (isImportedHistoricalSkillLevel(planner.plan, planner.selectedLevel)) {
+    return getHistoricalSelectableSkillRank(planner, slug);
+  }
+
   const buildState = computeBuildState(planner.actor, planner.plan, planner.selectedLevel - 1);
   applyActorSkillRankRules(buildState.skills, planner.actor, planner.selectedLevel);
   applyPlannedLevelSkillRankRules(buildState.skills, planner.plan, planner.selectedLevel);
@@ -467,6 +479,35 @@ export function getSelectableSkillRank(planner, slug) {
   }
 
   return buildState.skills[slug] ?? buildState.lores?.[slug] ?? 0;
+}
+
+function getHistoricalSelectableSkillRank(planner, slug) {
+  const skill = normalizeSkillSlug(slug);
+  const classDef = ClassRegistry.get(planner.plan?.classSlug);
+  const skills = computeSkillPickerState(planner.actor, planner.plan, planner.selectedLevel, classDef, {
+    includeActorSkillRanks: false,
+    initialSkillTraining: getHistoricalInitialSkillTraining(planner),
+    includePlannedFeatRules: true,
+    includeCurrentLevelSkillIncrease: false,
+  });
+  const levelData = getLevelData(planner.plan, planner.selectedLevel);
+  for (const inc of levelData?.customSkillIncreases ?? []) {
+    const customSkill = normalizeSkillSlug(inc?.skill);
+    if (customSkill && Number.isFinite(inc?.toRank)) {
+      skills[customSkill] = Math.max(skills[customSkill] ?? 0, inc.toRank);
+    }
+  }
+  return skills[skill] ?? 0;
+}
+
+function getHistoricalInitialSkillTraining(planner) {
+  const skills = new Set(getImportedInitialSkillTraining(planner.plan));
+  const creationData = getCreationData(planner.actor);
+  for (const rawSkill of creationData?.skills ?? []) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (isActiveSkillSlug(skill)) skills.add(skill);
+  }
+  return [...skills].sort((a, b) => a.localeCompare(b));
 }
 
 export async function syncPlannedFeatChoiceSkillRules(feat, flag, value, {

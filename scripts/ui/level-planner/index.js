@@ -21,7 +21,7 @@ import { scheduleBringApplicationToFront } from '../shared/window-focus.js';
 import { loadFeats } from '../../feats/feat-cache.js';
 import { getCreationData } from '../../creation/creation-store.js';
 import { doesFeatMatchRequiredSecondLevelClassFeat, getRequiredSecondLevelClassFeatForActor } from '../../classes/class-archetype-requirements.js';
-import { buildAttributeContext, buildIntBonusLanguageContext, buildIntBonusSkillContext, buildIntelligenceBenefitContext, buildSkillContext, getAvailableLanguages, getPlannedLanguagesBeforeLevel, localizeLanguageLabel } from './context.js';
+import { buildAttributeContext, buildImportedInitialSkillContext, buildImportedInitialSkillSummary, buildIntBonusLanguageContext, buildIntBonusSkillContext, buildIntelligenceBenefitContext, buildSkillContext, getAvailableLanguages, getPlannedLanguagesBeforeLevel, localizeLanguageLabel } from './context.js';
 import { annotateFeat, buildABPContext, buildFeatGrantPreview, buildLoreSkillIncreaseEntry, buildLevelContext, buildSkillRetrainSources, extractFeat, getClassFeaturesForLevel } from './level-context.js';
 import { activateLevelPlannerListeners, syncPlannedFeatChoiceSkillRules, syncSameLevelSkillIncreaseFromFeatRules } from './listeners.js';
 import { buildSpellContext, buildCustomSpellEntryOptions, buildSpellSlotDisplay, detectNewSpellRank, findFeatLevel, getDedicationSelectionLimitsForPlanner, getActorSpellCounts, getFocusSpellsForLevel, getGrantedSpellsForLevel, getHighestRank, getSubclassSlug, ordinalRank, resolveSpellTradition, shouldExcludeOwnedSpellIdentityForPlanner } from './spells.js';
@@ -37,6 +37,7 @@ const INVESTIGATOR_SKILLFUL_LESSON_BASE_SKILLS = ['arcana', 'crafting', 'occulti
 const PLANNER_WINDOW_SELECTORS = ['#pf2e-leveler-planner', '.pf2e-leveler.level-planner'];
 
 installRetrainChoicePickerListeners();
+installImportedInitialSkillDialogListeners();
 
 function getActorSheetSelectors(actor) {
   const actorId = String(actor?.id ?? '').trim();
@@ -1039,24 +1040,20 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
   _getPlannerValidationOptions(options = {}) {
     return {
       ...options,
-      skipHistoricalSkillIncreaseLevels: this._getHistoricalSkillIncreaseLevelsToHide(),
+      skipHistoricalSkillIncreaseLevels: this._getHistoricalSkillIncreaseLevelsToSkipValidation(),
     };
   }
 
-  _getHistoricalSkillIncreaseLevelsToHide() {
+  _getHistoricalSkillIncreaseLevelsToSkipValidation() {
     const importedActorLevel = Number(this.plan?.importedFromActor?.actorLevel ?? 0);
-    const shouldHide = this.plan?.importedFromActor?.hideHistoricalSkillIncreases === true;
-    if (!shouldHide || importedActorLevel < MIN_PLAN_LEVEL) return new Set();
+    const hasUnknownHistoricalSkillIncreases = this.plan?.importedFromActor?.hideHistoricalSkillIncreases === true;
+    if (!hasUnknownHistoricalSkillIncreases || importedActorLevel < MIN_PLAN_LEVEL) return new Set();
 
     const hidden = new Set();
     for (let level = MIN_PLAN_LEVEL; level <= importedActorLevel; level++) {
       hidden.add(level);
     }
     return hidden;
-  }
-
-  _shouldHideHistoricalSkillIncrease(level) {
-    return this._getHistoricalSkillIncreaseLevelsToHide().has(level);
   }
 
   _buildAttributeContext(levelData, choices) {
@@ -1820,6 +1817,38 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _getSkillRetrainSources() {
     return buildSkillRetrainSources(this, this.selectedLevel);
+  }
+
+  async _openImportedInitialSkillDialog() {
+    const imported = this.plan?.importedFromActor;
+    if (!imported || imported.hideHistoricalSkillIncreases !== true) return;
+
+    const dialogClass = foundry?.applications?.api?.DialogV2 ?? globalThis.Dialog;
+    if (!dialogClass?.prompt) return;
+
+    const summary = buildImportedInitialSkillSummary(this);
+    const result = await dialogClass.prompt({
+      window: { title: 'Starting Skill Training' },
+      content: buildImportedInitialSkillDialogContent({
+        choices: buildImportedInitialSkillContext(this),
+        count: summary.importedInitialSkillCount,
+        limit: summary.importedInitialSkillLimit,
+      }),
+      ok: {
+        label: localizeSelectLabel(),
+        callback: (event, button, dialog) => {
+          const root = dialog?.element ?? dialog ?? button?.form ?? event?.currentTarget?.closest?.('.application');
+          return readImportedInitialSkillDialogSelection(root);
+        },
+      },
+    });
+
+    const initialSkills = normalizeImportedInitialSkillSelection(result, summary.importedInitialSkillLimit);
+    if (!initialSkills) return;
+
+    imported.initialSkills = initialSkills;
+    delete imported.initialSkillsOpen;
+    await this._savePlanAndRender();
   }
 
   async _promptRetrainSource({ title, name, sources, getLabel, getMeta = null, getIcon = null, getGroupLabel = null }) {
@@ -2899,6 +2928,69 @@ function buildRetrainChoiceContent({ name, searchPlaceholder, choices }) {
   `;
 }
 
+function buildImportedInitialSkillDialogContent({ choices, count, limit }) {
+  const rows = choices.map((choice) => {
+    const selected = choice.selected === true;
+    const disabled = choice.disabled === true;
+    return `
+      <label
+        class="imported-initial-skill-card rank-bg-${escapeHtml(choice.rankName)} ${selected ? 'selected' : ''} ${disabled ? 'disabled' : ''}"
+        data-imported-initial-skill-choice
+      >
+        <input
+          type="checkbox"
+          name="importedInitialSkills"
+          value="${escapeHtml(choice.slug)}"
+          data-imported-initial-skill-input
+          ${selected ? 'checked' : ''}
+          ${disabled ? 'disabled' : ''}
+        >
+        <span class="imported-initial-skill-card__check" aria-hidden="true">
+          <i class="fa-solid fa-check"></i>
+        </span>
+        <span class="imported-initial-skill-card__body">
+          <span class="imported-initial-skill-card__name">${escapeHtml(choice.label)}</span>
+          <span class="imported-initial-skill-card__rank rank-text-${escapeHtml(choice.rankName)}">${titleCase(choice.rankName)}</span>
+        </span>
+      </label>
+    `;
+  }).join('');
+
+  return `
+    <div class="pf2e-leveler imported-initial-skills-dialog" data-imported-initial-skills data-imported-initial-skill-limit="${escapeHtml(limit)}">
+      <div class="imported-initial-skills-dialog__header">
+        <div class="imported-initial-skills-dialog__title">
+          <i class="section-header__icon fa-solid fa-graduation-cap"></i>
+          Starting Skill Training
+        </div>
+        <div class="imported-initial-skills-dialog__count">
+          <span data-imported-initial-skill-count>${escapeHtml(count)}</span>${limit > 0 ? `/${escapeHtml(limit)}` : ''}
+        </div>
+      </div>
+      <div class="imported-initial-skills-dialog__grid">
+        ${rows}
+      </div>
+    </div>
+  `;
+}
+
+function readImportedInitialSkillDialogSelection(root) {
+  return Array.from(root?.querySelectorAll?.('input[name="importedInitialSkills"]:checked') ?? [])
+    .map((input) => input.value);
+}
+
+function normalizeImportedInitialSkillSelection(value, limit) {
+  if (!Array.isArray(value)) return null;
+  const selected = new Set();
+  for (const rawSkill of value) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (isActiveSkillSlug(skill)) selected.add(skill);
+  }
+  const result = [...selected].sort((a, b) => a.localeCompare(b));
+  const max = Number(limit);
+  return max > 0 ? result.slice(0, max) : result;
+}
+
 function buildRetrainChoiceGroups(choices) {
   const groups = [];
   const indexes = new Map();
@@ -2929,6 +3021,36 @@ function installRetrainChoicePickerListeners() {
     if (!row) return;
     selectRetrainChoiceRow(row);
   });
+}
+
+function installImportedInitialSkillDialogListeners() {
+  const doc = globalThis.document;
+  if (!doc || globalThis.__pf2eLevelerImportedInitialSkillListeners) return;
+  globalThis.__pf2eLevelerImportedInitialSkillListeners = true;
+
+  doc.addEventListener('change', (event) => {
+    const input = event.target?.closest?.('[data-imported-initial-skill-input]');
+    if (!input) return;
+    syncImportedInitialSkillDialog(input.closest('[data-imported-initial-skills]'));
+  });
+}
+
+function syncImportedInitialSkillDialog(root) {
+  if (!root) return;
+  const limit = Number(root.dataset.importedInitialSkillLimit ?? 0);
+  const inputs = Array.from(root.querySelectorAll('[data-imported-initial-skill-input]'));
+  const checkedCount = inputs.filter((input) => input.checked).length;
+  const limitReached = limit > 0 && checkedCount >= limit;
+
+  for (const input of inputs) {
+    if (!input.checked) input.disabled = limitReached;
+    const choice = input.closest('[data-imported-initial-skill-choice]');
+    choice?.classList.toggle('selected', input.checked);
+    choice?.classList.toggle('disabled', input.disabled);
+  }
+
+  const count = root.querySelector('[data-imported-initial-skill-count]');
+  if (count) count.textContent = String(checkedCount);
 }
 
 function filterRetrainChoicePicker(input) {

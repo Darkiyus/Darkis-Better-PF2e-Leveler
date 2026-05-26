@@ -1,10 +1,10 @@
 import { ATTRIBUTES, MIN_PLAN_LEVEL, PROFICIENCY_RANK_NAMES } from '../../constants.js';
 import { getGradualBoostGroupLevels } from '../../classes/progression.js';
-import { computeBuildState, computeSkillPickerState } from '../../plan/build-state.js';
+import { computeBuildState, computeSkillPickerState, getImportedInitialSkillLimit, getImportedInitialSkillTraining, isImportedHistoricalSkillLevel } from '../../plan/build-state.js';
 import { getMaxSkillRank } from '../../utils/pf2e-api.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { annotateGuidanceBySlug, filterDisallowedForCurrentUser } from '../../access/content-guidance.js';
-import { getLanguageRarityMap, getLanguageMap, humanizeSkillLikeLabel } from '../character-wizard/skills-languages.js';
+import { getLanguageRarityMap, getLanguageMap, humanizeSkillLikeLabel, slugifyLoreSkillName } from '../character-wizard/skills-languages.js';
 import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../../utils/skill-slugs.js';
 import { getCreationData } from '../../creation/creation-store.js';
 
@@ -385,15 +385,27 @@ export function localizeLanguageLabel(label) {
 export function buildSkillContext(planner, levelData, level) {
   const maxRank = getMaxSkillRank(level);
   const classDef = ClassRegistry.get(planner.plan?.classSlug);
-  const stateBeforeLevel = computeBuildState(planner.actor, planner.plan, level - 1);
-  const currentSkills = computeSkillPickerState(planner.actor, planner.plan, level, classDef, {
+  const useHistoricalSkillState = isImportedHistoricalSkillLevel(planner.plan, level);
+  const historicalInitialSkills = getHistoricalInitialSkillTraining(planner);
+  const skillPickerOptions = {
     includePlannedFeatRules: true,
     includeCurrentLevelSkillIncrease: false,
-  });
-  const baseSkills = computeSkillPickerState(planner.actor, planner.plan, level, classDef, {
+    ...(useHistoricalSkillState
+      ? { includeActorSkillRanks: false, initialSkillTraining: historicalInitialSkills }
+      : {}),
+  };
+  const baseSkillPickerOptions = {
     includePlannedFeatRules: false,
     includeCurrentLevelSkillIncrease: false,
-  });
+    ...(useHistoricalSkillState
+      ? { includeActorSkillRanks: false, initialSkillTraining: historicalInitialSkills }
+      : {}),
+  };
+  const stateBeforeLevel = useHistoricalSkillState
+    ? { lores: buildHistoricalLoreRanks(planner, level - 1) }
+    : computeBuildState(planner.actor, planner.plan, level - 1);
+  const currentSkills = computeSkillPickerState(planner.actor, planner.plan, level, classDef, skillPickerOptions);
+  const baseSkills = computeSkillPickerState(planner.actor, planner.plan, level, classDef, baseSkillPickerOptions);
   const currentIncrease = levelData.skillIncreases?.[0];
 
   const skills = Object.entries(currentSkills).map(([slug, rawRank]) => {
@@ -455,6 +467,77 @@ export function buildSkillContext(planner, levelData, level) {
     ...entry,
     disabled: entry.disabled || entry.guidanceSelectionBlocked === true,
   }));
+}
+
+export function shouldShowImportedInitialSkillButton(planner, level) {
+  return Number(level) === MIN_PLAN_LEVEL && isImportedHistoricalSkillLevel(planner.plan, level);
+}
+
+export function buildImportedInitialSkillContext(planner) {
+  const selected = new Set(getHistoricalInitialSkillTraining(planner));
+  const limit = getImportedInitialSkillLimit(planner.actor, ClassRegistry.get(planner.plan?.classSlug));
+  const count = selected.size;
+  const limitReached = limit > 0 && count >= limit;
+  return getActiveSkillSlugs().map((slug) => ({
+    slug,
+    label: localizeSkillSlug(slug),
+    selected: selected.has(slug),
+    disabled: !selected.has(slug) && limitReached,
+    rankName: PROFICIENCY_RANK_NAMES[1],
+  }));
+}
+
+export function buildImportedInitialSkillSummary(planner) {
+  const limit = getImportedInitialSkillLimit(planner.actor, ClassRegistry.get(planner.plan?.classSlug));
+  const count = getHistoricalInitialSkillTraining(planner).length;
+  return {
+    importedInitialSkillCount: count,
+    importedInitialSkillLimit: limit,
+    importedInitialSkillLimitReached: limit > 0 && count >= limit,
+  };
+}
+
+function getHistoricalInitialSkillTraining(planner) {
+  const skills = new Set(getImportedInitialSkillTraining(planner.plan));
+  const creationData = getCreationData(planner.actor);
+  for (const rawSkill of creationData?.skills ?? []) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (isActiveSkillSlug(skill)) skills.add(skill);
+  }
+  return [...skills].sort((a, b) => a.localeCompare(b));
+}
+
+function buildHistoricalLoreRanks(planner, upToLevel) {
+  const lores = {};
+  for (const slug of collectActorLoreSlugs(planner.actor)) {
+    lores[slug] = 0;
+  }
+
+  for (let level = 1; level <= upToLevel; level++) {
+    const levelData = planner.plan?.levels?.[level];
+    if (!levelData) continue;
+
+    for (const skill of levelData.intBonusSkills ?? []) {
+      const slug = String(skill ?? '').trim().toLowerCase();
+      if (!slug || isActiveSkillSlug(slug)) continue;
+      lores[slug] = Math.max(lores[slug] ?? 0, 1);
+    }
+
+    for (const inc of [...(levelData.skillIncreases ?? []), ...(levelData.customSkillIncreases ?? [])]) {
+      const slug = String(inc?.skill ?? '').trim().toLowerCase();
+      const rank = Number(inc?.toRank ?? 0);
+      if (!slug || isActiveSkillSlug(slug) || !Number.isFinite(rank)) continue;
+      lores[slug] = Math.max(lores[slug] ?? 0, rank);
+    }
+  }
+
+  return lores;
+}
+
+function collectActorLoreSlugs(actor) {
+  return (actor?.items?.filter?.((item) => item?.type === 'lore') ?? [])
+    .map((item) => slugifyLoreSkillName(item?.slug ?? item?.name ?? ''))
+    .filter(Boolean);
 }
 
 function getRankBeforeCurrentSkillIncrease(slug, rank, currentIncrease) {

@@ -819,10 +819,14 @@ export function computeSkillsWithoutPlannedFeatRules(actor, plan, atLevel, class
 export function computeSkillPickerState(actor, plan, atLevel, classDef, options = {}) {
   const includePlannedFeatRules = options.includePlannedFeatRules !== false;
   const includeCurrentLevelSkillIncrease = options.includeCurrentLevelSkillIncrease === true;
+  const includeActorSkillRanks = options.includeActorSkillRanks !== false;
+  const initialSkillTraining = Array.isArray(options.initialSkillTraining) ? options.initialSkillTraining : [];
   const trackedClassDefs = Array.isArray(classDef) ? classDef.filter(Boolean) : [classDef].filter(Boolean);
   const skills = {};
   for (const skill of getActiveSkillSlugs()) {
-    skills[skill] = actor?.system?.skills?.[skill]?.rank ?? PROFICIENCY_RANKS.UNTRAINED;
+    skills[skill] = includeActorSkillRanks
+      ? (actor?.system?.skills?.[skill]?.rank ?? PROFICIENCY_RANKS.UNTRAINED)
+      : PROFICIENCY_RANKS.UNTRAINED;
   }
 
   for (const trackedClassDef of trackedClassDefs) {
@@ -836,8 +840,11 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
     }
   }
 
-  applyActorSkillRankRules(skills, actor, atLevel);
-  applyActorDeitySkill(skills, actor);
+  applyInitialSkillTraining(skills, initialSkillTraining);
+  if (includeActorSkillRanks) {
+    applyActorSkillRankRules(skills, actor, atLevel);
+    applyActorDeitySkill(skills, actor);
+  }
   applyInitialSkillRetrains(skills, plan, atLevel);
 
   for (let level = 1; level <= atLevel; level++) {
@@ -865,6 +872,51 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
   }
 
   return skills;
+}
+
+export function isImportedHistoricalSkillLevel(plan, level) {
+  const actorLevel = Number(plan?.importedFromActor?.actorLevel ?? 0);
+  const targetLevel = Number(level);
+  return plan?.importedFromActor?.hideHistoricalSkillIncreases === true
+    && Number.isFinite(actorLevel)
+    && Number.isFinite(targetLevel)
+    && targetLevel >= 1
+    && targetLevel <= actorLevel;
+}
+
+export function getImportedInitialSkillTraining(plan) {
+  const skills = new Set();
+  for (const rawSkill of plan?.importedFromActor?.initialSkills ?? []) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (isActiveSkillSlug(skill)) skills.add(skill);
+  }
+  return [...skills].sort((a, b) => a.localeCompare(b));
+}
+
+export function getImportedInitialSkillLimit(actor, classDef = null) {
+  const fixed = new Set([
+    ...normalizeInitialSkillList(classDef?.trainedSkills?.fixed),
+    ...normalizeInitialSkillList(actor?.class?.system?.trainedSkills?.value),
+  ]);
+  const additional = Number(actor?.class?.system?.trainedSkills?.additional ?? classDef?.trainedSkills?.additional ?? 0);
+  return fixed.size + (Number.isFinite(additional) && additional > 0 ? additional : 0);
+}
+
+function normalizeInitialSkillList(rawSkills) {
+  const skills = [];
+  for (const rawSkill of Array.isArray(rawSkills) ? rawSkills : []) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (isActiveSkillSlug(skill)) skills.push(skill);
+  }
+  return skills;
+}
+
+function applyInitialSkillTraining(skills, initialSkillTraining) {
+  for (const rawSkill of initialSkillTraining) {
+    const skill = normalizeSkillSlug(rawSkill);
+    if (!isActiveSkillSlug(skill)) continue;
+    skills[skill] = Math.max(skills[skill] ?? PROFICIENCY_RANKS.UNTRAINED, PROFICIENCY_RANKS.TRAINED);
+  }
 }
 
 function applyInitialSkillRetrains(skills, plan, atLevel) {

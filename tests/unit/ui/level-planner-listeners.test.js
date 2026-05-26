@@ -71,6 +71,63 @@ describe('Level planner skill increase listeners', () => {
     expect(planner._savePlanAndRender).toHaveBeenCalled();
   });
 
+  it('uses manual historical skill state instead of final actor ranks when selecting imported past skill increases', () => {
+    document.body.innerHTML = '<button type="button" data-action="selectSkillIncrease" data-skill="intimidation"></button>';
+
+    const actor = createMockActor({
+      system: {
+        details: {
+          level: { value: 8 },
+          xp: { value: 0, max: 1000 },
+        },
+        skills: {
+          ...createMockActor().system.skills,
+          intimidation: { rank: 2, value: 2 },
+        },
+      },
+    });
+    actor.items = [];
+
+    const planner = {
+      actor,
+      plan: {
+        classSlug: 'alchemist',
+        importedFromActor: {
+          actorLevel: 8,
+          hideHistoricalSkillIncreases: true,
+          initialSkills: ['acrobatics'],
+        },
+        levels: {
+          3: { skillIncreases: [{ skill: 'acrobatics', toRank: 2 }] },
+          7: { skillIncreases: [] },
+        },
+      },
+      selectedLevel: 7,
+      _savePlanAndRender: jest.fn(),
+    };
+
+    activateLevelPlannerListeners(planner, document.body);
+    document.querySelector('[data-action="selectSkillIncrease"]').click();
+
+    expect(planner.plan.levels[7].skillIncreases).toEqual([
+      { skill: 'intimidation', toRank: 1 },
+    ]);
+    expect(planner._savePlanAndRender).toHaveBeenCalled();
+  });
+
+  it('opens the imported starting skill dialog from the level 2 header', () => {
+    document.body.innerHTML = '<button type="button" data-action="openImportedInitialSkillDialog"></button>';
+
+    const planner = {
+      _openImportedInitialSkillDialog: jest.fn(),
+    };
+
+    activateLevelPlannerListeners(planner, document.body);
+    document.querySelector('[data-action="openImportedInitialSkillDialog"]').click();
+
+    expect(planner._openImportedInitialSkillDialog).toHaveBeenCalled();
+  });
+
   it('keeps an already-selected applied skill increase when clicked again', () => {
     document.body.innerHTML = '<button type="button" data-action="selectSkillIncrease" data-skill="stealth"></button>';
 

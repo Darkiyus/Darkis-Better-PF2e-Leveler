@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.19
+
+### Level Planner
+
+- **Imported higher-level plans now keep historical skill increases fillable** - Skill increase sections for already-reached levels are shown again and read from reconstructed history instead of the actor's final ranks; a level 2-only `Starting Skills` dialog lets GMs and players backfill the character's level 1 trained skill choices that PF2e actor data cannot identify, capped to the class's starting skill allowance, with responsive selectable skill cards that stay within the Foundry prompt. Blank unknown historical slots remain optional without blocking validation
+
 ## 3.4.18
 
 ### Level Planner

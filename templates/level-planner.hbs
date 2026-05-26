@@ -57,6 +57,12 @@
             <i class="fa-solid fa-play"></i>
             {{localize "PF2E_LEVELER.UI.APPLY"}}
           </button>
+          {{#if showImportedInitialSkillButton}}
+          <button type="button" class="sidebar-action-btn planner-content__action" data-action="openImportedInitialSkillDialog" data-tooltip="Starting Skill Training">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Starting Skills {{importedInitialSkillCount}}{{#if importedInitialSkillLimit}}/{{importedInitialSkillLimit}}{{/if}}
+          </button>
+          {{/if}}
           <button type="button" class="sidebar-action-btn planner-content__action" data-action="applySelectedRetraining" data-tooltip="Apply Downtime Retraining" aria-disabled="{{#if hasRetraining}}false{{else}}true{{/if}}" {{#unless hasRetraining}}disabled{{/unless}}>
             <i class="fa-solid fa-rotate"></i>
             Apply Downtime
