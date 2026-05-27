@@ -8,7 +8,7 @@ import {
   getFeatGrantCompletion,
   getFeatGrantSelections,
 } from '../../plan/feat-grants.js';
-import { computeBuildState, getImportedInitialSkillTraining } from '../../plan/build-state.js';
+import { computeBuildState, getAutomaticInitialSkillTraining, getImportedInitialSkillTraining } from '../../plan/build-state.js';
 import { isCantripExpansionFeat } from '../../plan/spellbook-feats.js';
 import { loadCompendium, loadCompendiumCategory, loadDeities, loadTaggedClassFeatures } from '../character-wizard/loaders.js';
 import { extractGrantedTrainedSkills, normalizePf2eCompendiumUuid, parseChoiceSets } from '../character-wizard/choice-sets.js';
@@ -201,9 +201,14 @@ function buildInitialSkillRetrainSources(planner) {
   const creationData = getCreationData(planner.actor);
   const creationSkills = Array.isArray(creationData?.skills) ? creationData.skills : [];
   const importedInitialSkills = getImportedInitialSkillTraining(planner.plan);
+  const classDef = ClassRegistry.get(planner.plan?.classSlug);
+  const automaticInitialSkills = getAutomaticInitialSkillTraining(planner.actor, planner.plan, classDef);
   const sources = [];
   const seen = new Set();
 
+  for (const rawSkill of automaticInitialSkills) {
+    addInitialSkillRetrainSource(sources, seen, planner, rawSkill, { allowHigherRanks: true, forceEligible: true });
+  }
   for (const rawSkill of creationSkills) {
     addInitialSkillRetrainSource(sources, seen, planner, rawSkill, { allowHigherRanks: true });
   }

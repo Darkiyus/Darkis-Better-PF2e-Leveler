@@ -1,8 +1,9 @@
-import { getClassFeaturesForLevel } from '../../../scripts/ui/level-planner/level-context.js';
+import { buildSkillRetrainSources, getClassFeaturesForLevel } from '../../../scripts/ui/level-planner/level-context.js';
 import { buildSkillContext } from '../../../scripts/ui/level-planner/context.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { ALCHEMIST } from '../../../scripts/classes/alchemist.js';
 import { ROGUE } from '../../../scripts/classes/rogue.js';
+import { createPlan } from '../../../scripts/plan/plan-model.js';
 
 describe('level planner class feature context', () => {
   beforeAll(() => {
@@ -83,5 +84,52 @@ describe('level planner class feature context', () => {
       global.CONFIG = originalConfig;
       global.game.system.id = originalSystemId;
     }
+  });
+
+  test('includes automatic initial granted skills as retrain sources', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'rogue';
+    actor.class.system.trainedSkills = { value: ['stealth'], additional: 7 };
+    actor.background = {
+      type: 'background',
+      name: 'Field Medic',
+      system: {
+        trainedSkills: { value: ['medicine'] },
+      },
+    };
+    actor.items = [
+      actor.background,
+      {
+        type: 'feat',
+        name: 'Thief Racket',
+        system: {
+          traits: { otherTags: ['rogue-racket'] },
+          rules: [
+            {
+              key: 'ActiveEffectLike',
+              path: 'system.skills.thievery.rank',
+              value: 1,
+            },
+          ],
+        },
+      },
+    ];
+    const plan = {
+      ...createPlan('rogue'),
+      importedFromActor: {
+        actorLevel: 8,
+        hideHistoricalSkillIncreases: true,
+        initialSkills: ['acrobatics'],
+      },
+    };
+
+    const sources = buildSkillRetrainSources({ actor, plan }, 2);
+
+    expect(sources.map((source) => source.skill)).toEqual(expect.arrayContaining([
+      'acrobatics',
+      'medicine',
+      'stealth',
+      'thievery',
+    ]));
   });
 });

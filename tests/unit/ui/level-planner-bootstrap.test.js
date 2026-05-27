@@ -1169,7 +1169,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       importedFromActor: {
         actorLevel: 8,
         hideHistoricalSkillIncreases: true,
-        initialSkills: ['acrobatics', 'athletics', 'stealth', 'crafting'],
+        initialSkills: ['acrobatics', 'athletics', 'stealth'],
       },
     });
 
@@ -1193,8 +1193,8 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     expect(context.showImportedInitialSkillButton).toBe(true);
     expect(context.showImportedInitialSkills).toBeUndefined();
     expect(context.importedInitialSkills).toBeUndefined();
-    expect(context.importedInitialSkillCount).toBe(4);
-    expect(context.importedInitialSkillLimit).toBe(4);
+    expect(context.importedInitialSkillCount).toBe(3);
+    expect(context.importedInitialSkillLimit).toBe(3);
   });
 
   it('opens an imported starting skill dialog and stores selected training', async () => {
@@ -1222,7 +1222,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     const prompt = jest.fn(async (config) => {
       const container = document.createElement('div');
       container.innerHTML = config.content;
-      container.querySelector('input[name="importedInitialSkills"][value="crafting"]').checked = true;
+      container.querySelector('input[name="importedInitialSkills"][value="athletics"]').checked = true;
       container.querySelector('input[name="importedInitialSkills"][value="stealth"]').checked = true;
       return config.ok.callback(null, null, { element: container });
     });
@@ -1234,12 +1234,16 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     const content = prompt.mock.calls[0][0].content;
     expect(content).toContain('Starting Skill Training');
     expect(content).toContain('Acrobatics');
+    expect(content).toContain('Crafting');
+    expect(content).toContain('data-imported-initial-skill-automatic="true"');
+    expect(content).toContain('data-imported-initial-skill-automatic-input="true"');
+    expect(content).toContain('Automatic');
     expect(content).toContain('data-imported-initial-skills');
     expect(content).toContain('pf2e-leveler imported-initial-skills-dialog');
     expect(content).toContain('imported-initial-skill-card');
     expect(content).toContain('imported-initial-skill-card__check');
     expect(content).not.toContain('class="skill-btn');
-    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'crafting', 'stealth']);
+    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'athletics', 'stealth']);
     expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
   });
 
@@ -1248,6 +1252,8 @@ describe('LevelPlanner bootstrap from existing actor', () => {
 
     expect(css).toContain('width: min(100%, 560px);');
     expect(css).toContain('max-width: 100%;');
+    expect(css).toContain('position: relative;');
+    expect(css).toContain('imported-initial-skill-card--automatic');
     expect(css).toContain('grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));');
     expect(css).not.toContain('min-width: min(560px, calc(100vw - 64px));');
     expect(css).not.toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
@@ -1280,7 +1286,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
 
     await planner._openImportedInitialSkillDialog();
 
-    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'athletics', 'crafting']);
+    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'athletics']);
     expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
   });
 

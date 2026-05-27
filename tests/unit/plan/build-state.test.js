@@ -11,7 +11,7 @@ import { ROGUE } from '../../../scripts/classes/rogue.js';
 import { SORCERER } from '../../../scripts/classes/sorcerer.js';
 import { WIZARD } from '../../../scripts/classes/wizard.js';
 import { MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, PROFICIENCY_RANKS } from '../../../scripts/constants.js';
-import { computeBuildState, computePlanArchetypeDedicationProgress, syncPlanArchetypeDedicationProgress } from '../../../scripts/plan/build-state.js';
+import { computeBuildState, computePlanArchetypeDedicationProgress, computeSkillPickerState, getImportedInitialSkillLimit, syncPlanArchetypeDedicationProgress } from '../../../scripts/plan/build-state.js';
 import { createPlan, addLevelFeatRetrain, addLevelSkillRetrain, setLevelBoosts, setLevelFeat, setLevelSkillIncrease, toggleLevelIntBonusSkill } from '../../../scripts/plan/plan-model.js';
 
 beforeAll(() => {
@@ -469,6 +469,89 @@ describe('computeBuildState', () => {
 
     expect(afterRetrain.skills.athletics).toBe(PROFICIENCY_RANKS.TRAINED);
     expect(afterRetrain.skills.occultism).toBe(PROFICIENCY_RANKS.TRAINED);
+  });
+
+  test('imported starting skill allowance uses flexible class picks plus level 1 Intelligence only', () => {
+    mockActor.class.slug = 'rogue';
+    mockActor.class.system.trainedSkills = { value: ['stealth'], additional: 7 };
+    mockActor.system.abilities.int.mod = 1;
+    mockActor.system.build.attributes.boosts[5] = ['int'];
+
+    expect(getImportedInitialSkillLimit(mockActor, ROGUE)).toBe(7);
+
+    mockActor.system.abilities.int.mod = 2;
+    mockActor.system.build.attributes.boosts[1] = ['int'];
+
+    expect(getImportedInitialSkillLimit(mockActor, ROGUE)).toBe(8);
+  });
+
+  test('historical skill state applies automatic initial background and subclass skill grants', () => {
+    mockActor.class.slug = 'rogue';
+    mockActor.class.system.trainedSkills = { value: ['stealth'], additional: 7 };
+    mockActor.background = {
+      type: 'background',
+      name: 'Field Medic',
+      system: {
+        trainedSkills: { value: ['medicine'] },
+      },
+    };
+    mockActor.items = [
+      mockActor.background,
+      {
+        type: 'feat',
+        name: 'Thief Racket',
+        system: {
+          traits: { otherTags: ['rogue-racket'] },
+          rules: [
+            {
+              key: 'ActiveEffectLike',
+              path: 'system.skills.thievery.rank',
+              value: 1,
+            },
+          ],
+        },
+      },
+    ];
+    plan = createPlan('rogue');
+
+    const skills = computeSkillPickerState(mockActor, plan, 2, ROGUE, {
+      includeActorSkillRanks: false,
+      includeCurrentLevelSkillIncrease: false,
+    });
+
+    expect(skills.stealth).toBe(PROFICIENCY_RANKS.TRAINED);
+    expect(skills.medicine).toBe(PROFICIENCY_RANKS.TRAINED);
+    expect(skills.thievery).toBe(PROFICIENCY_RANKS.TRAINED);
+    expect(skills.performance).toBe(PROFICIENCY_RANKS.UNTRAINED);
+  });
+
+  test('historical skill state applies investigator methodology skill grants', () => {
+    mockActor.class.slug = 'investigator';
+    mockActor.items = [
+      {
+        type: 'feat',
+        name: 'Forensic Medicine',
+        system: {
+          traits: { otherTags: ['investigator-methodology'] },
+          rules: [
+            {
+              key: 'ActiveEffectLike',
+              path: 'system.skills.medicine.rank',
+              value: 1,
+            },
+          ],
+        },
+      },
+    ];
+    plan = createPlan('investigator');
+
+    const skills = computeSkillPickerState(mockActor, plan, 2, INVESTIGATOR, {
+      includeActorSkillRanks: false,
+      includeCurrentLevelSkillIncrease: false,
+    });
+
+    expect(skills.medicine).toBe(PROFICIENCY_RANKS.TRAINED);
+    expect(skills.thievery).toBe(PROFICIENCY_RANKS.UNTRAINED);
   });
 
   test('computes class features for level', () => {

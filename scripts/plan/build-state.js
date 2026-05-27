@@ -1,11 +1,11 @@
-import { ANCESTRY_TRAIT_ALIASES, ATTRIBUTES, INITIAL_SKILL_RETRAIN_SOURCE_TYPE, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, MAX_LEVEL, PROFICIENCY_RANKS } from '../constants.js';
+import { ANCESTRY_TRAIT_ALIASES, ATTRIBUTES, INITIAL_SKILL_RETRAIN_SOURCE_TYPE, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, MAX_LEVEL, PROFICIENCY_RANKS, SUBCLASS_TAGS } from '../constants.js';
 import { ClassRegistry } from '../classes/registry.js';
 import { SUBCLASS_SPELLS } from '../data/subclass-spells.js';
 import { getAllPlannedFeats, getAllPlannedBoosts, getAllPlannedSpells } from './plan-model.js';
 import { isDualClassEnabled, slugify } from '../utils/pf2e-api.js';
 import { getDedicationAliasesFromDescription } from '../utils/feat-aliases.js';
 import { evaluatePredicate } from '../utils/predicate.js';
-import { getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../utils/skill-slugs.js';
+import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug } from '../utils/skill-slugs.js';
 import { getFeatLoreRules, getFeatSkillRules, PLAN_FEAT_KEYS } from '../utils/feat-skill-rules.js';
 import { isCompendiumUuidInCategory } from '../system-support/profiles.js';
 import { inferSf2eSpellcastingTraditionFromItem, normalizeSpellTradition } from '../utils/sf2e-spellcasting.js';
@@ -829,17 +829,7 @@ export function computeSkillPickerState(actor, plan, atLevel, classDef, options 
       : PROFICIENCY_RANKS.UNTRAINED;
   }
 
-  for (const trackedClassDef of trackedClassDefs) {
-    if (!trackedClassDef?.trainedSkills?.fixed) continue;
-    for (const rawSkill of trackedClassDef.trainedSkills.fixed) {
-      const skill = normalizeSkillSlug(rawSkill);
-      if (!isActiveSkillSlug(skill)) continue;
-      if (skills[skill] < PROFICIENCY_RANKS.TRAINED) {
-        skills[skill] = PROFICIENCY_RANKS.TRAINED;
-      }
-    }
-  }
-
+  applyInitialSkillTraining(skills, getAutomaticInitialSkillTraining(actor, plan, trackedClassDefs));
   applyInitialSkillTraining(skills, initialSkillTraining);
   if (includeActorSkillRanks) {
     applyActorSkillRankRules(skills, actor, atLevel);
@@ -894,21 +884,185 @@ export function getImportedInitialSkillTraining(plan) {
 }
 
 export function getImportedInitialSkillLimit(actor, classDef = null) {
-  const fixed = new Set([
-    ...normalizeInitialSkillList(classDef?.trainedSkills?.fixed),
-    ...normalizeInitialSkillList(actor?.class?.system?.trainedSkills?.value),
-  ]);
   const additional = Number(actor?.class?.system?.trainedSkills?.additional ?? classDef?.trainedSkills?.additional ?? 0);
-  return fixed.size + (Number.isFinite(additional) && additional > 0 ? additional : 0);
+  const flexibleClassPicks = Number.isFinite(additional) && additional > 0 ? additional : 0;
+  return flexibleClassPicks + Math.max(0, getLevelOneIntModifier(actor));
 }
 
-function normalizeInitialSkillList(rawSkills) {
-  const skills = [];
+export function getAutomaticInitialSkillTraining(actor, plan = null, classDef = null) {
+  const skills = new Set();
+  const classDefs = Array.isArray(classDef) ? classDef.filter(Boolean) : [classDef].filter(Boolean);
+  const classSlugs = getTrackedClassSlugs(actor, plan, classDefs);
+
+  addInitialSkillList(skills, actor?.class?.system?.trainedSkills?.value);
+  for (const entry of classDefs) {
+    addInitialSkillList(skills, entry?.trainedSkills?.fixed);
+  }
+
+  for (const item of getAutomaticInitialSkillItems(actor, classSlugs)) {
+    addInitialSkillList(skills, item?.system?.trainedSkills?.value);
+    addInitialSkillRuleTraining(skills, item);
+    addExplicitDescriptionTraining(skills, item?.system?.description?.value ?? item?.description ?? '');
+  }
+
+  return [...skills].sort((a, b) => a.localeCompare(b));
+}
+
+function getTrackedClassSlugs(actor, plan, classDefs) {
+  const slugs = new Set([
+    actor?.class?.slug,
+    actor?.class?.system?.slug,
+    plan?.classSlug,
+    plan?.dualClassSlug,
+    ...classDefs.map((entry) => entry?.slug),
+  ]);
+  return [...slugs]
+    .map((slug) => String(slug ?? '').trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function getAutomaticInitialSkillItems(actor, classSlugs) {
+  const items = [];
+  const seen = new Set();
+  const addItem = (item) => {
+    if (!item || typeof item !== 'object') return;
+    const key = item.uuid ?? item.id ?? item._id ?? `${item.type ?? ''}:${item.slug ?? item.name ?? items.length}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    items.push(item);
+  };
+
+  addItem(actor?.background);
+  for (const item of getOwnedItems(actor)) {
+    if (isBackgroundItem(item) || isInitialSubclassItem(item, classSlugs)) addItem(item);
+  }
+
+  return items;
+}
+
+function isBackgroundItem(item) {
+  return String(item?.type ?? item?.itemType ?? '').trim().toLowerCase() === 'background';
+}
+
+function isInitialSubclassItem(item, classSlugs) {
+  return classSlugs.some((classSlug) => itemHasTagFamily(item, SUBCLASS_TAGS[classSlug]));
+}
+
+function itemHasTagFamily(item, expected) {
+  const tag = String(expected ?? '').trim().toLowerCase();
+  if (!tag) return false;
+  return getItemOtherTags(item).some((candidate) => candidate === tag || candidate.startsWith(`${tag}-`));
+}
+
+function getItemOtherTags(item) {
+  return [...(item?.otherTags ?? []), ...(item?.system?.traits?.otherTags ?? [])]
+    .map((tag) => String(tag ?? '').trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function addInitialSkillList(target, rawSkills) {
   for (const rawSkill of Array.isArray(rawSkills) ? rawSkills : []) {
     const skill = normalizeSkillSlug(rawSkill);
-    if (isActiveSkillSlug(skill)) skills.push(skill);
+    if (isActiveSkillSlug(skill)) target.add(skill);
   }
-  return skills;
+}
+
+function addInitialSkillRuleTraining(target, item) {
+  for (const rule of item?.system?.rules ?? []) {
+    if (rule?.key !== 'ActiveEffectLike') continue;
+    if (!matchesRuleAtLevel(rule, 1)) continue;
+
+    const path = resolveInjectedValue(rule.path, item);
+    const match = String(path ?? '').match(/^system\.skills\.([^.]+)\.rank$/);
+    if (!match) continue;
+
+    const skill = normalizeSkillSlug(match[1]);
+    if (!isActiveSkillSlug(skill)) continue;
+
+    const value = evaluateRuleNumericValue(rule.value, 1, item);
+    if (Number.isFinite(value) && value >= PROFICIENCY_RANKS.TRAINED) target.add(skill);
+  }
+}
+
+function addExplicitDescriptionTraining(target, html) {
+  const description = String(html ?? '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (!description) return;
+
+  const clauses = description.match(/\b(?:you\s+)?(?:become|are|gain)\s+(?:the\s+)?trained(?:\s+proficiency\s+rank)?\s+in\s+([^.!?]+)/gu) ?? [];
+  for (const clause of clauses) {
+    if (/\b(?:your\s+choice\s+of|choice\s+of|skill\s+of\s+your\s+choice|chosen\s+skill|skill\s+you\s+chose)\b/u.test(clause)) continue;
+    for (const skill of getActiveSkillSlugs()) {
+      if (skillNameAppearsInClause(skill, clause)) target.add(skill);
+    }
+  }
+}
+
+function skillNameAppearsInClause(skill, clause) {
+  const candidates = new Set([
+    skill,
+    skill.replace(/-/gu, ' '),
+  ]);
+  const configEntry = getActiveSkillConfigEntry(skill);
+  const label = typeof configEntry === 'string' ? configEntry : configEntry?.label;
+  if (label) candidates.add(String(label).toLowerCase());
+
+  return [...candidates].some((candidate) => {
+    const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`, 'u').test(clause);
+  });
+}
+
+function getLevelOneIntModifier(actor) {
+  let intMod = getActorAbilityModifier(actor, 'int');
+  const boosts = actor?.system?.build?.attributes?.boosts ?? {};
+
+  for (const [levelKey, boostList] of Object.entries(boosts)) {
+    const level = Number(levelKey);
+    if (!Number.isInteger(level) || level <= 1) continue;
+    for (const boost of normalizeAbilityBoostList(boostList)) {
+      if (boost !== 'int') continue;
+      intMod = reverseApplyAbilityBoost(intMod);
+    }
+  }
+
+  return Math.trunc(intMod);
+}
+
+function normalizeAbilityBoostList(value) {
+  const entries = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object'
+      ? Object.entries(value)
+        .filter(([, selected]) => selected === true || selected === 1 || selected === 'true' || selected === 'selected')
+        .map(([key]) => key)
+      : [value];
+
+  return entries
+    .map((entry) => normalizeAbilityBoostKey(entry))
+    .filter((entry) => ATTRIBUTES.includes(entry));
+}
+
+function normalizeAbilityBoostKey(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  const aliases = {
+    strength: 'str',
+    dexterity: 'dex',
+    constitution: 'con',
+    intelligence: 'int',
+    wisdom: 'wis',
+    charisma: 'cha',
+  };
+  return aliases[normalized] ?? normalized;
+}
+
+function reverseApplyAbilityBoost(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return numeric > 4 ? numeric - 0.5 : numeric - 1;
 }
 
 function applyInitialSkillTraining(skills, initialSkillTraining) {

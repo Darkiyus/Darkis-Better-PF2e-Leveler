@@ -1,6 +1,6 @@
 import { ATTRIBUTES, MIN_PLAN_LEVEL, PROFICIENCY_RANK_NAMES } from '../../constants.js';
 import { getGradualBoostGroupLevels } from '../../classes/progression.js';
-import { computeBuildState, computeSkillPickerState, getImportedInitialSkillLimit, getImportedInitialSkillTraining, isImportedHistoricalSkillLevel } from '../../plan/build-state.js';
+import { computeBuildState, computeSkillPickerState, getAutomaticInitialSkillTraining, getImportedInitialSkillLimit, getImportedInitialSkillTraining, isImportedHistoricalSkillLevel } from '../../plan/build-state.js';
 import { getMaxSkillRank } from '../../utils/pf2e-api.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { annotateGuidanceBySlug, filterDisallowedForCurrentUser } from '../../access/content-guidance.js';
@@ -474,22 +474,29 @@ export function shouldShowImportedInitialSkillButton(planner, level) {
 }
 
 export function buildImportedInitialSkillContext(planner) {
-  const selected = new Set(getHistoricalInitialSkillTraining(planner));
+  const automatic = getAutomaticInitialSkillSet(planner);
+  const selected = new Set(getHistoricalInitialSkillTraining(planner).filter((skill) => !automatic.has(skill)));
   const limit = getImportedInitialSkillLimit(planner.actor, ClassRegistry.get(planner.plan?.classSlug));
   const count = selected.size;
   const limitReached = limit > 0 && count >= limit;
-  return getActiveSkillSlugs().map((slug) => ({
-    slug,
-    label: localizeSkillSlug(slug),
-    selected: selected.has(slug),
-    disabled: !selected.has(slug) && limitReached,
-    rankName: PROFICIENCY_RANK_NAMES[1],
-  }));
+  return getActiveSkillSlugs().map((slug) => {
+    const isAutomatic = automatic.has(slug);
+    return {
+      slug,
+      label: localizeSkillSlug(slug),
+      selected: isAutomatic || selected.has(slug),
+      disabled: isAutomatic || (!selected.has(slug) && limitReached),
+      automatic: isAutomatic,
+      sourceLabel: isAutomatic ? 'Automatic' : null,
+      rankName: PROFICIENCY_RANK_NAMES[1],
+    };
+  });
 }
 
 export function buildImportedInitialSkillSummary(planner) {
   const limit = getImportedInitialSkillLimit(planner.actor, ClassRegistry.get(planner.plan?.classSlug));
-  const count = getHistoricalInitialSkillTraining(planner).length;
+  const automatic = getAutomaticInitialSkillSet(planner);
+  const count = getHistoricalInitialSkillTraining(planner).filter((skill) => !automatic.has(skill)).length;
   return {
     importedInitialSkillCount: count,
     importedInitialSkillLimit: limit,
@@ -505,6 +512,11 @@ function getHistoricalInitialSkillTraining(planner) {
     if (isActiveSkillSlug(skill)) skills.add(skill);
   }
   return [...skills].sort((a, b) => a.localeCompare(b));
+}
+
+function getAutomaticInitialSkillSet(planner) {
+  const classDef = ClassRegistry.get(planner.plan?.classSlug);
+  return new Set(getAutomaticInitialSkillTraining(planner.actor, planner.plan, classDef));
 }
 
 function buildHistoricalLoreRanks(planner, upToLevel) {

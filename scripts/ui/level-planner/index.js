@@ -7,7 +7,7 @@ import { getSpellbookBonusCantripSelectionCount } from '../../plan/spellbook-fea
 import { buildFeatGrantRequirements, buildPlanFormulaProgressionRequirements } from '../../plan/feat-grants.js';
 import { getPlan, savePlan, clearPlan, exportPlan, importPlan } from '../../plan/plan-store.js';
 import { validateLevel } from '../../plan/plan-validator.js';
-import { computeBuildState } from '../../plan/build-state.js';
+import { computeBuildState, getAutomaticInitialSkillTraining } from '../../plan/build-state.js';
 import { promptApplyPlan, promptApplyRetraining } from '../../apply/apply-manager.js';
 import { isFreeArchetypeEnabled, isMythicEnabled, isABPEnabled, isGradualBoostsEnabled, isDualClassEnabled, isAncestralParagonEnabled } from '../../utils/pf2e-api.js';
 import { getDedicationAliasesFromDescription } from '../../utils/feat-aliases.js';
@@ -1843,7 +1843,8 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
       },
     });
 
-    const initialSkills = normalizeImportedInitialSkillSelection(result, summary.importedInitialSkillLimit);
+    const automaticInitialSkills = getAutomaticInitialSkillTraining(this.actor, this.plan, ClassRegistry.get(this.plan?.classSlug));
+    const initialSkills = normalizeImportedInitialSkillSelection(result, summary.importedInitialSkillLimit, automaticInitialSkills);
     if (!initialSkills) return;
 
     imported.initialSkills = initialSkills;
@@ -2940,16 +2941,19 @@ function buildImportedInitialSkillDialogContent({ choices, count, limit }) {
   const rows = choices.map((choice) => {
     const selected = choice.selected === true;
     const disabled = choice.disabled === true;
+    const automatic = choice.automatic === true;
     return `
       <label
-        class="imported-initial-skill-card rank-bg-${escapeHtml(choice.rankName)} ${selected ? 'selected' : ''} ${disabled ? 'disabled' : ''}"
+        class="imported-initial-skill-card rank-bg-${escapeHtml(choice.rankName)} ${selected ? 'selected' : ''} ${disabled ? 'disabled' : ''} ${automatic ? 'imported-initial-skill-card--automatic' : ''}"
         data-imported-initial-skill-choice
+        ${automatic ? 'data-imported-initial-skill-automatic="true"' : ''}
       >
         <input
           type="checkbox"
           name="importedInitialSkills"
           value="${escapeHtml(choice.slug)}"
           data-imported-initial-skill-input
+          ${automatic ? 'data-imported-initial-skill-automatic-input="true"' : ''}
           ${selected ? 'checked' : ''}
           ${disabled ? 'disabled' : ''}
         >
@@ -2958,7 +2962,10 @@ function buildImportedInitialSkillDialogContent({ choices, count, limit }) {
         </span>
         <span class="imported-initial-skill-card__body">
           <span class="imported-initial-skill-card__name">${escapeHtml(choice.label)}</span>
-          <span class="imported-initial-skill-card__rank rank-text-${escapeHtml(choice.rankName)}">${titleCase(choice.rankName)}</span>
+          <span class="imported-initial-skill-card__meta">
+            <span class="imported-initial-skill-card__rank rank-text-${escapeHtml(choice.rankName)}">${titleCase(choice.rankName)}</span>
+            ${choice.sourceLabel ? `<span class="imported-initial-skill-card__source">${escapeHtml(choice.sourceLabel)}</span>` : ''}
+          </span>
         </span>
       </label>
     `;
@@ -2987,11 +2994,13 @@ function readImportedInitialSkillDialogSelection(root) {
     .map((input) => input.value);
 }
 
-function normalizeImportedInitialSkillSelection(value, limit) {
+function normalizeImportedInitialSkillSelection(value, limit, excludedSkills = []) {
   if (!Array.isArray(value)) return null;
+  const excluded = new Set(excludedSkills.map((skill) => normalizeSkillSlug(skill)).filter((skill) => isActiveSkillSlug(skill)));
   const selected = new Set();
   for (const rawSkill of value) {
     const skill = normalizeSkillSlug(rawSkill);
+    if (excluded.has(skill)) continue;
     if (isActiveSkillSlug(skill)) selected.add(skill);
   }
   const result = [...selected].sort((a, b) => a.localeCompare(b));
@@ -3047,14 +3056,22 @@ function syncImportedInitialSkillDialog(root) {
   if (!root) return;
   const limit = Number(root.dataset.importedInitialSkillLimit ?? 0);
   const inputs = Array.from(root.querySelectorAll('[data-imported-initial-skill-input]'));
-  const checkedCount = inputs.filter((input) => input.checked).length;
+  const manualInputs = inputs.filter((input) => input.dataset.importedInitialSkillAutomaticInput !== 'true');
+  const checkedCount = manualInputs.filter((input) => input.checked).length;
   const limitReached = limit > 0 && checkedCount >= limit;
 
   for (const input of inputs) {
-    if (!input.checked) input.disabled = limitReached;
+    const automatic = input.dataset.importedInitialSkillAutomaticInput === 'true';
+    if (automatic) {
+      input.checked = true;
+      input.disabled = true;
+    } else if (!input.checked) {
+      input.disabled = limitReached;
+    }
     const choice = input.closest('[data-imported-initial-skill-choice]');
     choice?.classList.toggle('selected', input.checked);
     choice?.classList.toggle('disabled', input.disabled);
+    choice?.classList.toggle('imported-initial-skill-card--automatic', automatic);
   }
 
   const count = root.querySelector('[data-imported-initial-skill-count]');
