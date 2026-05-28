@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.27
+
+### Level Planner
+
+- **Free Heart background choices now open a picker** - Background ChoiceSet prompts now resolve background candidates, so Free Heart and similar grants can ask which background to add instead of appearing to do nothing
+- **Imported Intelligence partial boosts now carry into later boosts** - Level 10 Intelligence boosts now read PF2e's fractional raw ability values from imported characters, preserving level 5 partial progress such as `4.5 -> 5` instead of repeating `4 -> 4.5`
+- **Past Intelligence bonus skill choices now use historical training** - Intelligence extra-skill choices on imported higher-level characters reconstruct the skill ranks from that level, so skills trained later, such as level 8 Intimidation, remain selectable for the level 5 Intelligence bonus
+
 ## 3.4.26
 
 ### Level Planner

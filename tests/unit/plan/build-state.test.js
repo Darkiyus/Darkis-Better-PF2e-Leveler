@@ -137,6 +137,7 @@ describe('computeBuildState', () => {
   test('applies current imported ability boost after previous pending partial boost', () => {
     mockActor.system.details.level.value = 10;
     mockActor.system.abilities.int.mod = 4.5;
+
     mockActor.abilities = {
       str: { mod: 0, base: 0 },
       dex: { mod: 0, base: 0 },
@@ -154,6 +155,26 @@ describe('computeBuildState', () => {
 
     expect(beforeLevel10.attributes.int).toBe(4);
     expect(beforeLevel10.rawAttributes.int).toBe(4.5);
+    expect(level10State.attributes.int).toBe(5);
+    expect(level10State.rawAttributes.int).toBe(5);
+  });
+
+  test('preserves imported pending partial boosts from fractional actor base values', () => {
+    mockActor.system.details.level.value = 5;
+    mockActor.system.abilities.int.mod = 4;
+    mockActor.abilities = {
+      str: { mod: 0, base: 0 },
+      dex: { mod: 0, base: 0 },
+      con: { mod: 0, base: 0 },
+      int: { mod: 4, base: 4.5 },
+      wis: { mod: 0, base: 0 },
+      cha: { mod: 0, base: 0 },
+    };
+
+    setLevelBoosts(plan, 5, ['int']);
+    setLevelBoosts(plan, 10, ['int']);
+
+    const level10State = computeBuildState(mockActor, plan, 10);
     expect(level10State.attributes.int).toBe(5);
     expect(level10State.rawAttributes.int).toBe(5);
   });

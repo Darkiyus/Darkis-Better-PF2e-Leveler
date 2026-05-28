@@ -27,6 +27,7 @@ const CATEGORY_LABELS = {
   ancestry: 'Ancestry',
   ammunition: 'Ammunition',
   armor: 'Armor',
+  background: 'Background',
   classfeature: 'Class Feature',
   consumable: 'Consumable',
   container: 'Container',

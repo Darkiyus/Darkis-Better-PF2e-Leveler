@@ -3021,6 +3021,93 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     }
   });
 
+  it('shows a background item picker for planned feat background choice sets', async () => {
+    const originalFromUuid = global.fromUuid;
+    const actor = createMockActor({ items: [] });
+    actor.class.slug = 'alchemist';
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.selectedLevel = 5;
+    planner.plan.levels[5].ancestryFeats = [{
+      uuid: 'Compendium.pf2e.feats-srd.Item.free-heart',
+      slug: 'free-heart',
+      name: 'Free Heart',
+      level: 5,
+      choices: {},
+    }];
+    planner._compendiumCache['pf2e.backgrounds'] = [
+      {
+        uuid: 'Compendium.pf2e.backgrounds.Item.barrister',
+        name: 'Barrister',
+        img: 'barrister.webp',
+        type: 'background',
+        slug: 'barrister',
+        rarity: 'common',
+        traits: [],
+        level: 0,
+      },
+    ];
+
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'Compendium.pf2e.feats-srd.Item.free-heart') {
+        return {
+          uuid,
+          slug: 'free-heart',
+          name: 'Free Heart',
+          type: 'feat',
+          img: 'free-heart.webp',
+          system: {
+            description: { value: '' },
+            level: { value: 5 },
+            traits: { value: ['human'], rarity: 'common' },
+            rules: [
+              {
+                key: 'ChoiceSet',
+                flag: 'background',
+                prompt: 'Select a background.',
+                choices: {
+                  itemType: 'background',
+                  filter: ['item:type:background'],
+                },
+              },
+            ],
+          },
+        };
+      }
+      return null;
+    });
+
+    try {
+      const context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
+      const choiceSet = context.ancestryFeatChoiceSets.find((entry) => entry.flag === 'background');
+
+      expect(choiceSet).toEqual(expect.objectContaining({
+        choiceType: 'item',
+        choicePicker: expect.objectContaining({
+          kind: 'item',
+          allowedUuids: ['Compendium.pf2e.backgrounds.Item.barrister'],
+          items: [
+            expect.objectContaining({
+              uuid: 'Compendium.pf2e.backgrounds.Item.barrister',
+              name: 'Barrister',
+              type: 'background',
+            }),
+          ],
+        }),
+        options: [
+          expect.objectContaining({
+            value: 'Compendium.pf2e.backgrounds.Item.barrister',
+            label: 'Barrister',
+            type: 'background',
+          }),
+        ],
+      }));
+    } finally {
+      global.fromUuid = originalFromUuid;
+    }
+  });
+
   it('shows a deity selector under planner feats that require a deity choice', async () => {
     const originalFromUuid = global.fromUuid;
     const actor = createMockActor({ items: [] });

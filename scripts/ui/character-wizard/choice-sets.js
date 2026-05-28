@@ -1200,6 +1200,7 @@ async function resolveChoiceSetOptions(wizard, rule, currentChoices = {}, source
       const type = String(item.type ?? '').toLowerCase();
       const category = String(item.category ?? '').toLowerCase();
       if (isAncestryChoiceSet(rule)) return type === 'ancestry';
+      if (itemType === 'background') return type === 'background';
       if (itemType === 'heritage') return type === 'heritage';
       if (itemType === 'deity') return type === 'deity' || category === 'deity';
       if (itemType === 'classfeature') return category === 'classfeature';
@@ -2279,11 +2280,13 @@ function getChoiceSetPackKeys(itemType, filters) {
   if (normalizedType === 'action') addCategoryKeys(keys, 'actions');
   if (PHYSICAL_CHOICE_ITEM_TYPES.has(normalizedType)) addCategoryKeys(keys, 'equipment');
   if (normalizedType === 'ancestry') addCategoryKeys(keys, 'ancestries');
+  if (normalizedType === 'background') addCategoryKeys(keys, 'backgrounds');
   if (normalizedType === 'heritage') addCategoryKeys(keys, 'heritages');
   if (normalizedType === 'deity') addCategoryKeys(keys, 'deities');
 
   const flattenedFilters = safeSerializeChoiceFilters(filters);
   if (flattenedFilters.includes('item:type:feat')) addCategoryKeys(keys, 'feats');
+  if (flattenedFilters.includes('item:type:background')) addCategoryKeys(keys, 'backgrounds');
   if (flattenedFilters.includes('item:type:deity') || flattenedFilters.includes('item:category:deity')) addCategoryKeys(keys, 'deities');
   if (flattenedFilters.includes('item:type:spell')) addCategoryKeys(keys, 'spells');
   if (flattenedFilters.includes('item:type:action')) addCategoryKeys(keys, 'actions');

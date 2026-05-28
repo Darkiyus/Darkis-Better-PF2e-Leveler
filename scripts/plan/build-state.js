@@ -789,10 +789,20 @@ function getActorAbilityModifier(actor, attr) {
   const actorAbilities = actor?.abilities?.[attr] ?? null;
   const systemAbility = actor?.system?.abilities?.[attr] ?? null;
   const actorMod = actorAbilities?.mod;
+  const systemMod = systemAbility?.mod;
+  const displayMod = Number.isFinite(actorMod)
+    ? Number(actorMod)
+    : Number.isFinite(systemMod)
+      ? Number(systemMod)
+      : null;
+
+  for (const value of [actorMod, systemMod, actorAbilities?.base, systemAbility?.base]) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric % 1 === 0) continue;
+    if (displayMod == null || Math.trunc(numeric) === Math.trunc(displayMod)) return numeric;
+  }
 
   if (Number.isFinite(actorMod)) return Number(actorMod);
-
-  const systemMod = systemAbility?.mod;
   if (Number.isFinite(systemMod)) return Number(systemMod);
 
   const base = actorAbilities?.base;

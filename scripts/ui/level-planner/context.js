@@ -18,7 +18,7 @@ export function buildAttributeContext(planner, levelData, choices) {
   const alreadyAppliedLevel = planner.selectedLevel <= actorLevel;
   const buildState = computeBuildState(planner.actor, planner.plan, planner.selectedLevel - 1);
   const displayedRawAttributes = alreadyAppliedLevel
-    ? buildAppliedLevelAttributeBaseline(planner, actorLevel)
+    ? buildAppliedLevelAttributeBaseline(planner, actorLevel, planner.selectedLevel)
     : (buildState.rawAttributes ?? {});
 
   return ATTRIBUTES.map((key) => {
@@ -50,11 +50,11 @@ export function buildAttributeContext(planner, levelData, choices) {
   });
 }
 
-function buildAppliedLevelAttributeBaseline(planner, actorLevel) {
+function buildAppliedLevelAttributeBaseline(planner, actorLevel, selectedLevel = planner.selectedLevel) {
   const raw = Object.fromEntries(ATTRIBUTES.map((key) => [key, getActorAbilityModifier(planner.actor, key)]));
   const knownBeforeLevelCache = new Map();
 
-  for (let level = actorLevel; level >= planner.selectedLevel; level--) {
+  for (let level = actorLevel; level >= selectedLevel; level--) {
     const knownBeforeLevel = getKnownAttributeBaselineBeforeLevel(planner, level, knownBeforeLevelCache);
     for (const boost of getAppliedBoostsForLevel(planner, level)) {
       if (!ATTRIBUTES.includes(boost)) continue;
@@ -183,9 +183,20 @@ function getActorAbilityModifier(actor, attr) {
   const actorAbilities = actor?.abilities?.[attr] ?? null;
   const systemAbility = actor?.system?.abilities?.[attr] ?? null;
   const actorMod = actorAbilities?.mod;
+  const systemMod = systemAbility?.mod;
+  const displayMod = Number.isFinite(actorMod)
+    ? Number(actorMod)
+    : Number.isFinite(systemMod)
+      ? Number(systemMod)
+      : null;
+
+  for (const value of [actorMod, systemMod, actorAbilities?.base, systemAbility?.base]) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric % 1 === 0) continue;
+    if (displayMod == null || Math.trunc(numeric) === Math.trunc(displayMod)) return numeric;
+  }
 
   if (Number.isFinite(actorMod)) return Number(actorMod);
-  const systemMod = systemAbility?.mod;
   if (Number.isFinite(systemMod)) return Number(systemMod);
   const base = actorAbilities?.base;
   if (Number.isFinite(base)) return Number(base);
@@ -290,7 +301,13 @@ export function buildIntBonusSkillContext(planner, levelData, level) {
   if (!benefit) return null;
 
   const selected = new Set(levelData.intBonusSkills ?? []);
-  const buildState = computeBuildState(planner.actor, planner.plan, level - 1);
+  const useHistoricalSkillState = isImportedHistoricalSkillLevel(planner.plan, level);
+  const buildState = useHistoricalSkillState
+    ? {
+        skills: buildHistoricalActiveSkillRanks(planner, level - 1),
+        lores: buildHistoricalLoreRanks(planner, level - 1),
+      }
+    : computeBuildState(planner.actor, planner.plan, level - 1);
   const activeSkillSlugs = getActiveSkillSlugs();
   const activeSkillSet = new Set(activeSkillSlugs);
 
@@ -305,7 +322,7 @@ export function buildIntBonusSkillContext(planner, levelData, level) {
     };
   }).filter((entry) => !entry.disabled || entry.selected);
 
-  const loreRanks = computeBuildState(planner.actor, planner.plan, level - 1).lores ?? {};
+  const loreRanks = buildState.lores ?? {};
   const selectedLoreSlugs = (levelData.intBonusSkills ?? []).filter((slug) => !activeSkillSet.has(slug));
   const loreSlugs = new Set([...Object.keys(loreRanks), ...selectedLoreSlugs]);
   const loreEntries = [...loreSlugs].map((slug) => ({
@@ -509,6 +526,16 @@ function getHistoricalInitialSkillTraining(planner) {
     if (isActiveSkillSlug(skill)) skills.add(skill);
   }
   return [...skills].sort((a, b) => a.localeCompare(b));
+}
+
+function buildHistoricalActiveSkillRanks(planner, upToLevel) {
+  const classDef = ClassRegistry.get(planner.plan?.classSlug);
+  return computeSkillPickerState(planner.actor, planner.plan, upToLevel, classDef, {
+    includeActorSkillRanks: false,
+    includePlannedFeatRules: true,
+    includeCurrentLevelSkillIncrease: true,
+    initialSkillTraining: getHistoricalInitialSkillTraining(planner),
+  });
 }
 
 function getAutomaticInitialSkillSet(planner) {

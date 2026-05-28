@@ -128,6 +128,7 @@ export function normalizeItemCategory(item) {
   ).toLowerCase();
 
   if (type === 'ancestry' || category === 'ancestry') return 'ancestry';
+  if (type === 'background' || category === 'background') return 'background';
   if (type === 'heritage' || category === 'heritage') return 'heritage';
   if (type === 'deity' || category === 'deity') return 'deity';
   if (type === 'classfeature' || category === 'classfeature' || category === 'class-feature') return 'classfeature';

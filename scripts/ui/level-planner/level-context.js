@@ -1225,6 +1225,7 @@ function choiceOptionToPickerItem(option) {
 function inferItemTypeFromUuid(uuid) {
   const text = String(uuid ?? '').toLowerCase();
   if (text.includes('.ancestries.')) return 'ancestry';
+  if (text.includes('.backgrounds.')) return 'background';
   if (text.includes('.heritages.')) return 'heritage';
   if (text.includes('.deities.')) return 'deity';
   if (text.includes('.classfeatures.')) return 'classfeature';

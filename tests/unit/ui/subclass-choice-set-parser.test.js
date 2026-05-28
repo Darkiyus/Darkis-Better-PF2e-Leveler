@@ -288,6 +288,49 @@ describe('CharacterWizard subclass choice-set parsing', () => {
     ]);
   });
 
+  it('resolves background item choice sets from background compendiums', async () => {
+    const wizard = new CharacterWizard(createMockActor());
+    game.packs.set('pf2e.backgrounds', {
+      getDocuments: jest.fn(async () => [
+        createDoc({
+          uuid: 'Compendium.pf2e.backgrounds.Item.barrister',
+          name: 'Barrister',
+          type: 'background',
+          slug: 'barrister',
+          traits: ['uncommon'],
+          level: 0,
+        }),
+      ]),
+    });
+
+    const sets = await wizard._parseChoiceSets([
+      {
+        key: 'ChoiceSet',
+        flag: 'background',
+        prompt: 'Select a background.',
+        choices: {
+          itemType: 'background',
+          filter: ['item:type:background'],
+        },
+      },
+    ]);
+
+    expect(sets).toEqual([
+      expect.objectContaining({
+        flag: 'background',
+        prompt: 'Select a background.',
+        options: [
+          expect.objectContaining({
+            value: 'Compendium.pf2e.backgrounds.Item.barrister',
+            label: 'Barrister',
+            uuid: 'Compendium.pf2e.backgrounds.Item.barrister',
+            type: 'background',
+          }),
+        ],
+      }),
+    ]);
+  });
+
   it('supports tuple-form item filters such as PF2E feat level caps', async () => {
     const wizard = new CharacterWizard(createMockActor());
     const lowLevelFeat = createDoc({

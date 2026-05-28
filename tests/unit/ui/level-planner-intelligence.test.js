@@ -412,6 +412,80 @@ describe('LevelPlanner intelligence boost planner choices', () => {
     }));
   });
 
+  it('uses fractional actor base values when previewing future Intelligence partial boosts', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+    actor.system.details.level.value = 5;
+    actor.system.abilities.int.mod = 4;
+    actor.system.build.attributes.boosts[5] = ['int'];
+    actor.abilities = {
+      str: { mod: 0, base: 0 },
+      dex: { mod: 0, base: 0 },
+      con: { mod: 0, base: 0 },
+      int: { mod: 4, base: 4.5 },
+      wis: { mod: 0, base: 0 },
+      cha: { mod: 0, base: 0 },
+    };
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    setLevelBoosts(planner.plan, 10, ['int']);
+    planner.selectedLevel = 10;
+
+    const choices = [{ type: 'abilityBoosts', count: 4 }];
+    const context = planner._buildAttributeContext(planner.plan.levels[10], choices);
+    expect(context.find((entry) => entry.key === 'int')).toEqual(expect.objectContaining({
+      mod: 4,
+      newMod: 5,
+      partial: true,
+      completesPartial: true,
+    }));
+    expect(planner._buildIntelligenceBenefitContext(10)).toEqual({
+      count: 1,
+      gainsSingle: true,
+    });
+  });
+
+  it('uses historical skill state for imported past Intelligence bonus choices', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+    actor.system.details.level.value = 8;
+    actor.system.abilities.int.mod = 4;
+    actor.system.build.attributes.boosts[5] = ['int'];
+    actor.system.skills.intimidation.rank = 1;
+    actor.system.skills.intimidation.value = 1;
+    actor.abilities = {
+      str: { mod: 0, base: 0 },
+      dex: { mod: 0, base: 0 },
+      con: { mod: 0, base: 0 },
+      int: { mod: 4, base: 4 },
+      wis: { mod: 0, base: 0 },
+      cha: { mod: 0, base: 0 },
+    };
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.plan.importedFromActor = {
+      actorLevel: 8,
+      hideHistoricalSkillIncreases: true,
+      initialSkills: ['arcana'],
+    };
+    setLevelBoosts(planner.plan, 5, ['int']);
+    planner.selectedLevel = 5;
+
+    expect(planner._buildIntelligenceBenefitContext(5)).toEqual({
+      count: 1,
+      gainsSingle: true,
+    });
+
+    const skills = planner._buildIntBonusSkillContext(planner.plan.levels[5], 5);
+    expect(skills.find((entry) => entry.slug === 'intimidation')).toEqual(expect.objectContaining({
+      disabled: false,
+      selected: false,
+      trained: false,
+    }));
+  });
+
   it('replaces single-slot Intelligence bonus selections when clicking a different option', () => {
     const actor = createMockActor();
     actor.class.slug = 'alchemist';
