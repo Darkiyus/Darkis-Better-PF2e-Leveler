@@ -953,6 +953,27 @@ describe('LevelPlanner intelligence boost planner choices', () => {
     }));
   });
 
+  it('shows same-level derived feat lore skills in the skill increase picker', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.plan.levels[12].skillFeats = [{
+      uuid: 'Compendium.pf2e.feats-srd.Item.operatic-adventurer',
+      name: 'Operatic Adventurer',
+      slug: 'operatic-adventurer',
+    }];
+
+    const skills = planner._buildSkillContext(planner.plan.levels[12], 12);
+    expect(skills.find((entry) => entry.slug === 'theater-lore')).toEqual(expect.objectContaining({
+      rank: 1,
+      rankName: 'trained',
+      nextRankName: 'expert',
+      selected: false,
+    }));
+  });
+
   it('keeps skill rules from browsed nested feat choices while building level context', async () => {
     const actor = createMockActor();
     actor.class.slug = 'alchemist';

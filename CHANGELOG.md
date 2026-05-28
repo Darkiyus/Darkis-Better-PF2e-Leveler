@@ -4,7 +4,7 @@
 
 ### Level Planner
 
-- **Free Heart background Lore can now be raised on the same level** - Lore granted by the selected Free Heart background appears immediately in that level's skill increase list as trained, so it can be increased to expert right away
+- **Same-level feat-granted Lore can now be raised immediately** - Lore granted by feat choices and derived feat grants, such as Free Heart backgrounds and Operatic Adventurer's Theater Lore, appears immediately in that level's skill increase list as trained, so it can be increased to expert right away
 
 ## 3.4.29
 
