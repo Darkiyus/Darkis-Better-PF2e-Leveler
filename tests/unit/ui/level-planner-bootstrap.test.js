@@ -1756,7 +1756,31 @@ describe('LevelPlanner bootstrap from existing actor', () => {
         initialSkills: [],
       },
     };
-    const prompt = jest.fn(async (config) => ({ skills: [], choiceSelections: {} }));
+    const prompt = jest.fn(async (config) => {
+      const container = document.createElement('div');
+      container.innerHTML = config.content;
+      document.body.append(container);
+      const fallbackSelects = Array.from(container.querySelectorAll('[data-initial-skill-choice-fallback="true"]'));
+
+      expect(fallbackSelects).toHaveLength(2);
+      fallbackSelects[0].value = 'acrobatics';
+      fallbackSelects[0].dispatchEvent(new Event('change', { bubbles: true }));
+      expect(Array.from(fallbackSelects[1].options).find((option) => option.value === 'acrobatics').disabled).toBe(true);
+      expect(container.querySelector('input[name="importedInitialSkills"][value="acrobatics"]').checked).toBe(true);
+      expect(container.querySelector('input[name="importedInitialSkills"][value="acrobatics"]').disabled).toBe(true);
+
+      const medicineInput = container.querySelector('input[name="importedInitialSkills"][value="medicine"]');
+      medicineInput.checked = true;
+      medicineInput.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(Array.from(fallbackSelects[1].options).find((option) => option.value === 'medicine').disabled).toBe(true);
+
+      fallbackSelects[1].value = 'athletics';
+      fallbackSelects[1].dispatchEvent(new Event('change', { bubbles: true }));
+      expect(container.querySelector('[data-imported-initial-skill-count]').textContent).toBe('3');
+      expect(container.querySelector('input[name="importedInitialSkills"][value="athletics"]').checked).toBe(true);
+      expect(container.querySelector('input[name="importedInitialSkills"][value="athletics"]').disabled).toBe(true);
+      return config.ok.callback(null, null, { element: container });
+    });
     global.foundry.applications.api.DialogV2 = { prompt };
 
     await planner._openImportedInitialSkillDialog();
@@ -1766,6 +1790,9 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     expect(content).toContain('Alchemist Dedication - Skill Choices');
     expect(content).toContain('<span data-imported-initial-skill-count>0</span>/8');
     expect(content.match(/Select a replacement skill \(Crafting already (?:trained|granted)\)/g)).toHaveLength(2);
+    expect(content).not.toContain('duplicateSkillFallback_Compendium.pf2e.feats-srd.Item.alchemist-dedication_crafting');
+    expect(planner.plan.importedFromActor.initialSkills).toEqual(['acrobatics', 'athletics', 'medicine']);
+    expect(Object.values(planner.plan.importedFromActor.initialSkillChoices)).toEqual(['acrobatics', 'athletics']);
   });
 
   it('keeps imported starting skill dialog content within the Foundry prompt width', () => {
@@ -1773,9 +1800,11 @@ describe('LevelPlanner bootstrap from existing actor', () => {
 
     expect(css).toContain('width: min(100%, 560px);');
     expect(css).toContain('max-width: 100%;');
+    expect(css).toContain('max-height: min(680px, calc(100vh - 170px));');
     expect(css).toContain('position: relative;');
     expect(css).toContain('imported-initial-skill-card--automatic');
     expect(css).toContain('grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));');
+    expect(css).not.toContain('max-height: min(420px, 58vh);');
     expect(css).not.toContain('min-width: min(560px, calc(100vw - 64px));');
     expect(css).not.toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
   });

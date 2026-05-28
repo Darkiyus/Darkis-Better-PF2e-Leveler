@@ -655,6 +655,11 @@ export async function buildInitialSkillChoiceSetsAndFallbacks(planner) {
 
     // Check for fallbacks from explicit fallback text in item description
     const itemFallbacks = await extractInitialSkillFallbacks(item, itemRules, storedChoices, automaticSkills, activeSkillSlugs, sourceName, fallbackIndex);
+    const itemFallbackSkills = new Set(
+      itemFallbacks
+        .map((fallback) => normalizeSkillSlug(fallback.originalSkill))
+        .filter((skill) => isActiveSkillSlug(skill)),
+    );
     fallbacks.push(...itemFallbacks);
     fallbackIndex += itemFallbacks.length;
 
@@ -662,7 +667,7 @@ export async function buildInitialSkillChoiceSetsAndFallbacks(planner) {
     const grantedSkills = extractInitialSkillGrantsFromItem(item, itemRules);
     for (const skill of grantedSkills) {
       // If this skill was already granted by a previous item (not this one), create a fallback
-      if (encounteredSkills.has(skill) && !hasInitialSkillFallbackForItemSkill(fallbacks, itemUuid, sourceName, skill)) {
+      if (encounteredSkills.has(skill) && !itemFallbackSkills.has(skill) && !hasInitialSkillFallbackForItemSkill(fallbacks, itemUuid, sourceName, skill)) {
         const flag = `duplicateSkillFallback_${itemUuid}_${skill}`;
         const selectedValue = storedChoices?.[flag] ?? null;
         const availableSkills = activeSkillSlugs.filter((slug) =>

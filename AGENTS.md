@@ -281,13 +281,13 @@ recommend splitting it along real responsibility boundaries.
 <claude-mem-context>
 # Memory Context
 
-# [pf2e-leveler] recent context, 2026-05-28 12:29pm GMT+3
+# [pf2e-leveler] recent context, 2026-05-28 1:37pm GMT+3
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (15,784t read) | 851,889t work | 98% savings
+Stats: 50 obs (21,242t read) | 291,990t work | 93% savings
 
 ### May 3, 2026
 S834 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 3 at 1:42 PM)
@@ -295,56 +295,56 @@ S120 Feat retraining implementation for pf2e-leveler — Task 2 complete (valida
 ### May 28, 2026
 S835 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:52 AM)
 S836 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:57 AM)
-6761 8:31a ✅ Version 3.4.28 Confirmed Across All Files, Lint Clean, Tests Running
-6762 " ✅ pf2e-leveler 3.4.28 Fully Verified and Ready to Commit
-6763 8:32a ✅ Session Complete: pf2e-leveler 3.4.28 Ready for Commit
-6764 " 🔵 Partial Boost UI Pipeline Confirmed: template → CSS → i18n All Consistent
-6765 8:33a 🟣 Added pendingPartial Field and UI Display for Unselected Partial Boost Buttons
-6766 " 🟣 pendingPartial UI Applied Across All Three Template Files
-6767 " 🟣 pendingPartial Template Test and Existing Test Updates Pass
-6768 " ✅ CHANGELOG 3.4.28 Updated With Fifth Item for Partial Boost Label Display
-6769 " ✅ pf2e-leveler 3.4.28 CHANGELOG Finalized With 5 User-Facing Items
-6770 8:34a ✅ intelligence.test.js 39/39 and Lint Clean After pendingPartial Addition
-6771 " ✅ pf2e-leveler 3.4.28 Final: 1467 Tests, 86 Suites, Lint Clean — Ready to Commit
-6772 " ✅ Final Code Review Confirmed: pendingPartial Field and Template Display Correct
-6773 8:37a 🔵 Open User Question: Levels 7 and 8 Not Showing +4(partial) for Gradual Boosts
-6774 8:38a 🔵 Levels 7-8 pendingPartial=false Bug: buildAppliedLevelAttributeBaseline Cannot Detect Fractional Raw From Integer Actor Mod
-6775 " 🔴 Fixed buildAppliedLevelAttributeBaseline to Use Reconstructed Raw for Pending Partial Detection
-6776 8:39a ✅ pf2e-leveler 3.4.28 Final: 1468 Tests, 86 Suites Pass After Applied-Level Partial Fix
-6777 8:41a 🔵 buildAppliedLevelAttributeBaseline Change Preserves All Existing Test Semantics
-6778 " 🟣 Additional Test Confirms pendingPartial Display for Current Standard Boost Level
-6779 8:42a 🔵 Object-Shaped PF2e Boost Buckets Not Handled by buildKnownInitialAttributeBaseline
-6781 8:43a 🔴 normalizeActorBoostEntries Extended to Handle Array-Valued Slot Objects
-6782 8:44a 🔴 index.js normalizeActorBoostEntries Also Patched for Array-Value Slot Format
-6783 " ✅ 42 Intelligence Tests, 92 Bootstrap Tests Pass; Lint Clean After All normalizeActorBoostEntries Fixes
-6785 " ✅ pf2e-leveler 3.4.28 Final Verified: 1470 Tests, 86 Suites, Lint Clean
-6788 8:45a ✅ Final Code Review Confirms All pendingPartial and normalizeActorBoostEntries Diffs Are Correct
-6792 8:47a ✅ CHANGELOG Patch Version Increment Requested
-6793 8:48a 🔵 pf2e-leveler Project State: Version 3.4.28 with Uncommitted Level-Planner Changes
-6794 " ✅ pf2e-leveler Bumped from 3.4.28 to 3.4.29
-6795 " ✅ pf2e-leveler 3.4.29 Full Test Suite Passes: 1470/1470
-6796 " 🔵 3.4.29 CHANGELOG Entry Expands Partial Boost Label Description
-6797 8:49a 🟣 pf2e-leveler 3.4.29 Release: Five Level Planner Fixes Documented
-6798 " ✅ CHANGELOG Restructured: 3.4.29 Correctly Isolated from 3.4.28 Entries
-6849 9:39a 🟣 New failing test for auto-scaling feat skill visibility bug
-6850 " 🔵 Confirmed bug: acrobatics entry returns undefined when actor rank matches planned feat rank
-6852 " 🔴 Fixed: auto-scaling feat skills disappearing from skill picker when actor rank matches planned feat rank
-6853 9:40a ✅ CHANGELOG.md updated for auto-scaling feat skill fix in 3.4.29
-6854 " 🔴 pf2e-leveler 3.4.29 fix verified: all tests pass and lint clean
-6855 " 🔴 Full pf2e-leveler test suite passes: 1471/1471 tests green for v3.4.29
-6860 9:44a 🔴 Free Heart Background Lore Skill Not Available at Character Creation Level
-6861 9:50a 🔴 Same-Level Feat-Granted Lore Now Appears in Skill Increase Picker Immediately
-6862 " 🔴 Auto-Scaling Feat Skills Stay Visible After Owned Actor Rule Catches Up
-6868 9:53a ✅ Patch Version Increment with Changelog Entry
-6869 9:54a 🔵 pf2e-leveler Current Version and Project Structure Confirmed
-6870 " 🔵 Files Staged for 3.4.30 Patch Release
-6871 " ✅ pf2e-leveler Bumped to 3.4.30 with Free Heart Lore Fix Changelog Entry
-6873 " 🔵 ESLint Passes Clean on 3.4.30 Release Candidate
-6874 " 🔵 Full Test Suite Passes for 3.4.30 Release
+6874 9:54a 🔵 Full Test Suite Passes for 3.4.30 Release
 6906 10:08a ⚖️ Extend Feat Fix to Cover "Additional Lore" Feats Like Operatic Adventurer
 6908 10:09a 🔵 getDerivedFeatLoreRules Already Covers Operatic Adventurer; Fix Was Broader Than Initially Stated
 6909 " 🟣 Test Added for Same-Level Derived Feat Lore in Skill Increase Picker (Operatic Adventurer)
 6910 " ✅ CHANGELOG Updated to Reflect Broader Same-Level Lore Fix Scope
+6981 12:30p 🔵 pf2e-leveler Initial Skill Import System Architecture
+6982 " 🔵 Initial Skill Import Dialog: Duplicate-Skill Fallback Detection Architecture
+6983 12:31p 🔵 `getImportedInitialSkillLimit` Has No Class-Specific Branching
+6984 12:32p 🔵 INVESTIGATOR Class Definition and Rule Extraction Discrepancy Between context.js and build-state.js
+6986 " 🔵 Initial Skill Dialog Selection Normalization: Fallback Choices Count Against Flexible Pick Limit
+6988 12:33p 🔵 Two Divergent `reverseApplyAbilityBoost` Implementations
+6991 12:34p 🔴 Fixed `getLevelOneIntModifier` Over-Subtracting INT When Modifier Sits at the Ability Score Cap Boundary
+6993 " 🔴 Prevent Duplicate Fallback Prompts When Description-Text and Rule-Based Detection Both Fire
+6994 " 🔴 Test Mock Actor Missing `abilities`/`build` Properties for INT Boost Test
+6996 12:35p ✅ All Tests Green — Preparing Changelog Entry for v3.4.31
+6997 " ✅ pf2e-leveler Released as v3.4.31
+6998 " 🔴 v3.4.31 Passes Full Lint Check
+6999 " 🔴 `npm version` Does Not Update `module.json` in pf2e-leveler
+7001 " ✅ pf2e-leveler v3.4.31 Full Test Suite Green
+7002 12:36p ✅ v3.4.31 Complete Changeset Ready to Commit — 9 Files Changed
+7020 1:17p 🔵 Level Planner Skill Grant Logic Conflates "Granted" vs "Trained" States Incorrectly
+7021 1:18p 🔵 Dual Code Paths in `buildInitialSkillChoiceSetsAndFallbacks` Produce "Already Trained" vs "Already Granted" Inconsistency
+7022 1:19p 🔵 `getAutomaticInitialSkillTrainingEntries` and `getInitialSkillSourceItems` Return Different Skill Sets — Root Cause of Double-Prompt
+7023 " 🔴 Fixed Double-Prompt: Duplicate-Loop Now Skips Skills Already Covered by Fallback-Text Detection
+7024 " 🔴 Test Updated to Assert Alchemist Dedication Does Not Produce a `duplicateSkillFallback_` Prompt
+7025 " 🔴 All 92 Tests Pass and Lint Clean After Double-Prompt Fix in `context.js`
+7026 1:20p 🔴 Full Test Suite Green: 1474/1474 Tests Pass Across All 86 Suites
+7027 " ✅ Three Files Modified and Uncommitted: context.js, test file, and AGENTS.md
+7028 1:21p 🔵 Initial Skill Choice-Sets Dialog CSS Uses Non-Standard Variable Names With Hardcoded Fallbacks
+7029 " 🔵 Confirmed: Choice-Sets CSS Uses 6 Undefined Variable Names — All Fall Through to Hardcoded Values
+7030 " 🔄 Choice-Sets Dialog CSS Refactored to Use Leveler Design Tokens
+7033 1:24p 🔴 Dialog Scroll Constraint Moved From Inner Grid to Outer Container
+7035 1:25p ✅ Full Suite Green After All v3.4.31 Dialog Fixes: 1474/1474 Tests, Lint Clean
+7037 1:26p 🔵 Initial Skill Dialog Count Display Excludes Dropdown-Selected Replacement Skills
+7038 " 🟣 Added Test Specifying Cross-Fallback Deduplication: Selecting a Skill in One Dropdown Should Disable It in Other Fallback Dropdowns
+7040 1:27p 🔵 TDD Red Phase: "Ancient Elf Dedication" Test Fails — `initialSkills` Is `[]` Not `['deception']`
+7042 1:28p 🔵 Interactive Fallback Test Accidentally Applied to Wrong Test Case — "Ancient Elf" Test Still Uses Simple Mock
+7043 " 🔵 Interactive Fallback Test Now in Correct "Ancient Elf" Test — Failing Because `data-initial-skill-choice-fallback` Attribute Is Not Rendered
+7045 1:29p 🟣 Cross-Fallback Skill Deduplication Implemented: Selecting Same Skill in Multiple Fallback Dropdowns Now Prevents Duplicates
+7046 " 🟣 Full Suite Passes After Cross-Fallback Deduplication: 92/92 Tests, Lint Clean
+7047 " 🟣 Full Suite Green: 1474/1474 Tests Pass — All Changes Verified and Commit-Ready
+7048 " 🔵 Changes Split Across Staged and Unstaged: index.js and Latest Test Changes Are Unstaged
+7051 1:32p 🔴 Final State Confirmed: All Code Changes Verified Before Commit
+7052 " 🟣 Test Expanded: Fallback-Selected Skills Now Expected to Auto-Check Their Skill Cards and Increment the Counter
+7053 1:33p 🟣 Fallback-Selected Skills Now Auto-Check and Lock Their Skill Cards in the Dialog
+7054 " 🟣 Skill Card Auto-Lock Feature Complete: 92/92 Tests Pass, Lint Clean
+7055 1:34p 🟣 Complete Starting Skill Training Dialog Overhaul Ready for Commit — 1474/1474 Tests Pass
+7059 1:35p 🟣 Test Expanded: Manually-Checked Skill Cards Should Also Disable That Skill in Fallback Dropdowns
+7060 " 🟣 Bidirectional Skill Card / Fallback Dropdown Sync Implemented
+7061 1:36p 🟣 Full Bootstrap Suite Passes After Bidirectional Sync: 92/92 Tests, Lint Clean
 
-Access 852k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 292k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

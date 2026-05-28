@@ -614,7 +614,10 @@
   width: min(100%, 560px);
   min-width: 0;
   max-width: 100%;
+  max-height: min(680px, calc(100vh - 170px));
+  overflow-y: auto;
   overflow-x: hidden;
+  padding-right: 2px;
   color: var(--leveler-text);
 }
 
@@ -655,10 +658,7 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  max-height: min(420px, 58vh);
-  overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 2px;
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-card {
@@ -800,26 +800,27 @@
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-group {
-  background: var(--leveler-bg-secondary, #f5f5f5);
-  border-radius: var(--leveler-border-radius, 6px);
+  background: var(--leveler-bg-surface);
+  border-radius: var(--leveler-radius-md);
   padding: var(--leveler-spacing-md, 12px);
-  border: 1px solid var(--leveler-border-color, #ddd);
+  border: 1px solid var(--leveler-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-group__header {
   display: flex;
   align-items: center;
   gap: var(--leveler-spacing-sm, 8px);
-  font-weight: 600;
+  font-weight: 800;
   font-size: var(--font-size-13, 13px);
-  color: var(--color-text-dark-primary, #333);
+  color: var(--leveler-text-bright);
   margin-bottom: var(--leveler-spacing-sm, 8px);
   padding-bottom: var(--leveler-spacing-sm, 8px);
-  border-bottom: 1px solid var(--leveler-border-color, #ddd);
+  border-bottom: 1px solid var(--leveler-border);
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-group__header i {
-  color: var(--leveler-accent-color, #6366f1);
+  color: var(--leveler-accent-light);
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set {
@@ -830,7 +831,7 @@
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set + .imported-initial-skill-choice-set {
-  border-top: 1px solid var(--leveler-border-light, #eee);
+  border-top: 1px solid var(--leveler-border);
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set__label {
@@ -838,8 +839,8 @@
   align-items: center;
   gap: var(--leveler-spacing-xs, 4px);
   font-size: var(--font-size-12, 12px);
-  color: var(--color-text-dark-secondary, #666);
-  font-weight: 500;
+  color: var(--leveler-text-muted);
+  font-weight: 700;
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set__label i {
@@ -849,23 +850,29 @@
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set__label i.fa-repeat {
-  color: var(--leveler-warning-color, #f59e0b);
+  color: var(--leveler-warning);
 }
 
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set__select {
   width: 100%;
   padding: var(--leveler-spacing-sm, 8px);
-  border: 1px solid var(--leveler-border-color, #ddd);
-  border-radius: var(--leveler-border-radius, 6px);
-  background: var(--leveler-bg-primary, #fff);
+  border: 1px solid var(--leveler-border-light);
+  border-radius: var(--leveler-radius-md);
+  background: var(--leveler-bg-light);
+  color: var(--leveler-text-bright);
   font-size: var(--font-size-13, 13px);
   cursor: pointer;
 }
 
+.pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set__select option {
+  background: var(--leveler-bg-light);
+  color: var(--leveler-text-bright);
+}
+
 .pf2e-leveler.imported-initial-skills-dialog .imported-initial-skill-choice-set__select:focus {
   outline: none;
-  border-color: var(--leveler-accent-color, #6366f1);
-  box-shadow: 0 0 0 2px var(--leveler-focus-ring, rgba(99, 102, 241, 0.2));
+  border-color: var(--leveler-accent);
+  box-shadow: 0 0 0 2px var(--leveler-accent-dim);
 }
 
 .retrain-rank-text {

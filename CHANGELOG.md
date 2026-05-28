@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.4.32
+
+### Level Planner
+
+- **Starting skill replacement choices now count and lock consistently** - Replacement skills selected from fallback prompts now update the `0/8` starting skill count, lock the matching skill rows, and stay mutually exclusive with both other fallback prompts and manually selected starting skills
+- **Starting skill replacement prompts now match the dark dialog layout** - The Starting Skill Training replacement prompt cards now use the Level Planner dark surface styling and scroll with the rest of the dialog content
+
 ## 3.4.31
 
 ### Level Planner

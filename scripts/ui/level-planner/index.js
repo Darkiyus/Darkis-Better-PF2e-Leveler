@@ -3086,7 +3086,7 @@ function buildInitialSkillChoiceSetSections(choiceSets) {
             ${choiceSet.isFallback ? '<i class="fa-solid fa-repeat" title="Skill replacement"></i>' : '<i class="fa-solid fa-list-check"></i>'}
             ${escapeHtml(choiceSet.prompt)}
           </label>
-          <select name="initialSkillChoice_${escapeHtml(choiceSet.flag)}" class="imported-initial-skill-choice-set__select" data-initial-skill-choice-flag="${escapeHtml(choiceSet.flag)}">
+          <select name="initialSkillChoice_${escapeHtml(choiceSet.flag)}" class="imported-initial-skill-choice-set__select" data-initial-skill-choice-flag="${escapeHtml(choiceSet.flag)}" ${choiceSet.isFallback ? 'data-initial-skill-choice-fallback="true"' : ''}>
             <option value="">-- Select --</option>
             ${optionsHtml}
           </select>
@@ -3113,13 +3113,20 @@ function readImportedInitialSkillDialogSelection(root) {
     .map((input) => input.value);
 
   const choiceSelections = {};
+  const selectedFallbackSkills = new Set();
   const choiceInputs = root?.querySelectorAll?.('[data-initial-skill-choice-flag]') ?? [];
   for (const input of choiceInputs) {
     const flag = input.dataset.initialSkillChoiceFlag;
     const value = input.value;
-    if (flag && value) {
-      choiceSelections[flag] = value;
+    if (!flag || !value) continue;
+
+    const skill = normalizeSkillSlug(value);
+    if (input.dataset.initialSkillChoiceFallback === 'true' && isActiveSkillSlug(skill)) {
+      if (selectedFallbackSkills.has(skill)) continue;
+      selectedFallbackSkills.add(skill);
     }
+
+    choiceSelections[flag] = value;
   }
 
   return { skills, choiceSelections };
@@ -3144,6 +3151,7 @@ function normalizeImportedInitialSkillSelection(value, limit, excludedSkills = [
 
   for (const choiceValue of Object.values(choiceSelections)) {
     const skill = normalizeSkillSlug(choiceValue);
+    if (selected.has(skill)) continue;
     if (isActiveSkillSlug(skill)) selected.add(skill);
   }
 
@@ -3194,8 +3202,13 @@ function installImportedInitialSkillDialogListeners() {
 
   doc.addEventListener('change', (event) => {
     const input = event.target?.closest?.('[data-imported-initial-skill-input]');
-    if (!input) return;
-    syncImportedInitialSkillDialog(input.closest('[data-imported-initial-skills]'));
+    if (input) {
+      syncImportedInitialSkillDialog(input.closest('[data-imported-initial-skills]'));
+      return;
+    }
+
+    const choiceSelect = event.target?.closest?.('[data-initial-skill-choice-flag]');
+    if (choiceSelect) syncImportedInitialSkillDialog(choiceSelect.closest('[data-imported-initial-skills]'));
   });
 }
 
@@ -3204,16 +3217,42 @@ function syncImportedInitialSkillDialog(root) {
   const limit = Number(root.dataset.importedInitialSkillLimit ?? 0);
   const inputs = Array.from(root.querySelectorAll('[data-imported-initial-skill-input]'));
   const manualInputs = inputs.filter((input) => input.dataset.importedInitialSkillAutomaticInput !== 'true');
+  const fallbackSelectedSkills = getSelectedInitialSkillFallbackSkills(root);
+
+  for (const input of manualInputs) {
+    const skill = normalizeSkillSlug(input.value);
+    const lockedByFallback = fallbackSelectedSkills.has(skill);
+    const wasLockedByFallback = input.dataset.importedInitialSkillFallbackLocked === 'true';
+
+    if (lockedByFallback) {
+      if (!wasLockedByFallback) input.dataset.importedInitialSkillWasChecked = input.checked ? 'true' : 'false';
+      input.checked = true;
+      input.disabled = true;
+      input.dataset.importedInitialSkillFallbackLocked = 'true';
+    } else if (wasLockedByFallback) {
+      input.checked = input.dataset.importedInitialSkillWasChecked === 'true';
+      input.disabled = false;
+      delete input.dataset.importedInitialSkillFallbackLocked;
+      delete input.dataset.importedInitialSkillWasChecked;
+    }
+  }
+
   const checkedCount = manualInputs.filter((input) => input.checked).length;
   const limitReached = limit > 0 && checkedCount >= limit;
 
   for (const input of inputs) {
     const automatic = input.dataset.importedInitialSkillAutomaticInput === 'true';
+    const lockedByFallback = input.dataset.importedInitialSkillFallbackLocked === 'true';
     if (automatic) {
+      input.checked = true;
+      input.disabled = true;
+    } else if (lockedByFallback) {
       input.checked = true;
       input.disabled = true;
     } else if (!input.checked) {
       input.disabled = limitReached;
+    } else {
+      input.disabled = false;
     }
     const choice = input.closest('[data-imported-initial-skill-choice]');
     choice?.classList.toggle('selected', input.checked);
@@ -3223,6 +3262,46 @@ function syncImportedInitialSkillDialog(root) {
 
   const count = root.querySelector('[data-imported-initial-skill-count]');
   if (count) count.textContent = String(checkedCount);
+
+  syncInitialSkillFallbackChoiceOptions(root);
+}
+
+function syncInitialSkillFallbackChoiceOptions(root) {
+  const fallbackSelects = Array.from(root.querySelectorAll('select[data-initial-skill-choice-fallback="true"]'));
+  const selectedSkills = new Set([
+    ...getSelectedInitialSkillFallbackSkills(root),
+    ...getManuallySelectedInitialSkills(root),
+  ]);
+
+  for (const select of fallbackSelects) {
+    const currentSkill = normalizeSkillSlug(select.value);
+    for (const option of select.options ?? []) {
+      const optionSkill = normalizeSkillSlug(option.value);
+      if (!isActiveSkillSlug(optionSkill)) {
+        option.disabled = false;
+        continue;
+      }
+      option.disabled = optionSkill !== currentSkill && selectedSkills.has(optionSkill);
+    }
+  }
+}
+
+function getSelectedInitialSkillFallbackSkills(root) {
+  return new Set(
+    Array.from(root.querySelectorAll('select[data-initial-skill-choice-fallback="true"]'))
+      .map((select) => normalizeSkillSlug(select.value))
+      .filter((skill) => isActiveSkillSlug(skill)),
+  );
+}
+
+function getManuallySelectedInitialSkills(root) {
+  return Array.from(root.querySelectorAll('[data-imported-initial-skill-input]'))
+    .filter((input) =>
+      input.checked
+      && input.dataset.importedInitialSkillAutomaticInput !== 'true'
+      && input.dataset.importedInitialSkillFallbackLocked !== 'true')
+    .map((input) => normalizeSkillSlug(input.value))
+    .filter((skill) => isActiveSkillSlug(skill));
 }
 
 function filterRetrainChoicePicker(input) {
