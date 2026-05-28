@@ -281,13 +281,13 @@ recommend splitting it along real responsibility boundaries.
 <claude-mem-context>
 # Memory Context
 
-# [pf2e-leveler] recent context, 2026-05-28 9:53am GMT+3
+# [pf2e-leveler] recent context, 2026-05-28 10:00am GMT+3
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (16,545t read) | 834,433t work | 98% savings
+Stats: 50 obs (16,091t read) | 818,620t work | 98% savings
 
 ### May 3, 2026
 S834 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 3 at 1:42 PM)
@@ -295,12 +295,6 @@ S120 Feat retraining implementation for pf2e-leveler — Task 2 complete (valida
 ### May 28, 2026
 S835 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:52 AM)
 S836 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:57 AM)
-6750 8:27a ✅ ESLint Clean After migrateGradualBoostBuckets and arraysEqual Additions
-6751 " ✅ Full Suite Green: 1465 Tests Across 86 Suites After Complete Session
-6752 " 🔵 Final Code Review: migrateGradualBoostBuckets Logic Confirmed Correct
-6753 8:28a 🔵 context.js Final Architecture: Complete Gradual Boost Display Pipeline
-6754 " 🔵 Comprehensive Intelligence Test Suite Coverage Confirmed for Attribute Display
-6755 " 🔵 createMockActor Pattern in Intelligence Tests: Two Approaches for Abilities Setup
 6756 8:29a 🔵 createMockActor Sets items as Non-Iterable Mock Object — for...of Fails
 6757 " 🟣 New Test: Gradual Boost Partial Display Preserved When Previewing Next Gradual Set
 6758 8:30a 🔴 Fixed getAppliedBoostsForLevel Order: Gradual Lookup Must Run Before Direct Bucket Lookup
@@ -345,6 +339,12 @@ S836 Free Heart Background: Prompt for untrained skill replacement when backgrou
 6860 9:44a 🔴 Free Heart Background Lore Skill Not Available at Character Creation Level
 6861 9:50a 🔴 Same-Level Feat-Granted Lore Now Appears in Skill Increase Picker Immediately
 6862 " 🔴 Auto-Scaling Feat Skills Stay Visible After Owned Actor Rule Catches Up
+6868 9:53a ✅ Patch Version Increment with Changelog Entry
+6869 9:54a 🔵 pf2e-leveler Current Version and Project Structure Confirmed
+6870 " 🔵 Files Staged for 3.4.30 Patch Release
+6871 " ✅ pf2e-leveler Bumped to 3.4.30 with Free Heart Lore Fix Changelog Entry
+6873 " 🔵 ESLint Passes Clean on 3.4.30 Release Candidate
+6874 " 🔵 Full Test Suite Passes for 3.4.30 Release
 
-Access 834k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 819k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
