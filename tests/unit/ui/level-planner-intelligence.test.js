@@ -920,6 +920,39 @@ describe('LevelPlanner intelligence boost planner choices', () => {
     }));
   });
 
+  it('shows same-level feat-granted lore skills in the skill increase picker', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.plan.levels[2].classFeats = [{
+      uuid: 'Compendium.pf2e.feats-srd.Item.free-heart',
+      name: 'Free Heart',
+      slug: 'free-heart',
+      dynamicLoreRules: [
+        { skill: 'abadar-lore', value: 1, source: 'choice:levelerfreeheartbackground' },
+      ],
+    }];
+
+    const skills = planner._buildSkillContext(planner.plan.levels[2], 2);
+    expect(skills.find((entry) => entry.slug === 'abadar-lore')).toEqual(expect.objectContaining({
+      rank: 1,
+      rankName: 'trained',
+      nextRankName: 'expert',
+      selected: false,
+    }));
+
+    setLevelSkillIncrease(planner.plan, 2, { skill: 'abadar-lore', toRank: 2 });
+    const selectedSkills = planner._buildSkillContext(planner.plan.levels[2], 2);
+    expect(selectedSkills.find((entry) => entry.slug === 'abadar-lore')).toEqual(expect.objectContaining({
+      rank: 1,
+      rankName: 'trained',
+      nextRankName: 'expert',
+      selected: true,
+    }));
+  });
+
   it('keeps skill rules from browsed nested feat choices while building level context', async () => {
     const actor = createMockActor();
     actor.class.slug = 'alchemist';
@@ -978,6 +1011,47 @@ describe('LevelPlanner intelligence boost planner choices', () => {
     }];
 
     const skills = planner._buildSkillContext(planner.plan.levels[7], 7);
+    expect(skills.find((entry) => entry.slug === 'acrobatics')).toEqual(expect.objectContaining({
+      rank: 3,
+      rankName: 'master',
+      featGranted: true,
+      featSourceName: 'Acrobat Dedication',
+      lockedByFeat: true,
+      disabled: false,
+      maxed: true,
+    }));
+  });
+
+  it('keeps owned auto-scaling feat skills visible after actor rules match the planned rank', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+    actor.system.skills.acrobatics.rank = 3;
+    actor.items = [{
+      type: 'feat',
+      name: 'Acrobat Dedication',
+      slug: 'acrobat-dedication',
+      system: {
+        rules: [{
+          key: 'ActiveEffectLike',
+          path: 'system.skills.acrobatics.rank',
+          value: 'ternary(gte(@actor.level,15),4,ternary(gte(@actor.level,7),3,2))',
+        }],
+      },
+    }];
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.plan.levels[2].classFeats = [{
+      uuid: 'Compendium.pf2e.feats-srd.Item.acrobat-dedication',
+      name: 'Acrobat Dedication',
+      slug: 'acrobat-dedication',
+      skillRules: [
+        { skill: 'acrobatics', value: 'ternary(gte(@actor.level,15),4,ternary(gte(@actor.level,7),3,2))' },
+      ],
+      skillRulesResolved: true,
+    }];
+
+    const skills = planner._buildSkillContext(planner.plan.levels[9], 9);
     expect(skills.find((entry) => entry.slug === 'acrobatics')).toEqual(expect.objectContaining({
       rank: 3,
       rankName: 'master',

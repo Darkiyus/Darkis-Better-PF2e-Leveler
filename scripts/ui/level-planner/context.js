@@ -493,6 +493,9 @@ export function buildSkillContext(planner, levelData, level) {
   const stateBeforeLevel = useHistoricalSkillState
     ? { lores: buildHistoricalLoreRanks(planner, level - 1) }
     : computeBuildState(planner.actor, planner.plan, level - 1);
+  const loreStateForPicker = useHistoricalSkillState
+    ? { lores: buildHistoricalLoreRanks(planner, level) }
+    : computeBuildState(planner.actor, planner.plan, level);
   const currentSkills = computeSkillPickerState(planner.actor, planner.plan, level, classDef, skillPickerOptions);
   const baseSkills = computeSkillPickerState(planner.actor, planner.plan, level, classDef, baseSkillPickerOptions);
   const currentIncrease = levelData.skillIncreases?.[0];
@@ -500,8 +503,10 @@ export function buildSkillContext(planner, levelData, level) {
   const skills = Object.entries(currentSkills).map(([slug, rawRank]) => {
     const rank = getRankBeforeCurrentSkillIncrease(slug, rawRank, currentIncrease);
     const nextRank = rank + 1;
-    const featGranted = rank > (baseSkills[slug] ?? 0);
-    const featSourceName = featGranted ? findSkillGrantingFeatName(planner.plan, slug, level) : null;
+    const maxed = nextRank > maxRank;
+    const plannedFeatSourceName = findSkillGrantingFeatName(planner.plan, slug, level);
+    const featGranted = rank > (baseSkills[slug] ?? 0) || (maxed && !!plannedFeatSourceName);
+    const featSourceName = featGranted ? plannedFeatSourceName : null;
     const lockedByFeat = featGranted && nextRank > maxRank;
     return {
       slug,
@@ -509,7 +514,7 @@ export function buildSkillContext(planner, levelData, level) {
       rank,
       rankName: PROFICIENCY_RANK_NAMES[rank],
       nextRankName: PROFICIENCY_RANK_NAMES[Math.min(nextRank, 4)],
-      maxed: nextRank > maxRank,
+      maxed,
       featGranted,
       featSourceName,
       disabled: !featGranted && nextRank > maxRank,
@@ -521,7 +526,7 @@ export function buildSkillContext(planner, levelData, level) {
   const selectedLoreSlug = currentIncrease?.skill && !isActiveSkillSlug(currentIncrease.skill)
     ? String(currentIncrease.skill).toLowerCase()
     : null;
-  const loreRanks = { ...(stateBeforeLevel.lores ?? {}) };
+  const loreRanks = { ...(loreStateForPicker.lores ?? stateBeforeLevel.lores ?? {}) };
   const loreSlugs = new Set(Object.keys(loreRanks));
   if (selectedLoreSlug) loreSlugs.add(selectedLoreSlug);
   if (selectedLoreSlug) {

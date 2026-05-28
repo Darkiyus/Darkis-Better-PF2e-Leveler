@@ -1,10 +1,18 @@
 # Changelog
 
+## 3.4.30
+
+### Level Planner
+
+- **Free Heart background Lore can now be raised on the same level** - Lore granted by the selected Free Heart background appears immediately in that level's skill increase list as trained, so it can be increased to expert right away
+
 ## 3.4.29
 
 ### Level Planner
 
 - **Standard partial boost labels now read PF2e object-shaped history** - Non-gradual level 10 rows now show pending level 5 half-steps as `+4(partial)` before selection, even when PF2e stores creation and boost history as keyed objects instead of arrays
+- **Auto-scaling feat skills now stay visible after their owned actor rule catches up** - Skills granted by feats such as Acrobat Dedication remain listed as locked, source-labeled skill increases at later levels instead of disappearing once the actor's own rule reports the same rank
+- **Same-level feat-granted Lore can now be increased immediately** - Lore granted by a feat choice such as Free Heart's selected background now appears in that level's skill increase list as trained, allowing the same level's skill increase to raise it to expert
 
 ## 3.4.28
 

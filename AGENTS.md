@@ -281,13 +281,13 @@ recommend splitting it along real responsibility boundaries.
 <claude-mem-context>
 # Memory Context
 
-# [pf2e-leveler] recent context, 2026-05-28 8:48am GMT+3
+# [pf2e-leveler] recent context, 2026-05-28 9:53am GMT+3
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (16,306t read) | 758,989t work | 98% savings
+Stats: 50 obs (16,545t read) | 834,433t work | 98% savings
 
 ### May 3, 2026
 S834 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 3 at 1:42 PM)
@@ -295,18 +295,6 @@ S120 Feat retraining implementation for pf2e-leveler — Task 2 complete (valida
 ### May 28, 2026
 S835 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:52 AM)
 S836 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:57 AM)
-6738 8:22a ✅ Full Suite Green: 1464 Tests Across 86 Suites After Complete Session's Work
-6739 8:23a 🔵 boostCount and selectedBoostCount Correctly Scale for Gradual Boost Levels
-6740 " 🔵 _migratePlan Initializes abilityBoosts Arrays for All Gradual Boost Levels Before Backfill Runs
-6741 8:24a 🔵 Gradual Boost Architecture Summary: Complete Implementation Map
-6742 8:25a 🔵 Asymmetric Guard Conditions: seedGradualBoostGroup vs backfillGradualBoostGroup
-6743 " 🔵 New Test Exposes _migratePlan Doesn't Split Plan-Level Boost Buckets for Gradual Mode
-6744 " 🟣 migrateGradualBoostBuckets Added to _migratePlan for Variant-Switch Migration
-6745 8:26a 🔵 Test _buildLevelContext() Not Awaited — Context Returns Promise Not Object
-6746 " 🔴 Test Fixed: Made Async and Added Required classDef Argument to _buildLevelContext
-6747 " 🔵 buildLevelContext Fails With Non-Iterable actor.items in Test Mock
-6748 " 🟣 migrateGradualBoostBuckets Verified: Test Now Passes
-6749 " ✅ Gradual Boost Migration Tests All Passing: 37 Intelligence + 92 Bootstrap
 6750 8:27a ✅ ESLint Clean After migrateGradualBoostBuckets and arraysEqual Additions
 6751 " ✅ Full Suite Green: 1465 Tests Across 86 Suites After Complete Session
 6752 " 🔵 Final Code Review: migrateGradualBoostBuckets Logic Confirmed Correct
@@ -345,6 +333,18 @@ S836 Free Heart Background: Prompt for untrained skill replacement when backgrou
 6793 8:48a 🔵 pf2e-leveler Project State: Version 3.4.28 with Uncommitted Level-Planner Changes
 6794 " ✅ pf2e-leveler Bumped from 3.4.28 to 3.4.29
 6795 " ✅ pf2e-leveler 3.4.29 Full Test Suite Passes: 1470/1470
+6796 " 🔵 3.4.29 CHANGELOG Entry Expands Partial Boost Label Description
+6797 8:49a 🟣 pf2e-leveler 3.4.29 Release: Five Level Planner Fixes Documented
+6798 " ✅ CHANGELOG Restructured: 3.4.29 Correctly Isolated from 3.4.28 Entries
+6849 9:39a 🟣 New failing test for auto-scaling feat skill visibility bug
+6850 " 🔵 Confirmed bug: acrobatics entry returns undefined when actor rank matches planned feat rank
+6852 " 🔴 Fixed: auto-scaling feat skills disappearing from skill picker when actor rank matches planned feat rank
+6853 9:40a ✅ CHANGELOG.md updated for auto-scaling feat skill fix in 3.4.29
+6854 " 🔴 pf2e-leveler 3.4.29 fix verified: all tests pass and lint clean
+6855 " 🔴 Full pf2e-leveler test suite passes: 1471/1471 tests green for v3.4.29
+6860 9:44a 🔴 Free Heart Background Lore Skill Not Available at Character Creation Level
+6861 9:50a 🔴 Same-Level Feat-Granted Lore Now Appears in Skill Increase Picker Immediately
+6862 " 🔴 Auto-Scaling Feat Skills Stay Visible After Owned Actor Rule Catches Up
 
-Access 759k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 834k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
