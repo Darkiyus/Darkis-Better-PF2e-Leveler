@@ -22,6 +22,15 @@ const renderHandlebarsTemplate = foundry.applications?.handlebars?.renderTemplat
 const RARITY_VALUES = ['common', 'uncommon', 'rare', 'unique'];
 const FORMULA_VARIANT_RANKS = ['minor', 'lesser', 'moderate', 'greater', 'major', 'true'];
 const FORMULA_VARIANT_PATTERN = FORMULA_VARIANT_RANKS.join('|');
+const ITEM_SORT_MODES = ['manual', 'level-asc', 'level-desc', 'alpha-asc', 'alpha-desc'];
+const FORMULA_SORT_MODES = ['level-asc', 'level-desc', 'alpha-asc', 'alpha-desc'];
+const ITEM_SORT_LABELS = {
+  manual: 'PF2E_LEVELER.ITEM_PICKER.SORT_DEFAULT',
+  'level-asc': 'PF2E_LEVELER.ITEM_PICKER.SORT_LEVEL_ASC',
+  'level-desc': 'PF2E_LEVELER.ITEM_PICKER.SORT_LEVEL_DESC',
+  'alpha-asc': 'PF2E_LEVELER.ITEM_PICKER.SORT_ALPHA_ASC',
+  'alpha-desc': 'PF2E_LEVELER.ITEM_PICKER.SORT_ALPHA_DESC',
+};
 
 const CATEGORY_LABELS = {
   ancestry: 'Ancestry',
@@ -66,6 +75,13 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.takenItems = Array.isArray(options.takenItems) ? options.takenItems : [];
     this.collapseFormulaVariants = options.collapseFormulaVariants === true;
     this._takenItemIdentityKeys = new Set(this.takenItems.flatMap((item) => getItemMatchKeys(item)));
+    this._takenFormulaBaseNames = this.collapseFormulaVariants
+      ? new Set(this.takenItems.map((item) => getFormulaBaseName(item)).filter(Boolean))
+      : new Set();
+    this.sortMode = normalizeItemSortMode(options.sortMode, {
+      allowManual: !this.collapseFormulaVariants,
+      fallback: this.collapseFormulaVariants ? 'level-asc' : 'manual',
+    });
     this.filteredItems = [];
     this.selectedItemUuids = new Set();
     this.searchText = '';
@@ -166,6 +182,8 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       maxLevel: this.maxLevel,
       maxLevelCapped: this.maxLevelCap != null,
       levelOptions: this._getLevelOptions(),
+      sortMode: this.sortMode,
+      sortOptions: this._getSortOptions(),
     };
   }
 
@@ -253,7 +271,7 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (this.collapseFormulaVariants) {
       items = collapseFormulaVariantsToLowestLevel(items);
     }
-    return items;
+    return sortItemsForPicker(items, this.sortMode);
   }
 
   _getAvailableRarityValues() {
@@ -367,6 +385,15 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   _getLevelOptions() {
     const max = Number.isFinite(this.maxLevelCap) ? this.maxLevelCap : 24;
     return Array.from({ length: Math.max(0, max) + 1 }, (_, i) => ({ value: String(i), label: String(i) }));
+  }
+
+  _getSortOptions() {
+    const modes = this.collapseFormulaVariants ? FORMULA_SORT_MODES : ITEM_SORT_MODES;
+    return modes.map((value) => ({
+      value,
+      label: game.i18n?.localize?.(ITEM_SORT_LABELS[value]) ?? value,
+      selected: this.sortMode === value,
+    }));
   }
 
   _normalizeMaxLevel(value = this.maxLevel) {
@@ -491,6 +518,8 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         labels: { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', unique: 'Unique' },
         lockedValues: this._getRarityToggleLockedValues(),
       }),
+      sortMode: this.sortMode,
+      sortOptions: this._getSortOptions(),
     };
     const html = await renderHandlebarsTemplate(`modules/${MODULE_ID}/templates/item-picker.hbs`, context);
     const temp = document.createElement('div');
@@ -647,6 +676,18 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       maxLevelSelect.addEventListener('change', (e) => {
         this.maxLevel = this._normalizeMaxLevel(e.target.value);
         e.target.value = this.maxLevel;
+        this._updateList();
+      }, { signal });
+    }
+
+    const sortSelect = el.querySelector('[data-action="sortItems"]');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        this.sortMode = normalizeItemSortMode(e.target.value, {
+          allowManual: !this.collapseFormulaVariants,
+          fallback: this.collapseFormulaVariants ? 'level-asc' : 'manual',
+        });
+        e.target.value = this.sortMode;
         this._updateList();
       }, { signal });
     }
@@ -916,8 +957,12 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _isItemTaken(item) {
     if (item?.alreadyTaken === true) return true;
-    if (!item || this._takenItemIdentityKeys.size === 0) return false;
-    return getItemMatchKeys(item).some((key) => this._takenItemIdentityKeys.has(key));
+    if (!item) return false;
+    if (this._takenItemIdentityKeys.size > 0 && getItemMatchKeys(item).some((key) => this._takenItemIdentityKeys.has(key))) {
+      return true;
+    }
+    const formulaBaseName = getFormulaBaseName(item);
+    return formulaBaseName.length > 0 && this._takenFormulaBaseNames.has(formulaBaseName);
   }
 }
 
@@ -960,10 +1005,46 @@ function collapseFormulaVariantsToLowestLevel(items) {
   return orderedKeys.map((key) => byFormula.get(key));
 }
 
+function sortItemsForPicker(items, sortMode) {
+  if (sortMode === 'manual') return items;
+  const sorted = [...items];
+  sorted.sort((a, b) => {
+    if (sortMode === 'level-asc') {
+      return compareNumbers(getItemLevel(a), getItemLevel(b)) || compareItemNames(a, b);
+    }
+    if (sortMode === 'level-desc') {
+      return compareNumbers(getItemLevel(b), getItemLevel(a)) || compareItemNames(a, b);
+    }
+    if (sortMode === 'alpha-desc') {
+      return compareItemNames(b, a);
+    }
+    return compareItemNames(a, b);
+  });
+  return sorted;
+}
+
+function normalizeItemSortMode(value, { allowManual = true, fallback = 'manual' } = {}) {
+  const mode = String(value ?? '').trim().toLowerCase();
+  const allowedModes = allowManual ? ITEM_SORT_MODES : FORMULA_SORT_MODES;
+  return allowedModes.includes(mode) ? mode : fallback;
+}
+
+function compareNumbers(a, b) {
+  return a === b ? 0 : a - b;
+}
+
+function compareItemNames(a, b) {
+  const nameCompare = getFormulaBaseName(a).localeCompare(getFormulaBaseName(b), undefined, { sensitivity: 'base' });
+  if (nameCompare !== 0) return nameCompare;
+  return String(a?.uuid ?? '').localeCompare(String(b?.uuid ?? ''), undefined, { sensitivity: 'base' });
+}
+
 function getFormulaBaseName(item) {
-  return String(item?.name ?? '')
+  const name = typeof item === 'string' ? item : item?.name;
+  return String(name ?? '')
     .toLowerCase()
     .replace(/[\u2019`]/g, "'")
+    .replace(/'s\b/g, '')
     .replace(new RegExp(`^\\s*(?:${FORMULA_VARIANT_PATTERN})\\s+`, 'i'), '')
     .replace(new RegExp(`\\s*\\((?:${FORMULA_VARIANT_PATTERN})\\)\\s*$`, 'i'), '')
     .replace(new RegExp(`\\s*,\\s*(?:${FORMULA_VARIANT_PATTERN})\\s*$`, 'i'), '')

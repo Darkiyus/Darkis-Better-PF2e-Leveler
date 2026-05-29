@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.36
+
+### Level Planner
+
+- **Free Heart backgrounds now offer replacement skills when both choices are trained** - Backgrounds that let Free Heart choose between two skills now widen to untrained replacement skills when both authored options are already trained, instead of leaving every option disabled
+- **Partial Intelligence boosts no longer ask for bonus picks** - Imported historical Intelligence boosts only require bonus skill and language selections when the boost produces a full modifier increase, not when it only creates pending partial progress
+- **Alchemist formula picks are now sorted and block known variant families** - New formula grant pickers default to level sorting, expose level/alphabetical sort modes, and treat lower-rank formulas as already known when the character already has a higher-rank version such as Alchemist Fire (Greater)
+
 ## 3.4.35
 
 ### Level Planner

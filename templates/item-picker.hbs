@@ -44,6 +44,14 @@
           {{/each}}
           </select>
         </div>
+        <div class="picker__utility-row picker__utility-row--inline-label">
+          <div class="picker__filter-label">{{localize "PF2E_LEVELER.ITEM_PICKER.SORT"}}</div>
+          <select class="picker__select picker__select--compact" data-action="sortItems">
+          {{#each sortOptions}}
+          <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+          </select>
+        </div>
       </div>
 
       <div class="picker__filter-group">

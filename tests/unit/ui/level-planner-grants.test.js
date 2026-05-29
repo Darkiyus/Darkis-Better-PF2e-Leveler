@@ -768,6 +768,90 @@ describe('level planner grant previews', () => {
     ]);
   });
 
+  test('widens selected Free Heart background skill choices when both authored skills are already trained', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-free-heart') {
+        return {
+          uuid,
+          name: 'Free Heart',
+          slug: 'free-heart',
+          system: { slug: 'free-heart', traits: { value: ['elf'] }, rules: [] },
+        };
+      }
+      if (uuid === 'Compendium.pf2e.backgrounds.Item.roaming-performer') {
+        return {
+          uuid,
+          name: 'Roaming Performer',
+          type: 'background',
+          system: {
+            description: {
+              value: '<p>You become trained in Acrobatics or Athletics. If you were already trained in both, you become trained in a skill of your choice.</p>',
+            },
+            rules: [{
+              key: 'ChoiceSet',
+              flag: 'backgroundSkill',
+              prompt: 'PF2E.SpecificRule.Prompt.Skill',
+              choices: [
+                { value: 'acrobatics', label: 'Acrobatics' },
+                { value: 'athletics', label: 'Athletics' },
+              ],
+            }],
+          },
+        };
+      }
+      return null;
+    });
+
+    const actor = createMockActor({ items: [] });
+    actor.system.skills.acrobatics.rank = 1;
+    actor.system.skills.athletics.rank = 1;
+
+    const ancestryFeat = {
+      uuid: 'feat-free-heart',
+      name: 'Free Heart',
+      slug: 'free-heart',
+      choices: {
+        levelerFreeHeartBackground: 'Compendium.pf2e.backgrounds.Item.roaming-performer',
+      },
+    };
+    const planner = {
+      actor,
+      selectedLevel: 13,
+      plan: {
+        classSlug: 'fighter',
+        levels: {
+          13: {
+            ancestryFeats: [ancestryFeat],
+            featGrants: [],
+          },
+        },
+      },
+      _compendiumCache: {
+        'category-backgrounds': [
+          { uuid: 'Compendium.pf2e.backgrounds.Item.roaming-performer', name: 'Roaming Performer', type: 'background', rarity: 'common', traits: [], slug: 'roaming-performer' },
+        ],
+      },
+      _buildAttributeContext: jest.fn(() => ({})),
+      _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+      _buildIntBonusSkillContext: jest.fn(() => []),
+      _buildIntBonusLanguageContext: jest.fn(() => []),
+      _buildSkillContext: jest.fn(() => []),
+      _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+      _isCustomPlanOpen: jest.fn(() => false),
+    };
+
+    const context = await buildLevelContext(planner, FIGHTER, {});
+    const backgroundSkillChoice = context.ancestryFeatChoiceSets.find((choiceSet) => choiceSet.flag === 'backgroundSkill');
+
+    expect(backgroundSkillChoice.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: 'arcana', disabled: false }),
+    ]));
+    expect(backgroundSkillChoice.options).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: 'acrobatics', disabled: false }),
+      expect.objectContaining({ value: 'athletics', disabled: false }),
+    ]));
+  });
+
   test('prompts for an untrained skill when selected Free Heart background grants an already trained skill', async () => {
     global.fromUuid = jest.fn(async (uuid) => {
       if (uuid === 'feat-free-heart') {

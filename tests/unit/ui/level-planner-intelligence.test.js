@@ -792,6 +792,36 @@ describe('LevelPlanner intelligence boost planner choices', () => {
     }));
   });
 
+  it('does not ask for Intelligence bonus choices when an imported past boost only creates a pending partial', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+    actor.system.details.level.value = 8;
+    actor.system.abilities.int.mod = 5;
+    actor.system.build.attributes.boosts[5] = ['int'];
+    actor.abilities = {
+      str: { mod: 0, base: 0 },
+      dex: { mod: 0, base: 0 },
+      con: { mod: 0, base: 0 },
+      int: { mod: 5, base: 4.5 },
+      wis: { mod: 0, base: 0 },
+      cha: { mod: 0, base: 0 },
+    };
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.plan.importedFromActor = {
+      actorLevel: 8,
+      hideHistoricalSkillIncreases: true,
+      initialSkills: ['arcana'],
+    };
+    setLevelBoosts(planner.plan, 5, ['int']);
+    planner.selectedLevel = 5;
+
+    expect(planner._buildIntelligenceBenefitContext(5)).toBeNull();
+    expect(planner._buildIntBonusSkillContext(planner.plan.levels[5], 5)).toBeNull();
+    expect(planner._buildIntBonusLanguageContext(planner.plan.levels[5], 5)).toBeNull();
+  });
+
   it('replaces single-slot Intelligence bonus selections when clicking a different option', () => {
     const actor = createMockActor();
     actor.class.slug = 'alchemist';

@@ -942,11 +942,12 @@ async function buildFreeHeartBackgroundChoiceSets(planner, feat, source, parsedC
   syncFreeHeartBackgroundLoreRules(feat, selectedBackground);
   const wizard = createPlannerChoiceWizard(planner);
   const backgroundChoiceSets = await parseChoiceSets(wizard, selectedBackground.system?.rules ?? [], feat?.choices ?? {}, selectedBackground);
+  const backgroundHasSkillFallback = hasSkillFallbackText(selectedBackground.system?.description?.value);
   choiceSets.push(...backgroundChoiceSets.map((choiceSet) => ({
     ...choiceSet,
     sourceName: selectedBackground.name,
     ...((choiceSet?.options ?? []).every((option) => isActiveSkillSlug(option?.value))
-      ? { grantsSkillTraining: true }
+      ? { grantsSkillTraining: true, ...(backgroundHasSkillFallback ? { widenWhenAllOptionsBlocked: true } : {}) }
       : {}),
   })));
 
@@ -1865,7 +1866,7 @@ function decoratePlannerSkillChoiceOptions(planner, entry, feat, options) {
   );
   const blockedSkills = new Set((entry?.blockedSkills ?? []).map((skill) => normalizeSkillSlug(skill)));
 
-  return options.map((option) => {
+  const decorated = options.map((option) => {
     const value = normalizeSkillSlug(option?.value);
     const selectedHere = value === selected;
     const trainedBeforeLevel = (priorState.skills?.[value] ?? 0) >= 1;
@@ -1878,6 +1879,40 @@ function decoratePlannerSkillChoiceOptions(planner, entry, feat, options) {
       disabled,
     };
   });
+
+  if (entry?.widenWhenAllOptionsBlocked !== true || decorated.some((option) => option.disabled !== true)) {
+    return decorated;
+  }
+
+  return buildPlannerSkillChoiceReplacementOptions({
+    priorState,
+    selected,
+    selectedIntSkills,
+    selectedElsewhere,
+    blockedSkills,
+  });
+}
+
+function buildPlannerSkillChoiceReplacementOptions({
+  priorState,
+  selected,
+  selectedIntSkills,
+  selectedElsewhere,
+  blockedSkills,
+}) {
+  return getActiveSkillSlugs().map((slug) => {
+    const selectedHere = slug === selected;
+    const trainedBeforeLevel = (priorState.skills?.[slug] ?? 0) >= 1;
+    const disabled = !selectedHere
+      && (trainedBeforeLevel || selectedIntSkills.has(slug) || selectedElsewhere.has(slug) || blockedSkills.has(slug));
+
+    return {
+      value: slug,
+      label: localizeSkillSlug(slug),
+      selected: selectedHere,
+      disabled,
+    };
+  }).filter((entry) => !entry.disabled || entry.selected);
 }
 
 function extractGrantPreselectedChoices(rule) {

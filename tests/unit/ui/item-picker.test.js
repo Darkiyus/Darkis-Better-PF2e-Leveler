@@ -195,6 +195,56 @@ describe('ItemPicker', () => {
     expect([...picker.selectedItemUuids]).toEqual(['item-b']);
   });
 
+  test('marks lower formula variants taken when a higher variant is already known', async () => {
+    const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), {
+      multiSelect: true,
+      collapseFormulaVariants: true,
+      takenItems: [
+        { uuid: 'item-greater-alchemist-fire', name: 'Alchemist Fire (Greater)' },
+      ],
+      items: [
+        {
+          uuid: 'item-lesser-alchemist-fire',
+          name: "Alchemist's Fire (Lesser)",
+          type: 'consumable',
+          system: { traits: { rarity: 'common', value: ['alchemical', 'bomb'] }, level: { value: 1 } },
+        },
+        {
+          uuid: 'item-greater-alchemist-fire',
+          name: "Alchemist's Fire (Greater)",
+          type: 'consumable',
+          system: { traits: { rarity: 'common', value: ['alchemical', 'bomb'] }, level: { value: 11 } },
+        },
+        {
+          uuid: 'item-acid-flask',
+          name: 'Acid Flask',
+          type: 'consumable',
+          system: { traits: { rarity: 'common', value: ['alchemical', 'bomb'] }, level: { value: 1 } },
+        },
+      ],
+    });
+
+    const context = await picker._prepareContext();
+
+    expect(context.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        uuid: 'item-lesser-alchemist-fire',
+        alreadyTaken: true,
+        selectionBlocked: true,
+      }),
+      expect.objectContaining({
+        uuid: 'item-acid-flask',
+        alreadyTaken: false,
+        selectionBlocked: false,
+      }),
+    ]));
+
+    picker._toggleSelectedItem('item-lesser-alchemist-fire');
+    picker._toggleSelectedItem('item-acid-flask');
+
+    expect([...picker.selectedItemUuids]).toEqual(['item-acid-flask']);
+  });
+
   test('toggle select all skips visible taken formulas', () => {
     const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), {
       multiSelect: true,
@@ -383,11 +433,59 @@ describe('ItemPicker', () => {
     const context = await picker._prepareContext();
 
     expect(context.items.map((item) => item.uuid)).toEqual([
-      'item-lesser-antidote',
-      'item-lesser-alchemist-fire',
       'item-acid-flask',
+      'item-lesser-alchemist-fire',
+      'item-lesser-antidote',
     ]);
     expect(context.filteredCount).toBe(3);
+  });
+
+  test('supports explicit sort modes for formula picking', async () => {
+    const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), {
+      collapseFormulaVariants: true,
+      items: [
+        {
+          uuid: 'item-level-3',
+          name: 'Bottled Lightning (Moderate)',
+          type: 'consumable',
+          system: { traits: { rarity: 'common', value: ['alchemical', 'bomb'] }, level: { value: 3 } },
+        },
+        {
+          uuid: 'item-level-1-b',
+          name: 'Antidote (Lesser)',
+          type: 'consumable',
+          system: { traits: { rarity: 'common', value: ['alchemical'] }, level: { value: 1 } },
+        },
+        {
+          uuid: 'item-level-1-a',
+          name: 'Acid Flask',
+          type: 'consumable',
+          system: { traits: { rarity: 'common', value: ['alchemical', 'bomb'] }, level: { value: 1 } },
+        },
+      ],
+    });
+
+    const context = await picker._prepareContext();
+
+    expect(context.sortMode).toBe('level-asc');
+    expect(context.sortOptions.map((entry) => entry.value)).toEqual([
+      'level-asc',
+      'level-desc',
+      'alpha-asc',
+      'alpha-desc',
+    ]);
+    expect(context.items.map((item) => item.uuid)).toEqual([
+      'item-level-1-a',
+      'item-level-1-b',
+      'item-level-3',
+    ]);
+
+    picker.sortMode = 'alpha-desc';
+    expect(picker._filterItems().map((item) => item.uuid)).toEqual([
+      'item-level-3',
+      'item-level-1-b',
+      'item-level-1-a',
+    ]);
   });
 
   test('keeps formula variants visible when collapse is not requested', async () => {
@@ -614,6 +712,8 @@ describe('ItemPicker', () => {
     expect(template).not.toContain('{{localize "PF2E_LEVELER.CREATION.SEARCH"}}');
     expect(template).toContain('picker__utility-row picker__utility-row--inline-label');
     expect(template).toContain('<div class="picker__filter-label">{{localize "PF2E_LEVELER.FEAT_PICKER.FILTER_LEVEL"}}</div>');
+    expect(template).toContain('<div class="picker__filter-label">{{localize "PF2E_LEVELER.ITEM_PICKER.SORT"}}</div>');
+    expect(template).toContain('data-action="sortItems"');
     expect(template).not.toContain('{{localize "PF2E_LEVELER.FEAT_PICKER.MAX_LEVEL" level=this.label}}');
     expect(template.indexOf('data-action="traitInput"')).toBeGreaterThan(template.indexOf('data-action="searchItems"'));
     expect(template.indexOf('data-action="traitInput"')).toBeLessThan(template.indexOf('data-action="filterMaxLevel"'));

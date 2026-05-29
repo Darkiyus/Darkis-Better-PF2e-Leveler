@@ -799,7 +799,7 @@ function getActorAbilityModifier(actor, attr) {
   for (const value of [actorMod, systemMod, actorAbilities?.base, systemAbility?.base]) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric % 1 === 0) continue;
-    if (displayMod == null || Math.trunc(numeric) === Math.trunc(displayMod)) return numeric;
+    if (isRelevantFractionalAbilityModifier(numeric, displayMod)) return numeric;
   }
 
   if (Number.isFinite(actorMod)) return Number(actorMod);
@@ -809,6 +809,12 @@ function getActorAbilityModifier(actor, attr) {
   if (Number.isFinite(base)) return Number(base);
 
   return 0;
+}
+
+function isRelevantFractionalAbilityModifier(numeric, displayMod) {
+  if (displayMod == null) return true;
+  if (Math.trunc(numeric) === Math.trunc(displayMod)) return true;
+  return numeric < displayMod && Math.abs(displayMod - numeric - 0.5) < 0.001;
 }
 
 function isPlannedBoostReflectedOnActor(actor, attr, boostLevel, actorLevel) {
