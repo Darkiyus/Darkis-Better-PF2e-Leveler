@@ -942,12 +942,11 @@ async function buildFreeHeartBackgroundChoiceSets(planner, feat, source, parsedC
   syncFreeHeartBackgroundLoreRules(feat, selectedBackground);
   const wizard = createPlannerChoiceWizard(planner);
   const backgroundChoiceSets = await parseChoiceSets(wizard, selectedBackground.system?.rules ?? [], feat?.choices ?? {}, selectedBackground);
-  const backgroundHasSkillFallback = hasSkillFallbackText(selectedBackground.system?.description?.value);
   choiceSets.push(...backgroundChoiceSets.map((choiceSet) => ({
     ...choiceSet,
     sourceName: selectedBackground.name,
     ...((choiceSet?.options ?? []).every((option) => isActiveSkillSlug(option?.value))
-      ? { grantsSkillTraining: true, ...(backgroundHasSkillFallback ? { widenWhenAllOptionsBlocked: true } : {}) }
+      ? { grantsSkillTraining: true, widenWhenAllOptionsBlocked: true }
       : {}),
   })));
 

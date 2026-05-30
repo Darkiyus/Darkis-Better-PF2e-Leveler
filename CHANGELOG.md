@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.37
+
+### Level Planner
+
+- **Free Heart background skill choices now widen without relying on prose text** - Martial Disciple-style background skill choices now offer untrained replacement skills when every authored option is already trained, even if PF2e rule data does not expose the fallback sentence
+
 ## 3.4.36
 
 ### Level Planner
