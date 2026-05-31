@@ -2116,6 +2116,10 @@ function getFeatAliases(feat) {
     addFeatChoiceAlias(aliases, selected);
   }
 
+  for (const alias of getMultifariousMuseChoiceAliases(feat)) {
+    aliases.add(alias);
+  }
+
   for (const selected of Object.values(feat?.flags?.pf2e?.rulesSelections ?? {})) {
     addFeatChoiceAlias(aliases, selected);
   }
@@ -2133,6 +2137,21 @@ function getFeatAliases(feat) {
   }
 
   return aliases;
+}
+
+function getMultifariousMuseChoiceAliases(feat) {
+  const slug = String(feat?.slug ?? '')
+    .trim()
+    .toLowerCase();
+  const name = String(feat?.name ?? '')
+    .trim()
+    .toLowerCase();
+  if (slug !== 'multifarious-muse' && name !== 'multifarious muse') return [];
+
+  return [...getFeatChoiceSelectionMap(feat).values()]
+    .map((value) => slugify(value))
+    .filter(Boolean)
+    .map((value) => `${value}-muse`);
 }
 
 function getSubclassAliases(feat) {

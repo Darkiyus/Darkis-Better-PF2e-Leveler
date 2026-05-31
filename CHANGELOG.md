@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.38
+
+### Level Planner
+
+- **Multifarious Muse choices now satisfy muse prerequisites** - Bards who choose Enigma through Multifarious Muse now satisfy Enigma Muse prerequisites such as Loremaster's Etude
+
 ## 3.4.37
 
 ### Level Planner

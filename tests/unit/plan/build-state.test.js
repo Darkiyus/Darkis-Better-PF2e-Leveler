@@ -1,5 +1,6 @@
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { ALCHEMIST } from '../../../scripts/classes/alchemist.js';
+import { BARD } from '../../../scripts/classes/bard.js';
 import { DRUID } from '../../../scripts/classes/druid.js';
 import { FIGHTER } from '../../../scripts/classes/fighter.js';
 import { GUARDIAN } from '../../../scripts/classes/guardian.js';
@@ -17,6 +18,7 @@ import { createPlan, addLevelFeatRetrain, addLevelSkillRetrain, setLevelBoosts, 
 beforeAll(() => {
   ClassRegistry.clear();
   ClassRegistry.register(ALCHEMIST);
+  ClassRegistry.register(BARD);
   ClassRegistry.register(DRUID);
   ClassRegistry.register(FIGHTER);
   ClassRegistry.register(GUARDIAN);
@@ -1977,6 +1979,36 @@ describe('computeBuildState', () => {
     expect(state.feats.has('maestro')).toBe(true);
     expect(state.feats.has('maestro-muse')).toBe(true);
     expect(state.featAliasSources.get('maestro-muse')?.has('maestro')).toBe(true);
+  });
+
+  test('tracks selected bard muse aliases from Multifarious Muse choices', () => {
+    const actor = createMockActor();
+    actor.items = {
+      filter: jest.fn((predicate) => {
+        const items = [
+          {
+            type: 'feat',
+            name: 'Multifarious Muse',
+            slug: 'multifarious-muse',
+            system: { traits: { value: ['bard'] } },
+            flags: {
+              system: {
+                rulesSelections: {
+                  muse: 'enigma',
+                },
+              },
+            },
+          },
+        ];
+        return items.filter(predicate);
+      }),
+    };
+
+    const state = computeBuildState(actor, createPlan('bard'), 4);
+
+    expect(state.feats.has('enigma')).toBe(true);
+    expect(state.feats.has('enigma-muse')).toBe(true);
+    expect(state.featAliasSources.get('enigma-muse')?.has('multifarious-muse')).toBe(true);
   });
 
   test('infers variable bloodline tradition from subclass choice without an embedded spellcasting entry', () => {

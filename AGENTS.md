@@ -281,13 +281,13 @@ recommend splitting it along real responsibility boundaries.
 <claude-mem-context>
 # Memory Context
 
-# [pf2e-leveler] recent context, 2026-05-28 1:48pm GMT+3
+# [pf2e-leveler] recent context, 2026-05-31 9:33am GMT+3
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (20,315t read) | 234,093t work | 91% savings
+Stats: 50 obs (17,914t read) | 293,866t work | 94% savings
 
 ### May 3, 2026
 S834 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 3 at 1:42 PM)
@@ -295,43 +295,6 @@ S120 Feat retraining implementation for pf2e-leveler — Task 2 complete (valida
 ### May 28, 2026
 S835 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:52 AM)
 S836 Free Heart Background: Prompt for untrained skill replacement when background grants an already-trained skill (May 28 at 7:57 AM)
-6993 12:34p 🔴 Prevent Duplicate Fallback Prompts When Description-Text and Rule-Based Detection Both Fire
-6994 " 🔴 Test Mock Actor Missing `abilities`/`build` Properties for INT Boost Test
-6996 12:35p ✅ All Tests Green — Preparing Changelog Entry for v3.4.31
-6997 " ✅ pf2e-leveler Released as v3.4.31
-6998 " 🔴 v3.4.31 Passes Full Lint Check
-6999 " 🔴 `npm version` Does Not Update `module.json` in pf2e-leveler
-7001 " ✅ pf2e-leveler v3.4.31 Full Test Suite Green
-7002 12:36p ✅ v3.4.31 Complete Changeset Ready to Commit — 9 Files Changed
-7020 1:17p 🔵 Level Planner Skill Grant Logic Conflates "Granted" vs "Trained" States Incorrectly
-7021 1:18p 🔵 Dual Code Paths in `buildInitialSkillChoiceSetsAndFallbacks` Produce "Already Trained" vs "Already Granted" Inconsistency
-7022 1:19p 🔵 `getAutomaticInitialSkillTrainingEntries` and `getInitialSkillSourceItems` Return Different Skill Sets — Root Cause of Double-Prompt
-7023 " 🔴 Fixed Double-Prompt: Duplicate-Loop Now Skips Skills Already Covered by Fallback-Text Detection
-7024 " 🔴 Test Updated to Assert Alchemist Dedication Does Not Produce a `duplicateSkillFallback_` Prompt
-7025 " 🔴 All 92 Tests Pass and Lint Clean After Double-Prompt Fix in `context.js`
-7026 1:20p 🔴 Full Test Suite Green: 1474/1474 Tests Pass Across All 86 Suites
-7027 " ✅ Three Files Modified and Uncommitted: context.js, test file, and AGENTS.md
-7028 1:21p 🔵 Initial Skill Choice-Sets Dialog CSS Uses Non-Standard Variable Names With Hardcoded Fallbacks
-7029 " 🔵 Confirmed: Choice-Sets CSS Uses 6 Undefined Variable Names — All Fall Through to Hardcoded Values
-7030 " 🔄 Choice-Sets Dialog CSS Refactored to Use Leveler Design Tokens
-7033 1:24p 🔴 Dialog Scroll Constraint Moved From Inner Grid to Outer Container
-7035 1:25p ✅ Full Suite Green After All v3.4.31 Dialog Fixes: 1474/1474 Tests, Lint Clean
-7037 1:26p 🔵 Initial Skill Dialog Count Display Excludes Dropdown-Selected Replacement Skills
-7038 " 🟣 Added Test Specifying Cross-Fallback Deduplication: Selecting a Skill in One Dropdown Should Disable It in Other Fallback Dropdowns
-7040 1:27p 🔵 TDD Red Phase: "Ancient Elf Dedication" Test Fails — `initialSkills` Is `[]` Not `['deception']`
-7042 1:28p 🔵 Interactive Fallback Test Accidentally Applied to Wrong Test Case — "Ancient Elf" Test Still Uses Simple Mock
-7043 " 🔵 Interactive Fallback Test Now in Correct "Ancient Elf" Test — Failing Because `data-initial-skill-choice-fallback` Attribute Is Not Rendered
-7045 1:29p 🟣 Cross-Fallback Skill Deduplication Implemented: Selecting Same Skill in Multiple Fallback Dropdowns Now Prevents Duplicates
-7046 " 🟣 Full Suite Passes After Cross-Fallback Deduplication: 92/92 Tests, Lint Clean
-7047 " 🟣 Full Suite Green: 1474/1474 Tests Pass — All Changes Verified and Commit-Ready
-7048 " 🔵 Changes Split Across Staged and Unstaged: index.js and Latest Test Changes Are Unstaged
-7051 1:32p 🔴 Final State Confirmed: All Code Changes Verified Before Commit
-7052 " 🟣 Test Expanded: Fallback-Selected Skills Now Expected to Auto-Check Their Skill Cards and Increment the Counter
-7053 1:33p 🟣 Fallback-Selected Skills Now Auto-Check and Lock Their Skill Cards in the Dialog
-7054 " 🟣 Skill Card Auto-Lock Feature Complete: 92/92 Tests Pass, Lint Clean
-7055 1:34p 🟣 Complete Starting Skill Training Dialog Overhaul Ready for Commit — 1474/1474 Tests Pass
-7059 1:35p 🟣 Test Expanded: Manually-Checked Skill Cards Should Also Disable That Skill in Fallback Dropdowns
-7060 " 🟣 Bidirectional Skill Card / Fallback Dropdown Sync Implemented
 7061 1:36p 🟣 Full Bootstrap Suite Passes After Bidirectional Sync: 92/92 Tests, Lint Clean
 7064 1:38p 🔵 CHANGELOG.md v3.4.31 Entry Is Incomplete — Does Not Reflect Full Dialog Overhaul Done This Session
 7065 " ✅ Version Bumped to 3.4.32 — New Changelog Entry Added for Starting Skill Dialog Overhaul
@@ -345,6 +308,44 @@ S836 Free Heart Background: Prompt for untrained skill replacement when backgrou
 7075 " ✅ All Related Test Suites Pass After Dedication Fallback Skill Refactor
 7076 1:48p ✅ CHANGELOG v3.4.32 Updated to Reflect Correct Fallback Skill Behavior
 7077 " ✅ Full Test Suite Passes After Dedication Fallback Skill Refactor — 1474/1474
+7079 1:49p ✅ pf2e-leveler Bumped to v3.4.33 with Dedication Fallback Skill Fix as Separate Release
+7081 1:51p ✅ pf2e-leveler v3.4.33 Changes Fully Staged, All 1474 Tests Green
+### May 31, 2026
+7148 9:20a 🔵 pf2e-leveler FoundryVTT Module: Prerequisite & Feat Filtering Architecture
+7149 " 🔵 pf2e-leveler Prerequisite Checker & Feat Picker Architecture: Deep Read
+7150 9:21a 🔵 pf2e-leveler Additional Archetype Feat Unlock System & Feat Filter Category Logic
+7152 " 🔵 Loremaster's Etude Feat Not Found in Local FoundryVTT Data
+7153 " 🔵 pf2e-leveler Content Guidance System: GM-Controlled Per-Item Allow/Block
+7155 9:22a 🔵 pf2e-leveler Build State Feat Computation: Alias System & Archetype Progress Tracking
+7156 " 🔵 Level Planner Feat Selection Storage: Full Metadata Persisted on Pick
+7157 9:23a 🔵 parsePrerequisiteNode("enigma muse") Parses as Feat Slug, Not Subclass Identity
+7158 " 🟣 Added Failing Test: Loremaster's Etude Should Satisfy Enigma Muse Prerequisite via Loremaster Dedication Unlock
+7159 " 🔵 Confirmed Bug: Loremaster's Etude "Enigma Muse" Prerequisite Fails for Non-Bard with Loremaster Dedication
+7163 " 🔴 Fixed: Loremaster's Etude Enigma Muse Prerequisite Now Satisfied for Loremaster Dedication Unlocks
+7164 9:24a 🔵 Fix Works But Test Assertion Too Strict: Prereq Text Now "Enigma Muse (via Loremaster Dedication)"
+7165 " 🔴 Loremaster's Etude Enigma Muse Prerequisite Fix: Test Now Passing
+7166 " 🔴 All 58 feat-picker Tests Pass and Lint Clean After Loremaster Fix
+7167 " 🔴 Full Test Suite Passes After Loremaster Fix: 1484 Tests, 86 Suites, All Green
+7173 9:25a ✅ pf2e-leveler v3.4.37: Working Tree Ready for Loremaster Fix Commit
+7174 " ✅ CHANGELOG.md Updated for v3.4.37 with Loremaster Fix Entry
+7181 9:27a 🔵 Bard Muse Subclass Aliases vs Loremaster Fix: Understanding the Full Picture
+7183 " 🔵 Bard Class Definition in scripts/classes/bard.js; BARD Not Registered in build-state.test.js Suite
+7184 9:28a ✅ Loremaster Fix Reverted from feat-picker.js: Searching for Better Approach
+7185 " ✅ Loremaster Test Also Reverted from feat-picker.test.js: Full Rollback of First Approach
+7186 " ✅ Full Rollback Complete: All Three Files Reverted to Pre-Fix State
+7191 " 🟣 New Failing Test: Multifarious Muse rulesSelections Should Generate enigma-muse Alias in Build State
+7192 " ✅ BARD Class Registered in build-state.test.js to Support Multifarious Muse Test
+7194 " 🔵 Confirmed RED: feats.has('enigma') True but feats.has('enigma-muse') False for Multifarious Muse
+7195 9:29a 🔵 getMultifariousMuseChoiceAliases Fix Not Working: getFeatChoiceSelectionMap May Not Read rulesSelections
+7198 " 🔴 Multifarious Muse Choice Aliases Now Generated in Build State — Loremaster's Etude Bug Fixed at Root Cause
+7199 " 🔴 Both Affected Test Suites Pass After Multifarious Muse Fix: 102 + 57 Tests Green
+7201 9:30a 🔴 Full Suite Green: 1485 Tests, 86 Suites — Multifarious Muse Fix Complete and Verified
+7202 " 🔴 pf2e-leveler v3.4.37: Multifarious Muse Fix Ready for Commit — Final State Verified
+7203 9:31a ✅ Test Updated to Use flags.system.rulesSelections Instead of flags.pf2e.rulesSelections
+7204 " 🔴 pf2e-leveler v3.4.37 Multifarious Muse Fix: Final Verification — 1485/1485 Tests Pass
+7205 9:33a 🔵 pf2e-leveler Module Metadata: Author RoiLeaf, FoundryVTT 13-14 Compatibility
+7206 " ✅ pf2e-leveler Version Bumped to 3.4.38 for Multifarious Muse Fix Release
+7207 " 🔵 module-manifest.test.js Validates CI Release Workflow Version Stamping
 
-Access 234k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 294k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
