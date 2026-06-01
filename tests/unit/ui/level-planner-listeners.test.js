@@ -547,6 +547,23 @@ describe('Level planner skill increase listeners', () => {
     });
   });
 
+  it('opens a planned class feature choice picker from nested browse controls', () => {
+    document.body.innerHTML = '<button type="button" data-action="openPlannedClassFeatureChoicePicker" data-feature-key="instinct" data-flag="furyInstinct"></button>';
+
+    const planner = {
+      selectedLevel: 1,
+      _openPlannedClassFeatureChoicePicker: jest.fn(),
+    };
+
+    activateLevelPlannerListeners(planner, document.body);
+    document.querySelector('[data-action="openPlannedClassFeatureChoicePicker"]').click();
+
+    expect(planner._openPlannedClassFeatureChoicePicker).toHaveBeenCalledWith({
+      featureKey: 'instinct',
+      flag: 'furyInstinct',
+    });
+  });
+
   it('adds selected choice-item skill rules onto the planned feat', async () => {
     const originalFromUuid = global.fromUuid;
     document.body.innerHTML = '<button type="button" data-action="selectPlannedFeatChoice" data-category="archetypeFeats" data-flag="druidicOrder" data-value="Compendium.pf2e.classfeatures.Item.animal-order"></button>';

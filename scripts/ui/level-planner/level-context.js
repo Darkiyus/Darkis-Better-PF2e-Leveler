@@ -382,14 +382,46 @@ async function buildClassFeatureEntries(planner, level, levelData) {
     if (rules.length === 0) return { ...enrichedFeature, choiceSets: [] };
 
     const storedChoices = levelData?.classFeatureChoices?.[feature.key] ?? {};
-    const choiceSets = await parseChoiceSets(wizard, rules, getClassFeatureChoiceValues(storedChoices), source);
+    const storedChoiceValues = getClassFeatureChoiceValues(storedChoices);
+    const choiceSets = await parseChoiceSets(wizard, rules, storedChoiceValues, source);
+    const selectedOptionChoiceSets = await buildSelectedClassFeatureOptionChoiceSets(wizard, choiceSets, storedChoiceValues);
+    const combinedChoiceSets = dedupePlannerChoiceSets([...choiceSets, ...selectedOptionChoiceSets]);
     return {
       ...enrichedFeature,
-      choiceSets: choiceSets
+      choiceSets: combinedChoiceSets
         .map((entry) => decoratePlannerClassFeatureChoiceSet(entry, storedChoices))
         .filter((entry) => entry.options.length > 0),
     };
   }));
+}
+
+async function buildSelectedClassFeatureOptionChoiceSets(wizard, choiceSets, storedChoiceValues) {
+  const nestedChoiceSets = [];
+  const seen = new Set();
+
+  for (const choiceSet of choiceSets ?? []) {
+    const selectedValue = storedChoiceValues?.[choiceSet?.flag];
+    if (typeof selectedValue !== 'string' || selectedValue.length === 0 || selectedValue === '[object Object]') continue;
+
+    const option = findMatchingPlannerChoiceSetOption(choiceSet, selectedValue);
+    const uuid = option?.uuid ?? (isItemUuid(selectedValue) ? selectedValue : null);
+    if (!uuid || seen.has(uuid)) continue;
+    seen.add(uuid);
+
+    const selectedItem = await fromUuid(uuid).catch(() => null);
+    const rules = Array.isArray(selectedItem?.system?.rules) ? selectedItem.system.rules : [];
+    if (rules.length === 0) continue;
+    nestedChoiceSets.push(...await parseChoiceSets(wizard, rules, storedChoiceValues, selectedItem));
+  }
+
+  return nestedChoiceSets;
+}
+
+function findMatchingPlannerChoiceSetOption(choiceSet, selectedValue) {
+  return (choiceSet?.options ?? []).find((option) =>
+    plannerChoiceValueMatches(option?.value, selectedValue)
+    || plannerChoiceValueMatches(option?.uuid, selectedValue)
+    || plannerChoiceValueMatches(option?.slug, selectedValue));
 }
 
 async function resolveClassFeatureSource(planner, feature) {
@@ -456,14 +488,22 @@ function getClassFeatureChoiceValues(storedChoices = {}) {
 
 function decoratePlannerClassFeatureChoiceSet(choiceSet, storedChoices = {}) {
   const selectedValue = String(storedChoices?.[choiceSet.flag]?.value ?? storedChoices?.[choiceSet.flag] ?? '');
-  return {
+  const choiceType = choiceSet.choiceType
+    ?? (choiceSet.options.every((option) => isActiveSkillSlug(option.value)) ? 'skill' : 'item');
+  const decorated = {
     ...choiceSet,
+    choiceType,
     options: (choiceSet.options ?? []).map((option) => ({
       ...option,
-      selected: String(option.value ?? option.uuid ?? '') === selectedValue,
+      uuid: option.uuid ?? (isItemUuid(option.value) ? option.value : null),
+      selected: plannerChoiceValueMatches(option?.value, selectedValue)
+        || plannerChoiceValueMatches(option?.uuid, selectedValue),
       slug: option.slug ?? null,
     })),
   };
+  const choicePicker = buildPlannerChoicePickerMetadata(decorated);
+  if (choicePicker?.kind === 'feat') decorated.choicePicker = choicePicker;
+  return decorated;
 }
 
 export function annotateFeat(feat) {

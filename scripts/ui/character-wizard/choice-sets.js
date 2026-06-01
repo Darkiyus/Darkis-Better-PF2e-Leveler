@@ -1828,11 +1828,27 @@ export function buildChoiceSetRollOptions(wizard, rules, currentChoices) {
   for (const slug of getSelectedFeatRollOptionSlugs(wizard)) {
     values[`feat:${slug}`] = true;
   }
+  for (const slug of getClassRollOptionSlugs(wizard)) {
+    values[`class:${slug}`] = true;
+  }
   for (const category of ['unarmored', 'light', 'medium', 'heavy']) {
     const rank = getActorDefenseRank(wizard, category);
     values[`defense:${category}:rank:${rank}`] = true;
   }
   return values;
+}
+
+function getClassRollOptionSlugs(wizard) {
+  const slugs = new Set();
+  addClassRollOptionSlug(slugs, wizard?.data?.class);
+  addClassRollOptionSlug(slugs, wizard?.data?.dualClass);
+  addClassRollOptionSlug(slugs, wizard?.actor?.class);
+  return slugs;
+}
+
+function addClassRollOptionSlug(slugs, source) {
+  const slug = String(source?.slug ?? source?.system?.slug ?? '').trim().toLowerCase();
+  if (slug) slugs.add(slug);
 }
 
 function getActorDefenseRank(wizard, category) {
@@ -2377,6 +2393,22 @@ const CHOICE_SET_TUPLE_FILTER_PATHS = new Set([
   'item:ancestry',
 ]);
 
+const CHOICE_SET_NAMED_FILTER_FIELDS = new Set([
+  'damage',
+  'tag',
+  'trait',
+  'type',
+  'level',
+  'slug',
+  'category',
+  'rarity',
+  'ancestry',
+  'melee',
+  'ranged',
+  'thrown-melee',
+  'magical',
+]);
+
 function compareChoiceSetFilterOperands(item, operator, operands) {
   if (!Array.isArray(operands) || operands.length !== 2) return true;
 
@@ -2457,7 +2489,11 @@ function matchesChoiceSetFilterString(item, filter) {
     return (item.damageTypes ?? []).includes(value);
   }
 
-  if (parts.length < 3) return true;
+  if (parts.length < 3) {
+    return CHOICE_SET_NAMED_FILTER_FIELDS.has(field)
+      ? true
+      : String(item.slug ?? '').toLowerCase() === field.toLowerCase();
+  }
   const value = rest.join(':');
 
   switch (field) {

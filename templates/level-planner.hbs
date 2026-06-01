@@ -94,6 +94,16 @@
               <i class="fa-solid fa-circle-info"></i>
               {{this.prompt}}
             </div>
+            {{#if this.choicePicker}}
+            <div class="feat-slot__note" style="margin-top: var(--leveler-spacing-sm); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              {{#if this.choicePicker.selectedOption}}
+              <button type="button" data-action="viewItem" data-uuid="{{this.choicePicker.selectedOption.uuid}}" style="background:none;border:0;padding:0;color:inherit;cursor:pointer;text-decoration:underline;">{{this.choicePicker.selectedOption.label}}</button>
+              {{else}}
+              <span>{{localize "PF2E_LEVELER.UI.NOT_SELECTED"}}</span>
+              {{/if}}
+              <button type="button" class="spell-add-btn" data-action="openPlannedClassFeatureChoicePicker" data-feature-key="{{../key}}" data-flag="{{this.flag}}" style="padding: 3px 10px;">{{localize "PF2E_LEVELER.UI.BROWSE"}}</button>
+            </div>
+            {{else}}
             <div class="wizard-item-grid wizard-item-grid--compact" style="margin-top: var(--leveler-spacing-sm);">
               {{#each this.options}}
               <div class="wizard-item {{#if this.selected}}wizard-item--taken{{/if}}">
@@ -113,6 +123,7 @@
               </div>
               {{/each}}
             </div>
+            {{/if}}
             {{/each}}
             {{/each}}
           </div>

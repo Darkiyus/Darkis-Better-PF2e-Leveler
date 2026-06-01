@@ -151,6 +151,16 @@ export function activateLevelPlannerListeners(planner, html) {
     });
   });
 
+  el.querySelectorAll('[data-action="openPlannedClassFeatureChoicePicker"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (typeof planner._openPlannedClassFeatureChoicePicker !== 'function') return;
+      planner._openPlannedClassFeatureChoicePicker({
+        featureKey: button.dataset.featureKey,
+        flag: button.dataset.flag,
+      });
+    });
+  });
+
   el.querySelectorAll('[data-action="promptPlannedFeatLoreChoice"]').forEach((button) => {
     button.addEventListener('click', async () => {
       const category = button.dataset.category;

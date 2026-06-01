@@ -8,6 +8,7 @@ import { createPlan } from '../../../scripts/plan/plan-model.js';
 import { computeBuildState } from '../../../scripts/plan/build-state.js';
 import { loadFeats } from '../../../scripts/feats/feat-cache.js';
 import { ItemPicker } from '../../../scripts/ui/item-picker.js';
+import { FeatPicker } from '../../../scripts/ui/feat-picker.js';
 import { readFileSync } from 'node:fs';
 
 jest.mock('../../../scripts/plan/plan-store.js', () => ({
@@ -3306,6 +3307,70 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       expect(planner.plan.levels[5].ancestryFeats[0].choices.ancestry).toBe('dwarf');
       expect(planner._refreshPlannedFeatGrantPreview).toHaveBeenCalledWith(planner.plan.levels[5].ancestryFeats[0]);
       expect(planner.plan.levels[5].ancestryFeats[0].grantChoiceSets).toEqual([{ flag: 'feat', options: [] }]);
+      expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
+    } finally {
+      renderSpy.mockRestore();
+    }
+  });
+
+  it('opens class-feature feat choices with FeatPicker and stores the choice-set value', async () => {
+    const actor = createMockActor({ items: [] });
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.selectedLevel = 1;
+    planner.plan.levels[1] ??= {};
+    planner.render = jest.fn();
+    planner._buildLevelContext = jest.fn(async () => ({
+      classFeatures: [
+        {
+          key: 'instinct',
+          choiceSets: [
+            {
+              flag: 'furyInstinct',
+              prompt: 'Select a 1st-level class feat.',
+              choicePicker: {
+                kind: 'feat',
+                title: 'Select a 1st-level class feat.',
+                category: 'class',
+                level: 1,
+                allowedUuids: ['Compendium.pf2e.feats-srd.Item.raging-thrower'],
+              },
+            },
+          ],
+        },
+      ],
+    }));
+    let pickerInstance = null;
+    const renderSpy = jest.spyOn(FeatPicker.prototype, 'render').mockImplementation(function render() {
+      pickerInstance = this;
+    });
+
+    try {
+      await planner._openPlannedClassFeatureChoicePicker({
+        featureKey: 'instinct',
+        flag: 'furyInstinct',
+      });
+
+      expect(pickerInstance).toBeInstanceOf(FeatPicker);
+      expect(pickerInstance.category).toBe('class');
+      expect(pickerInstance.targetLevel).toBe(1);
+      expect([...pickerInstance.allowedFeatUuids]).toEqual(['Compendium.pf2e.feats-srd.Item.raging-thrower']);
+
+      await pickerInstance.onSelect({
+        uuid: 'Compendium.pf2e.feats-srd.Item.raging-thrower',
+        name: 'Raging Thrower',
+        slug: 'raging-thrower',
+      });
+
+      expect(planner.plan.levels[1].classFeatureChoices).toEqual({
+        instinct: {
+          furyInstinct: {
+            value: 'Compendium.pf2e.feats-srd.Item.raging-thrower',
+            label: 'Raging Thrower',
+            slug: 'raging-thrower',
+          },
+        },
+      });
       expect(savePlan).toHaveBeenCalledWith(actor, planner.plan);
     } finally {
       renderSpy.mockRestore();

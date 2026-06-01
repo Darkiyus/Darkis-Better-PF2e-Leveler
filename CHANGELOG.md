@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.40
+
+### Level Planner
+
+- **Fury Instinct now grants its bonus 1st-level barbarian feat choice** - Selecting Fury Instinct from the barbarian Instinct class feature now shows a Browse button for its bonus feat picker and filters it to valid 1st-level barbarian feats
+
 ## 3.4.39
 
 ### Level Planner

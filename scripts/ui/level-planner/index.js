@@ -2143,6 +2143,75 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     picker.render(true);
   }
 
+  async _openPlannedClassFeatureChoicePicker({ featureKey, flag } = {}) {
+    const levelData = getLevelData(this.plan, this.selectedLevel);
+    if (!levelData || !featureKey || !flag) return;
+
+    const classDef = ClassRegistry.get(this.plan.classSlug);
+    const context = await this._buildLevelContext(classDef, this._getVariantOptions());
+    const feature = (context?.classFeatures ?? []).find((entry) => entry.key === featureKey);
+    const choiceSet = (feature?.choiceSets ?? []).find((entry) => entry.flag === flag);
+    const pickerConfig = choiceSet?.choicePicker;
+    if (!pickerConfig?.allowedUuids?.length) return;
+
+    const selectChoice = async (item) => {
+      const selectedValue = item?.levelerChoiceValue ?? item?.uuid;
+      if (!selectedValue) return;
+      levelData.classFeatureChoices ??= {};
+      levelData.classFeatureChoices[featureKey] ??= {};
+      levelData.classFeatureChoices[featureKey][flag] = {
+        value: selectedValue,
+        label: item?.name ?? item?.label ?? selectedValue,
+        slug: item?.slug ?? item?.system?.slug ?? null,
+      };
+      await this._savePlanAndRender();
+    };
+
+    if (pickerConfig.kind === 'spell') {
+      const { SpellPicker } = await import('../spell-picker.js');
+      const picker = new SpellPicker(this.actor, 'any', Number.isInteger(pickerConfig.rank) ? pickerConfig.rank : -1, selectChoice, {
+        allowedUuids: pickerConfig.allowedUuids,
+        exactRank: Number.isInteger(pickerConfig.rank) && pickerConfig.rank >= 0,
+        preset: {
+          ...(Number.isInteger(pickerConfig.rank) && pickerConfig.rank >= 0
+            ? {
+                selectedRanks: [pickerConfig.rank],
+                lockedRanks: [pickerConfig.rank],
+              }
+            : {}),
+        },
+        title: pickerConfig.title,
+      });
+      picker.render(true);
+      return;
+    }
+
+    if (pickerConfig.kind === 'item') {
+      const { ItemPicker } = await import('../item-picker.js');
+      const picker = new ItemPicker(this.actor, selectChoice, {
+        items: pickerConfig.items ?? [],
+        title: pickerConfig.title,
+        preset: {
+          selectedRarities: ['common', 'uncommon', 'rare', 'unique'],
+        },
+      });
+      picker.render(true);
+      return;
+    }
+
+    const buildState = computeBuildState(this.actor, this.plan, this.selectedLevel);
+    const picker = new FeatPicker(this.actor, pickerConfig.category ?? 'custom', pickerConfig.level ?? this.selectedLevel, buildState, selectChoice, {
+      preset: {
+        allowedFeatUuids: pickerConfig.allowedUuids,
+        selectedRarities: ['common', 'uncommon', 'rare', 'unique'],
+        maxLevel: '',
+        levelOptionCap: this.selectedLevel,
+      },
+      title: pickerConfig.title,
+    });
+    picker.render(true);
+  }
+
   _findRenderedPlannedFeatChoiceSet(context, { category, flag, index = 0 } = {}) {
     const contextKeys = {
       classFeats: ['classFeatChoiceSets', 'classFeat'],
