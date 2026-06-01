@@ -1911,6 +1911,9 @@ function computeClassFeatures(actor, plan, classDefs, atLevel) {
   for (const levelData of getPlanLevelDataUpTo(plan, atLevel)) {
     addPlannedClassFeatureChoiceAliases(features, levelData);
   }
+  for (const feat of getEffectiveCharacterFeats(actor, plan, atLevel)) {
+    addFeatGrantedClassFeatureChoiceAliases(features, feat);
+  }
 
   return features;
 }
@@ -1969,6 +1972,74 @@ function addPlannedClassFeatureChoiceAliases(features, levelData) {
 
 function addFeatureChoiceAlias(features, value) {
   collectFeatureChoiceAliases(features, value);
+}
+
+function addFeatGrantedClassFeatureChoiceAliases(features, feat) {
+  const selections = getFeatChoiceSelectionMap(feat);
+
+  for (const choiceSet of getStoredChoiceSets(feat)) {
+    const flag = String(choiceSet?.flag ?? '').trim();
+    if (!flag || !selections.has(flag)) continue;
+
+    const selectedValue = selections.get(flag);
+    for (const option of choiceSet?.options ?? []) {
+      if (!isClassFeatureLikeChoiceOption(option)) continue;
+      if (choiceOptionMatchesSelection(option, selectedValue)) {
+        addClassFeatureLikeChoiceOptionAliases(features, option);
+      }
+    }
+  }
+
+  for (const granted of feat?.grantedItems ?? []) {
+    if (isClassFeatureLikeChoiceOption(granted)) addClassFeatureLikeChoiceOptionAliases(features, granted);
+  }
+}
+
+function isClassFeatureLikeChoiceOption(option) {
+  if (!option || typeof option !== 'object') return false;
+
+  const rawValue = option.value;
+  const uuid = String(
+    option.uuid
+      ?? option.sourceId
+      ?? option.flags?.core?.sourceId
+      ?? rawValue?.uuid
+      ?? (typeof rawValue === 'string' ? rawValue : '')
+      ?? '',
+  ).toLowerCase();
+  if (uuid.includes('.classfeatures.')) return true;
+
+  const type = String(option.type ?? option.itemType ?? rawValue?.type ?? '').toLowerCase();
+  if (['classfeature', 'class-feature'].includes(type)) return true;
+
+  const category = String(
+    option.category
+      ?? option.system?.category?.value
+      ?? option.system?.category
+      ?? rawValue?.category
+      ?? '',
+  ).toLowerCase();
+  return ['classfeature', 'class-feature'].includes(category);
+}
+
+function addClassFeatureLikeChoiceOptionAliases(features, option) {
+  const rawValue = option?.value;
+  const candidates = [
+    option?.slug,
+    option?.system?.slug,
+    option?.label,
+    option?.name,
+    option?.uuid,
+    typeof rawValue === 'string' ? rawValue : null,
+    rawValue?.slug,
+    rawValue?.label,
+    rawValue?.name,
+    rawValue?.uuid,
+  ];
+
+  for (const candidate of candidates) {
+    collectFeatureChoiceAliases(features, candidate);
+  }
 }
 
 function collectFeatureChoiceAliases(features, value) {

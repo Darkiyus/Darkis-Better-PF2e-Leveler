@@ -1815,6 +1815,9 @@ function areChoiceSetsSatisfied(choiceSets, currentChoices) {
 
 export function buildChoiceSetRollOptions(wizard, rules, currentChoices) {
   const values = {};
+  for (const option of getExplicitChoiceSetRollOptions(wizard)) {
+    values[option] = true;
+  }
   for (const [index, rule] of (rules ?? []).entries()) {
     if (rule?.key !== 'ChoiceSet') continue;
     const flag = getChoiceSetFlag(rule, index);
@@ -1831,11 +1834,39 @@ export function buildChoiceSetRollOptions(wizard, rules, currentChoices) {
   for (const slug of getClassRollOptionSlugs(wizard)) {
     values[`class:${slug}`] = true;
   }
+  for (const slug of getFeatureRollOptionSlugs(wizard)) {
+    values[`feature:${slug}`] = true;
+  }
   for (const category of ['unarmored', 'light', 'medium', 'heavy']) {
     const rank = getActorDefenseRank(wizard, category);
     values[`defense:${category}:rank:${rank}`] = true;
   }
   return values;
+}
+
+function getExplicitChoiceSetRollOptions(wizard) {
+  const options = new Set();
+  addExplicitChoiceSetRollOptions(options, wizard?.rollOptions);
+  addExplicitChoiceSetRollOptions(options, wizard?.data?.rollOptions);
+  return options;
+}
+
+function addExplicitChoiceSetRollOptions(options, source) {
+  if (!source) return;
+  if (source instanceof Set || Array.isArray(source)) {
+    for (const value of source) {
+      const option = String(value ?? '').trim().toLowerCase();
+      if (option) options.add(option);
+    }
+    return;
+  }
+  if (typeof source === 'object') {
+    for (const [key, value] of Object.entries(source)) {
+      if (value !== true) continue;
+      const option = String(key ?? '').trim().toLowerCase();
+      if (option) options.add(option);
+    }
+  }
 }
 
 function getClassRollOptionSlugs(wizard) {
@@ -1849,6 +1880,30 @@ function getClassRollOptionSlugs(wizard) {
 function addClassRollOptionSlug(slugs, source) {
   const slug = String(source?.slug ?? source?.system?.slug ?? '').trim().toLowerCase();
   if (slug) slugs.add(slug);
+}
+
+function getFeatureRollOptionSlugs(wizard) {
+  const slugs = new Set();
+  for (const source of getFeatureRollOptionSources(wizard)) {
+    addFeatureRollOptionSlug(slugs, source);
+  }
+  return slugs;
+}
+
+function getFeatureRollOptionSources(wizard) {
+  const features = wizard?.data?.classFeatures ?? wizard?.classFeatures ?? [];
+  if (features instanceof Set) return [...features];
+  return Array.isArray(features) ? features : [];
+}
+
+function addFeatureRollOptionSlug(slugs, source) {
+  const candidates = typeof source === 'object' && source !== null
+    ? [source.slug, source.key, source.name, source.value, source.label]
+    : [source];
+  for (const candidate of candidates) {
+    const slug = slugify(String(candidate ?? ''));
+    if (slug) slugs.add(slug);
+  }
 }
 
 function getActorDefenseRank(wizard, category) {

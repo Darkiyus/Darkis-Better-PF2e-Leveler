@@ -1644,7 +1644,7 @@ async function collectGrantPreviewEntries({
 
   for (const rule of item.system?.rules ?? []) {
     if (rule?.key !== 'GrantItem' || typeof rule?.uuid !== 'string') continue;
-    if (!matchesGrantPredicate(rule, planner)) continue;
+    if (!matchesGrantPredicate(rule, planner, wizard)) continue;
     const preselectedChoices = extractGrantPreselectedChoices(rule);
     const ruleChoices = {
       ...(storedChoices ?? {}),
@@ -1732,13 +1732,19 @@ function isPlannerChoiceSetSatisfied(choiceSet, choices = {}, preselectedChoiceF
 
 function createPlannerChoiceWizard(planner) {
   const primaryClass = resolvePlannerPrimaryClass(planner);
+  const buildState = buildPlannerChoiceBuildState(planner);
+  const rollOptions = buildPlannerChoiceRollOptions(buildState);
   const wizard = {
     actor: planner.actor,
     _compendiumCache: planner._compendiumCache ?? (planner._compendiumCache = {}),
+    rollOptions,
     data: {
       class: primaryClass,
       deity: planner.actor?.items?.find?.((item) => item.type === 'deity') ?? null,
       skills: collectPlannerSelectedSkills(planner),
+      classFeatures: [...(buildState?.classFeatures ?? [])],
+      feats: [...(buildState?.feats ?? [])],
+      rollOptions,
     },
     _getCachedDocument: (uuid) => fromUuid(uuid).catch(() => null),
     _loadCompendium: async (key) => loadCompendium(wizard, key),
@@ -1754,6 +1760,42 @@ function createPlannerChoiceWizard(planner) {
     },
   };
   return wizard;
+}
+
+function buildPlannerChoiceBuildState(planner) {
+  if (!planner?.plan) return null;
+  try {
+    return computeBuildState(planner.actor, planner.plan, planner.selectedLevel);
+  } catch {
+    return null;
+  }
+}
+
+function buildPlannerChoiceRollOptions(buildState) {
+  const options = new Set();
+  for (const slug of buildState?.feats ?? []) {
+    const normalized = normalizeRollOptionSlug(slug);
+    if (normalized) options.add(`feat:${normalized}`);
+  }
+  for (const slug of buildState?.classFeatures ?? []) {
+    const normalized = normalizeRollOptionSlug(slug);
+    if (normalized) options.add(`feature:${normalized}`);
+  }
+  for (const entry of [buildState?.classSlug, buildState?.dualClassSlug]) {
+    const normalized = normalizeRollOptionSlug(entry);
+    if (normalized) options.add(`class:${normalized}`);
+  }
+  for (const classState of buildState?.classes ?? []) {
+    const normalized = normalizeRollOptionSlug(classState?.slug);
+    if (normalized) options.add(`class:${normalized}`);
+  }
+  return options;
+}
+
+function normalizeRollOptionSlug(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 function resolvePlannerPrimaryClass(planner) {
@@ -2107,10 +2149,11 @@ function clauseDescribesSelectedSkillChoice(clause) {
   return /\b(?:your\s+choice\s+of|choice\s+of|chosen\s+skill|skill\s+you\s+chose)\b/u.test(normalized);
 }
 
-function matchesGrantPredicate(rule, planner) {
+function matchesGrantPredicate(rule, planner, wizard = null) {
   if (!rule?.predicate) return true;
   const actorLevel = planner?.selectedLevel ?? planner?.actor?.system?.details?.level?.value ?? 1;
-  return evaluatePredicate(rule.predicate, actorLevel);
+  const rollOptions = wizard?.rollOptions ?? buildPlannerChoiceRollOptions(buildPlannerChoiceBuildState(planner));
+  return evaluatePredicate(rule.predicate, actorLevel, rollOptions);
 }
 
 async function resolvePlannerDeitySkill(planner, deityUuid) {

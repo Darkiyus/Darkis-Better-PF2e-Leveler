@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.41
+
+### Level Planner
+
+- **Instinct Ability now recognizes Barbarian Dedication instincts** - Characters with Barbarian Dedication can choose Fury Instinct's bonus 1st-level barbarian feat from Instinct Ability because the planner now honors `feature:fury-instinct` predicates from the chosen dedication instinct
+
 ## 3.4.40
 
 ### Level Planner

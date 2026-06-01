@@ -1390,6 +1390,184 @@ describe('level planner grant previews', () => {
     }
   });
 
+  test('surfaces Instinct Ability bonus feat choices from the planned barbarian dedication instinct', async () => {
+    const originalPacks = game.packs;
+    const originalHas = game.i18n.has;
+    const originalLocalize = game.i18n.localize;
+    const furyInstinctUuid = 'Compendium.pf2e.classfeatures.Item.k7M9jedvt31AJ5ZR';
+
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-instinct-ability') {
+        return {
+          uuid,
+          name: 'Instinct Ability',
+          slug: 'instinct-ability',
+          type: 'feat',
+          system: {
+            category: 'class',
+            level: { value: 6 },
+            traits: { value: ['archetype'], rarity: 'common' },
+            rules: [
+              {
+                key: 'ChoiceSet',
+                flag: 'furyInstinct',
+                predicate: ['feature:fury-instinct'],
+                prompt: 'PF2E.SpecificRule.Prompt.LevelOneClassFeat',
+                choices: {
+                  itemType: 'feat',
+                  filter: [
+                    'item:level:1',
+                    'item:category:class',
+                    'item:trait:barbarian',
+                    { not: 'item:draconic-arrogance' },
+                  ],
+                },
+              },
+              {
+                key: 'GrantItem',
+                predicate: ['feature:fury-instinct'],
+                uuid: '{item|flags.system.rulesSelections.furyInstinct}',
+              },
+            ],
+          },
+        };
+      }
+
+      return null;
+    });
+
+    game.packs = new Map([
+      ['pf2e.feats-srd', {
+        metadata: { label: 'Feats', packageName: 'pf2e' },
+        title: 'Feats',
+        collection: 'pf2e.feats-srd',
+        getDocuments: jest.fn(async () => [
+          {
+            uuid: 'Compendium.pf2e.feats-srd.Item.raging-thrower',
+            name: 'Raging Thrower',
+            slug: 'raging-thrower',
+            type: 'feat',
+            system: {
+              category: 'class',
+              level: { value: 1 },
+              traits: { value: ['barbarian'], rarity: 'common' },
+            },
+          },
+          {
+            uuid: 'Compendium.pf2e.feats-srd.Item.draconic-arrogance',
+            name: 'Draconic Arrogance',
+            slug: 'draconic-arrogance',
+            type: 'feat',
+            system: {
+              category: 'class',
+              level: { value: 1 },
+              traits: { value: ['barbarian'], rarity: 'common' },
+            },
+          },
+          {
+            uuid: 'Compendium.pf2e.feats-srd.Item.power-attack',
+            name: 'Power Attack',
+            slug: 'power-attack',
+            type: 'feat',
+            system: {
+              category: 'class',
+              level: { value: 1 },
+              traits: { value: ['fighter'], rarity: 'common' },
+            },
+          },
+        ]),
+      }],
+    ]);
+    game.i18n.has = jest.fn((key) => key === 'PF2E.SpecificRule.Prompt.LevelOneClassFeat');
+    game.i18n.localize = jest.fn((key) => (
+      key === 'PF2E.SpecificRule.Prompt.LevelOneClassFeat'
+        ? 'Select a 1st-level class feat.'
+        : key
+    ));
+
+    try {
+      const actor = createMockActor({
+        items: [],
+        class: {
+          slug: 'alchemist',
+          name: 'Alchemist',
+        },
+      });
+      const planner = {
+        actor,
+        selectedLevel: 6,
+        plan: {
+          classSlug: 'alchemist',
+          levels: {
+            2: {
+              archetypeFeats: [
+                {
+                  uuid: 'feat-barbarian-dedication',
+                  name: 'Barbarian Dedication',
+                  slug: 'barbarian-dedication',
+                  choices: {
+                    instinct: furyInstinctUuid,
+                  },
+                  grantChoiceSets: [
+                    {
+                      flag: 'instinct',
+                      options: [
+                        {
+                          value: furyInstinctUuid,
+                          uuid: furyInstinctUuid,
+                          slug: 'fury-instinct',
+                          label: 'Fury Instinct',
+                          type: 'feat',
+                          category: 'classfeature',
+                          traits: ['barbarian'],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            6: {
+              archetypeFeats: [
+                {
+                  uuid: 'feat-instinct-ability',
+                  name: 'Instinct Ability',
+                  slug: 'instinct-ability',
+                  choices: {},
+                },
+              ],
+            },
+          },
+        },
+        _compendiumCache: {},
+        _buildAttributeContext: jest.fn(() => ({})),
+        _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+        _buildIntBonusSkillContext: jest.fn(() => []),
+        _buildIntBonusLanguageContext: jest.fn(() => []),
+        _buildSkillContext: jest.fn(() => []),
+        _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+        _isCustomPlanOpen: jest.fn(() => false),
+      };
+
+      const context = await buildLevelContext(planner, ALCHEMIST, {});
+      const furyFeatChoice = context.archetypeFeatChoiceSets.find((entry) => entry.flag === 'furyInstinct');
+
+      expect(furyFeatChoice).toEqual(expect.objectContaining({
+        prompt: 'Select a 1st-level class feat.',
+        choicePicker: expect.objectContaining({
+          kind: 'feat',
+          category: 'class',
+          allowedUuids: ['Compendium.pf2e.feats-srd.Item.raging-thrower'],
+        }),
+      }));
+      expect(furyFeatChoice.options.map((option) => option.slug)).toEqual(['raging-thrower']);
+    } finally {
+      game.packs = originalPacks;
+      game.i18n.has = originalHas;
+      game.i18n.localize = originalLocalize;
+    }
+  });
+
   test('resolves missing class feature UUIDs from the class feature compendium', async () => {
     const actor = createMockActor({
       items: [],
