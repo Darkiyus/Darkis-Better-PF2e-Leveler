@@ -292,6 +292,7 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     this._levelNavigationToken = 0;
     this._shouldBringToFrontOnRender = true;
     this._focusAnchorElement = null;
+    this._creationHandoff = options.creationHandoff === true;
     this.plan = this._loadOrCreatePlan(actor);
     const actorLevel = actor.system?.details?.level?.value ?? 1;
 
@@ -573,7 +574,7 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     };
     const plan = createPlan(classSlug, options);
     const actorLevel = Number(actor?.system?.details?.level?.value ?? 1);
-    if (actorLevel > 1) {
+    if (actorLevel > 1 && !this._creationHandoff) {
       plan.importedFromActor = {
         actorLevel,
         hideHistoricalSkillIncreases: true,

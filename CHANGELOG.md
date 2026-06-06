@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.43
+
+### Level Planner
+
+- **Leveler-created higher-level characters now keep early skill increases** - Characters created through Leveler after setting a higher Foundry level no longer get treated as imported historical actors, so sequential level-up shows level 3 and 5 skill increases normally
+
 ## 3.4.42
 
 ### Level Planner

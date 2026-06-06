@@ -1243,6 +1243,36 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     expect(context.availableSkills.length).toBeGreaterThan(0);
   });
 
+  it('does not mark a higher-level Leveler-created actor as imported history during sequential handoff', async () => {
+    const actor = createMockActor({
+      items: [],
+      system: {
+        details: {
+          level: { value: 6 },
+          xp: { value: 0, max: 1000 },
+        },
+      },
+    });
+    actor.class.slug = 'alchemist';
+
+    const planner = new LevelPlanner(actor, { sequentialMode: true, creationHandoff: true });
+
+    expect(planner.plan.importedFromActor).toBeUndefined();
+    expect(planner.plan.sequentialMode).toEqual({
+      active: true,
+      targetLevel: 6,
+      currentLevel: 2,
+    });
+
+    planner.selectedLevel = 3;
+    const level3Context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
+    expect(level3Context.showSkillIncrease).toBe(true);
+
+    planner.selectedLevel = 5;
+    const level5Context = await planner._buildLevelContext(ClassRegistry.get('alchemist'), planner._getVariantOptions());
+    expect(level5Context.showSkillIncrease).toBe(true);
+  });
+
   it('builds historical skill increases from manual starting skills and prior planned increases instead of final actor ranks', async () => {
     getPlan.mockReturnValue({
       ...createPlan('alchemist'),

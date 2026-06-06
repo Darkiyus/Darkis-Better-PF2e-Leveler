@@ -1624,7 +1624,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       const actorLevel = this.actor.system?.details?.level?.value ?? 1;
       if (actorLevel > 1) {
         const { LevelPlanner } = await import('../level-planner/index.js');
-        new LevelPlanner(this.actor, { sequentialMode: true }).setFocusAnchor(this._focusAnchorElement).render(true);
+        new LevelPlanner(this.actor, { sequentialMode: true, creationHandoff: true }).setFocusAnchor(this._focusAnchorElement).render(true);
       }
     } finally {
       this._stopApplyPromptWatcher();
