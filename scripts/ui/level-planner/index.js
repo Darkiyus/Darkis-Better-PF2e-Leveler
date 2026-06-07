@@ -63,6 +63,16 @@ const LOCATION_TO_PLAN_CATEGORY = {
   dual_class: 'dualClassFeats',
 };
 
+const FEAT_CATEGORY_TO_LOCATION_GROUP = {
+  classFeats: 'class',
+  skillFeats: 'skill',
+  generalFeats: 'general',
+  ancestryFeats: 'ancestry',
+  archetypeFeats: 'archetype',
+  mythicFeats: 'mythic',
+  dualClassFeats: 'xdy_dualclass',
+};
+
 function extractDirectFeatSkillRules(feat) {
   const result = [];
   for (const skill of feat?.system?.trainedSkills?.value ?? []) {
@@ -1751,13 +1761,24 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _getFeatRetrainSources() {
     const sources = [];
+    const seen = new Set();
+    const addSource = (source) => {
+      const key = [
+        source.category,
+        source.fromLevel,
+        source.original?.actorItemId ?? source.original?.uuid ?? source.original?.sourceId ?? source.original?.slug ?? source.original?.name,
+      ].join('::');
+      if (seen.has(key)) return;
+      seen.add(key);
+      sources.push(source);
+    };
     for (const item of this.actor.items ?? []) {
       if (item?.type !== 'feat') continue;
       const fromLevel = getActorFeatTakenLevel(item);
       if (!Number.isFinite(fromLevel) || fromLevel > this.selectedLevel) continue;
       const category = getActorFeatPlanCategory(item);
       if (!category) continue;
-      sources.push({
+      addSource({
         fromLevel,
         category,
         original: {
@@ -1770,6 +1791,26 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
           location: getActorFeatLocation(item) || null,
         },
       });
+    }
+    for (let level = 1; level <= this.selectedLevel; level++) {
+      const levelData = this.plan?.levels?.[level];
+      for (const category of FEAT_PLAN_CATEGORIES) {
+        for (const feat of levelData?.[category] ?? []) {
+          if (!feat?.uuid && !feat?.name) continue;
+          addSource({
+            fromLevel: level,
+            category,
+            original: {
+              uuid: feat.uuid ?? null,
+              sourceId: feat.sourceId ?? feat.uuid ?? null,
+              name: feat.name,
+              slug: feat.slug,
+              img: feat.img,
+              location: `${FEAT_CATEGORY_TO_LOCATION_GROUP[category] ?? 'bonus'}-${level}`,
+            },
+          });
+        }
+      }
     }
     return sources.sort((a, b) => a.fromLevel - b.fromLevel || String(a.original.name).localeCompare(String(b.original.name)));
   }

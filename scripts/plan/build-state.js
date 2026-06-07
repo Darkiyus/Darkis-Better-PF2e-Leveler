@@ -907,9 +907,18 @@ export function getIntelligenceBenefitCount(actor, plan, level) {
 
   const before = computeBuildState(actor, plan, level - 1);
   const after = computeBuildState(actor, plan, level);
-  const beforeInt = Math.trunc(before.rawAttributes?.int ?? before.attributes.int ?? 0);
+  const beforeRawInt = isPlannedBoostReflectedOnActor(actor, 'int', level, Number(actor?.system?.details?.level?.value ?? 0))
+    ? reverseApplyAbilityBoostValue(after.rawAttributes?.int ?? after.attributes.int ?? 0)
+    : (before.rawAttributes?.int ?? before.attributes.int ?? 0);
+  const beforeInt = Math.trunc(beforeRawInt);
   const afterInt = Math.trunc(after.rawAttributes?.int ?? after.attributes.int ?? 0);
   return Math.max(0, afterInt - beforeInt);
+}
+
+function reverseApplyAbilityBoostValue(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return numeric > 4 ? numeric - 0.5 : numeric - 1;
 }
 
 export function isImportedHistoricalSkillLevel(plan, level) {

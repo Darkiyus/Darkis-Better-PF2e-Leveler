@@ -448,7 +448,29 @@ async function resolveFreeHeartBackgroundGrantedFeatDatas(featEntry, level) {
     if (!item) continue;
     featDatas.push(prepareBackgroundGrantedFeatForCreation(item, level));
   }
+  const textGrantedUuid = getFreeHeartBackgroundTextGrantedFeatUuid(background, featEntry);
+  if (textGrantedUuid && !seen.has(textGrantedUuid)) {
+    const item = await resolveFeat(textGrantedUuid);
+    if (item) featDatas.push(prepareBackgroundGrantedFeatForCreation(item, level));
+  }
   return featDatas;
+}
+
+function getFreeHeartBackgroundTextGrantedFeatUuid(background, featEntry) {
+  const selectedSkill = String(featEntry?.choices?.backgroundSkill ?? '').trim().toLowerCase();
+  if (!['acrobatics', 'athletics'].includes(selectedSkill)) return null;
+
+  const links = extractUuidLinks(background?.system?.description?.value ?? '');
+  const targetName = selectedSkill === 'athletics' ? 'quick jump' : 'cat fall';
+  return links.find((entry) => entry.label.toLowerCase() === targetName)?.uuid ?? null;
+}
+
+function extractUuidLinks(value) {
+  return [...String(value ?? '').matchAll(/@UUID\[([^\]]+)\]\{([^}]+)\}/gu)]
+    .map((match) => ({
+      uuid: match[1],
+      label: match[2],
+    }));
 }
 
 function prepareBackgroundGrantedFeatForCreation(item, level) {

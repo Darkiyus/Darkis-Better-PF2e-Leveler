@@ -324,6 +324,72 @@ describe('applyFeats', () => {
     expect(created[1].system.location).toBe('bonus-13');
   });
 
+  test('applies selected prose-only Free Heart background skill feat', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-free-heart') {
+        return {
+          uuid,
+          name: 'Free Heart',
+          img: 'icon.png',
+          system: { slug: 'free-heart', level: { value: 1 }, location: null, rules: [] },
+          toObject: jest.fn(() => ({
+            name: 'Free Heart',
+            system: { slug: 'free-heart', level: { value: 1 }, location: null, rules: [] },
+          })),
+        };
+      }
+      if (uuid === 'Compendium.pf2e.backgrounds.Item.martial-disciple') {
+        return {
+          uuid,
+          name: 'Martial Disciple',
+          type: 'background',
+          system: {
+            description: {
+              value: '<p>You are trained in Acrobatics or Athletics. You gain @UUID[Compendium.pf2e.feats-srd.Item.cat-fall]{Cat Fall} or @UUID[Compendium.pf2e.feats-srd.Item.quick-jump]{Quick Jump}.</p>',
+            },
+            rules: [],
+          },
+        };
+      }
+      if (uuid === 'Compendium.pf2e.feats-srd.Item.quick-jump') {
+        return {
+          uuid,
+          name: 'Quick Jump',
+          type: 'feat',
+          flags: { core: { sourceId: uuid } },
+          system: { level: { value: 1 }, location: null },
+          toObject: jest.fn(() => ({
+            name: 'Quick Jump',
+            type: 'feat',
+            flags: { core: { sourceId: uuid } },
+            system: { level: { value: 1 }, location: null },
+          })),
+        };
+      }
+      return null;
+    });
+
+    await applyFeats(mockActor, {
+      levels: {
+        9: {
+          ancestryFeats: [{
+            uuid: 'feat-free-heart',
+            name: 'Free Heart',
+            slug: 'free-heart',
+            choices: {
+              levelerFreeHeartBackground: 'Compendium.pf2e.backgrounds.Item.martial-disciple',
+              backgroundSkill: 'athletics',
+            },
+          }],
+        },
+      },
+    }, 9);
+
+    const created = mockActor.createEmbeddedDocuments.mock.calls[0][1];
+    expect(created.map((item) => item.name)).toEqual(['Free Heart', 'Quick Jump']);
+    expect(created[1].system.location).toBe('bonus-9');
+  });
+
   test('preselects Adopted Ancestry grants from complex ancestry feat choices', async () => {
     global.fromUuid = jest.fn(async (uuid) => {
       if (uuid === 'Compendium.pf2e.feats-srd.Item.cultural-adaptability') {

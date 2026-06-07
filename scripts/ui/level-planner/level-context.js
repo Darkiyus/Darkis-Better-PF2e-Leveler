@@ -981,7 +981,13 @@ async function buildFreeHeartBackgroundChoiceSets(planner, feat, source, parsedC
   const fixedSkillRules = await syncFreeHeartBackgroundSkillRules(feat, selectedBackground);
   syncFreeHeartBackgroundLoreRules(feat, selectedBackground);
   const wizard = createPlannerChoiceWizard(planner);
-  const backgroundChoiceSets = await parseChoiceSets(wizard, selectedBackground.system?.rules ?? [], feat?.choices ?? {}, selectedBackground);
+  let backgroundChoiceSets = await parseChoiceSets(wizard, selectedBackground.system?.rules ?? [], feat?.choices ?? {}, selectedBackground);
+  if (!backgroundChoiceSets.some((choiceSet) => (choiceSet?.options ?? []).every((option) => isActiveSkillSlug(option?.value)))) {
+    backgroundChoiceSets = [
+      ...backgroundChoiceSets,
+      ...buildFreeHeartBackgroundTextSkillChoiceSets(selectedBackground),
+    ];
+  }
   choiceSets.push(...backgroundChoiceSets.map((choiceSet) => {
     const isSkillChoiceSet = (choiceSet?.options ?? []).every((option) => isActiveSkillSlug(option?.value));
     const drivesGrant = isSkillChoiceSet && backgroundChoiceSetDrivesGrant(selectedBackground, choiceSet?.flag);
@@ -1007,12 +1013,51 @@ async function buildFreeHeartBackgroundChoiceSets(planner, feat, source, parsedC
 }
 
 function backgroundChoiceSetDrivesGrant(background, flag) {
+  if (flag === 'backgroundSkill' && hasFreeHeartBackgroundTextSkillFeatGrant(background)) return true;
   const normalizedFlag = String(flag ?? '').trim().toLowerCase();
   if (!normalizedFlag) return false;
   const needle = `rulesselections.${normalizedFlag}`;
   return (background?.system?.rules ?? []).some((rule) =>
     rule?.key === 'GrantItem'
     && String(rule?.uuid ?? '').toLowerCase().includes(needle));
+}
+
+function buildFreeHeartBackgroundTextSkillChoiceSets(background) {
+  if (!hasFreeHeartBackgroundTextSkillFeatGrant(background)) return [];
+  const description = normalizeDescriptionText(background?.system?.description?.value ?? '');
+  const options = [];
+  if (/\bacrobatics\b/.test(description) && /\bcat\s+fall\b/.test(description)) {
+    options.push({ value: 'acrobatics', label: localizeSkillSlug('acrobatics') });
+  }
+  if (/\bathletics\b/.test(description) && /\bquick\s+jump\b/.test(description)) {
+    options.push({ value: 'athletics', label: localizeSkillSlug('athletics') });
+  }
+  if (options.length < 2) return [];
+  return [{
+    flag: 'backgroundSkill',
+    prompt: 'Select a skill.',
+    choiceType: 'skill',
+    syntheticType: 'free-heart-background-text-skill-feat',
+    grantsSkillTraining: true,
+    sourceName: background?.name ?? null,
+    options,
+  }];
+}
+
+function hasFreeHeartBackgroundTextSkillFeatGrant(background) {
+  const description = normalizeDescriptionText(background?.system?.description?.value ?? '');
+  return /\bacrobatics\b/.test(description)
+    && /\bathletics\b/.test(description)
+    && /\bcat\s+fall\b/.test(description)
+    && /\bquick\s+jump\b/.test(description);
+}
+
+function normalizeDescriptionText(value) {
+  return String(value ?? '')
+    .replace(/<[^>]+>/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .toLowerCase();
 }
 
 async function resolveSelectedFreeHeartBackground(feat) {
@@ -1228,13 +1273,14 @@ async function buildNaturalAmbitionChoiceSet(planner) {
 
 async function buildAdvancedMulticlassClassFeatChoiceSet(planner, feat, source, parsedChoiceSets = []) {
   if (hasUsableChoiceSet(parsedChoiceSets, ADVANCED_MULTICLASS_FEAT_CHOICE_FLAG)) return null;
-  if ((source?.system?.rules ?? []).some((rule) => rule?.key === 'GrantItem')) return null;
 
   const slug = String(feat?.slug ?? source?.system?.slug ?? source?.slug ?? '').trim().toLowerCase();
   const name = String(feat?.name ?? source?.name ?? '').trim().toLowerCase();
-  if (!slug.startsWith('advanced-') && !name.startsWith('advanced ')) return null;
+  const isConcoction = slug === 'basic-concoction' || slug === 'advanced-concoction' || name === 'basic concoction' || name === 'advanced concoction';
+  if (!isConcoction && (source?.system?.rules ?? []).some((rule) => rule?.key === 'GrantItem')) return null;
+  if (!isConcoction && !slug.startsWith('advanced-') && !name.startsWith('advanced ')) return null;
 
-  const classSlug = getPlannerDedicationArchetypeSlug(feat, source);
+  const classSlug = isConcoction ? 'alchemist' : getPlannerDedicationArchetypeSlug(feat, source);
   if (!classSlug || !ClassRegistry.has(classSlug)) return null;
 
   const maxLevel = Math.max(1, Math.floor(Number(planner?.selectedLevel ?? 1) / 2));

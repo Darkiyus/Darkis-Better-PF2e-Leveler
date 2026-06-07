@@ -778,6 +778,34 @@ describe('LevelPlanner intelligence boost planner choices', () => {
     });
   });
 
+  it('counts level 10 Intelligence bonus choices when the actor already records the completed boost', () => {
+    const actor = createMockActor();
+    actor.class.slug = 'alchemist';
+    actor.system.details.level.value = 10;
+    actor.system.abilities.int.mod = 5;
+    actor.system.build.attributes.boosts[5] = ['int'];
+    actor.system.build.attributes.boosts[10] = ['int'];
+    actor.abilities = {
+      str: { mod: 0, base: 0 },
+      dex: { mod: 0, base: 0 },
+      con: { mod: 0, base: 0 },
+      int: { mod: 5, base: 5 },
+      wis: { mod: 0, base: 0 },
+      cha: { mod: 0, base: 0 },
+    };
+
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    setLevelBoosts(planner.plan, 5, ['int']);
+    setLevelBoosts(planner.plan, 10, ['int']);
+    planner.selectedLevel = 10;
+
+    expect(planner._buildIntelligenceBenefitContext(10)).toEqual({
+      count: 1,
+      gainsSingle: true,
+    });
+  });
+
   it('uses historical skill state for imported past Intelligence bonus choices', () => {
     const actor = createMockActor();
     actor.class.slug = 'alchemist';

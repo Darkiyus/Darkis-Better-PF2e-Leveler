@@ -5738,6 +5738,37 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     ]));
   });
 
+  it('offers future planned feats as retraining sources after their planned level', () => {
+    const actor = createMockActor({ items: [] });
+    actor.class.slug = 'alchemist';
+    const planner = new LevelPlanner(actor);
+    planner.plan = createPlan('alchemist');
+    planner.plan.levels[9].classFeats = [
+      {
+        uuid: 'Compendium.pf2e.feats-srd.Item.quick-bomber',
+        name: 'Quick Bomber',
+        slug: 'quick-bomber',
+        img: 'quick-bomber.webp',
+        level: 1,
+        traits: ['alchemist'],
+      },
+    ];
+    planner.selectedLevel = 10;
+
+    expect(planner._getFeatRetrainSources()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        fromLevel: 9,
+        category: 'classFeats',
+        original: expect.objectContaining({
+          uuid: 'Compendium.pf2e.feats-srd.Item.quick-bomber',
+          name: 'Quick Bomber',
+          slug: 'quick-bomber',
+          img: 'quick-bomber.webp',
+        }),
+      }),
+    ]));
+  });
+
   it('offers creation-selected trained skills as skill retrain sources', async () => {
     const actor = createMockActor();
     actor.items = [];

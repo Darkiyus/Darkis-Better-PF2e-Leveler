@@ -1026,6 +1026,169 @@ describe('level planner grant previews', () => {
     ]));
   });
 
+  test('keeps unselected Free Heart background skill choices before prompting for replacement skills', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-free-heart') {
+        return {
+          uuid,
+          name: 'Free Heart',
+          slug: 'free-heart',
+          system: { slug: 'free-heart', traits: { value: ['elf'] }, rules: [] },
+        };
+      }
+      if (uuid === 'Compendium.pf2e.backgrounds.Item.martial-disciple') {
+        return {
+          uuid,
+          name: 'Martial Disciple',
+          type: 'background',
+          system: {
+            rules: [
+              {
+                key: 'ChoiceSet',
+                flag: 'backgroundSkill',
+                prompt: 'PF2E.SpecificRule.Prompt.Skill',
+                choices: [
+                  { value: 'acrobatics', label: 'Acrobatics' },
+                  { value: 'athletics', label: 'Athletics' },
+                ],
+              },
+              {
+                key: 'GrantItem',
+                uuid: '{item|flags.pf2e.rulesSelections.backgroundSkill}',
+              },
+            ],
+          },
+        };
+      }
+      return null;
+    });
+
+    const actor = createMockActor({ items: [] });
+    actor.system.skills.acrobatics.rank = 1;
+    actor.system.skills.athletics.rank = 1;
+
+    const ancestryFeat = {
+      uuid: 'feat-free-heart',
+      name: 'Free Heart',
+      slug: 'free-heart',
+      choices: {
+        levelerFreeHeartBackground: 'Compendium.pf2e.backgrounds.Item.martial-disciple',
+      },
+    };
+    const planner = {
+      actor,
+      selectedLevel: 1,
+      plan: {
+        classSlug: 'fighter',
+        levels: {
+          1: {
+            ancestryFeats: [ancestryFeat],
+            featGrants: [],
+          },
+        },
+      },
+      _compendiumCache: {
+        'category-backgrounds': [
+          { uuid: 'Compendium.pf2e.backgrounds.Item.martial-disciple', name: 'Martial Disciple', type: 'background', rarity: 'common', traits: [], slug: 'martial-disciple' },
+        ],
+      },
+      _buildAttributeContext: jest.fn(() => ({})),
+      _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+      _buildIntBonusSkillContext: jest.fn(() => []),
+      _buildIntBonusLanguageContext: jest.fn(() => []),
+      _buildSkillContext: jest.fn(() => []),
+      _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+      _isCustomPlanOpen: jest.fn(() => false),
+    };
+
+    const context = await buildLevelContext(planner, FIGHTER, {});
+    const backgroundSkillChoice = context.ancestryFeatChoiceSets.find((choiceSet) => choiceSet.flag === 'backgroundSkill');
+
+    expect(backgroundSkillChoice.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: 'acrobatics', disabled: false, selected: false }),
+      expect.objectContaining({ value: 'athletics', disabled: false, selected: false }),
+    ]));
+    expect(context.ancestryFeatChoiceSets).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        syntheticType: 'free-heart-background-skill-fallback',
+      }),
+    ]));
+  });
+
+  test('builds Martial Disciple skill choices from prose-only Free Heart background data', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-free-heart') {
+        return {
+          uuid,
+          name: 'Free Heart',
+          slug: 'free-heart',
+          system: { slug: 'free-heart', traits: { value: ['elf'] }, rules: [] },
+        };
+      }
+      if (uuid === 'Compendium.pf2e.backgrounds.Item.martial-disciple') {
+        return {
+          uuid,
+          name: 'Martial Disciple',
+          type: 'background',
+          system: {
+            description: {
+              value: '<p>You are trained in Acrobatics or Athletics. You gain @UUID[Compendium.pf2e.feats-srd.Item.cat-fall]{Cat Fall} or @UUID[Compendium.pf2e.feats-srd.Item.quick-jump]{Quick Jump}.</p>',
+            },
+            rules: [],
+          },
+        };
+      }
+      return null;
+    });
+
+    const actor = createMockActor({ items: [] });
+    actor.system.skills.acrobatics.rank = 1;
+    actor.system.skills.athletics.rank = 1;
+    const planner = {
+      actor,
+      selectedLevel: 1,
+      plan: {
+        classSlug: 'fighter',
+        levels: {
+          1: {
+            ancestryFeats: [{
+              uuid: 'feat-free-heart',
+              name: 'Free Heart',
+              slug: 'free-heart',
+              choices: {
+                levelerFreeHeartBackground: 'Compendium.pf2e.backgrounds.Item.martial-disciple',
+              },
+            }],
+            featGrants: [],
+          },
+        },
+      },
+      _compendiumCache: {
+        'category-backgrounds': [
+          { uuid: 'Compendium.pf2e.backgrounds.Item.martial-disciple', name: 'Martial Disciple', type: 'background', rarity: 'common', traits: [], slug: 'martial-disciple' },
+        ],
+      },
+      _buildAttributeContext: jest.fn(() => ({})),
+      _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+      _buildIntBonusSkillContext: jest.fn(() => []),
+      _buildIntBonusLanguageContext: jest.fn(() => []),
+      _buildSkillContext: jest.fn(() => []),
+      _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+      _isCustomPlanOpen: jest.fn(() => false),
+    };
+
+    const context = await buildLevelContext(planner, FIGHTER, {});
+    const backgroundSkillChoice = context.ancestryFeatChoiceSets.find((choiceSet) => choiceSet.flag === 'backgroundSkill');
+
+    expect(backgroundSkillChoice.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: 'acrobatics', disabled: false }),
+      expect.objectContaining({ value: 'athletics', disabled: false }),
+    ]));
+    expect(context.ancestryFeatChoiceSets).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ syntheticType: 'free-heart-background-skill-fallback' }),
+    ]));
+  });
+
   test('prompts for an untrained skill when selected Free Heart background grants an already trained skill', async () => {
     global.fromUuid = jest.fn(async (uuid) => {
       if (uuid === 'feat-free-heart') {
@@ -2292,5 +2455,66 @@ describe('level planner grant previews', () => {
         source: 'choice:skill',
       }),
     ]);
+  });
+
+  test('adds an alchemist class feat picker for Advanced Concoction', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-advanced-concoction') {
+        return {
+          uuid,
+          name: 'Advanced Concoction',
+          slug: 'advanced-concoction',
+          system: {
+            slug: 'advanced-concoction',
+            traits: { value: ['alchemist', 'archetype'] },
+            rules: [{ key: 'GrantItem', uuid: 'Compendium.pf2e.feats-srd.Item.opaque' }],
+          },
+        };
+      }
+      return null;
+    });
+
+    const planner = {
+      actor: createMockActor({ items: [] }),
+      selectedLevel: 8,
+      plan: {
+        classSlug: 'fighter',
+        levels: {
+          8: {
+            archetypeFeats: [{
+              uuid: 'feat-advanced-concoction',
+              name: 'Advanced Concoction',
+              slug: 'advanced-concoction',
+              traits: ['alchemist', 'archetype'],
+              choices: {},
+            }],
+            featGrants: [],
+          },
+        },
+      },
+      _compendiumCache: {
+        'category-feats': [
+          { uuid: 'Compendium.pf2e.feats-srd.Item.alchemical-familiar', name: 'Alchemical Familiar', type: 'feat', category: 'class', level: 1, rarity: 'common', traits: ['alchemist'], slug: 'alchemical-familiar' },
+          { uuid: 'Compendium.pf2e.feats-srd.Item.efficient-alchemy', name: 'Efficient Alchemy', type: 'feat', category: 'class', level: 4, rarity: 'common', traits: ['alchemist'], slug: 'efficient-alchemy' },
+          { uuid: 'Compendium.pf2e.feats-srd.Item.healing-bomb', name: 'Healing Bomb', type: 'feat', category: 'class', level: 8, rarity: 'common', traits: ['alchemist'], slug: 'healing-bomb' },
+        ],
+      },
+      _buildAttributeContext: jest.fn(() => ({})),
+      _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+      _buildIntBonusSkillContext: jest.fn(() => []),
+      _buildIntBonusLanguageContext: jest.fn(() => []),
+      _buildSkillContext: jest.fn(() => []),
+      _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+      _isCustomPlanOpen: jest.fn(() => false),
+    };
+
+    const context = await buildLevelContext(planner, FIGHTER, {});
+    const choiceSet = context.archetypeFeatChoiceSets.find((entry) => entry.flag === 'levelerAdvancedClassFeat');
+
+    expect(choiceSet).toEqual(expect.objectContaining({
+      syntheticType: 'advanced-multiclass-class-feat',
+      choiceType: 'item',
+    }));
+    expect(choiceSet.options.map((option) => option.slug)).toEqual(['alchemical-familiar', 'efficient-alchemy']);
   });
 });
