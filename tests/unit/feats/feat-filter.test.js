@@ -239,7 +239,7 @@ describe('filterFeatsByCategory', () => {
     ]));
   });
 
-  test('does not include skill-tagged dedication additional feats in the archetype category', async () => {
+  test('includes skill-tagged dedication additional feats in the archetype category', async () => {
     const dedication = {
       ...makeFeat('Acrobat Dedication', 2, ['archetype', 'dedication']),
       slug: 'acrobat-dedication',
@@ -267,8 +267,6 @@ describe('filterFeatsByCategory', () => {
 
     expect(result).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: 'Acrobat Dedication' }),
-    ]));
-    expect(result).not.toEqual(expect.arrayContaining([
       expect.objectContaining({ name: 'Graceful Leaper' }),
     ]));
   });
@@ -329,6 +327,39 @@ describe('filterFeatsByCategory', () => {
     const result = filterFeatsByCategory(
       [dedication, treatCondition, holisticCare],
       'skill',
+      '',
+      6,
+      { additionalArchetypeFeatLevels: additionalLevels },
+    );
+
+    expect(result).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'Treat Condition' }),
+      expect.objectContaining({ name: 'Holistic Care' }),
+    ]));
+  });
+
+  test('includes skill-tagged additional archetype feats in the archetype category once unlocked', async () => {
+    const dedication = {
+      ...makeFeat('Medic Dedication', 2, ['archetype', 'dedication']),
+      slug: 'medic-dedication',
+      system: {
+        ...makeFeat('Medic Dedication', 2, ['archetype', 'dedication']).system,
+        description: { value: '<p>No additional feats listed here.</p>' },
+      },
+    };
+    const treatCondition = makeFeat('Treat Condition', 4, ['archetype', 'skill']);
+    treatCondition.system.prerequisites.value = [{ value: 'Medic Dedication' }];
+    const holisticCare = makeFeat('Holistic Care', 6, ['archetype', 'skill']);
+    holisticCare.system.prerequisites.value = [{ value: 'trained in Diplomacy, Treat Condition' }];
+
+    const additionalLevels = await collectAdditionalArchetypeFeatLevels(
+      [dedication, treatCondition, holisticCare],
+      new Set(['medic-dedication']),
+    );
+
+    const result = filterFeatsByCategory(
+      [dedication, treatCondition, holisticCare],
+      'archetype',
       '',
       6,
       { additionalArchetypeFeatLevels: additionalLevels },

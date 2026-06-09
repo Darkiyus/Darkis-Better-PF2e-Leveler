@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.4.44
+
+### Level Planner
+
+- **Free archetype Medic skill feats now stay visible** - Treat Condition, Holistic Care, and other skill-tagged archetype feats unlocked by a dedication remain available in free archetype slots instead of being hidden by locked archetype filters
+
 ## 3.4.43
 
 ### Level Planner

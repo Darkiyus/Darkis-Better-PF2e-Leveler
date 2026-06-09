@@ -65,7 +65,8 @@ function matchesFeatCategory(traits, category, queries, options = {}) {
         || (includeSkillFeats && !traits.includes('general') && !traits.includes('archetype') && traits.includes('skill'));
     case 'archetype':
       return traits.includes('dedication')
-        || ((traits.includes('archetype') || isAdditionalArchetypeFeat || hasDedicationPrerequisite) && !isSkillFeat);
+        || (!isSkillFeat && (traits.includes('archetype') || isAdditionalArchetypeFeat || hasDedicationPrerequisite))
+        || (isSkillFeat && (isAdditionalArchetypeFeat || hasDedicationPrerequisite));
     case 'mythic':
       return traits.includes('mythic');
     default:

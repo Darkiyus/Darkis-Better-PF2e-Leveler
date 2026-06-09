@@ -1028,6 +1028,56 @@ describe('FeatPicker prerequisite enforcement', () => {
     );
   });
 
+  test('free archetype picker keeps skill-tagged Medic feats visible under locked archetype filtering', () => {
+    const treatCondition = createFeat({
+      name: 'Treat Condition',
+      prereqText: 'Medic Dedication',
+      uuid: 'Compendium.pf2e.feats-srd.Item.treat-condition',
+      slug: 'treat-condition',
+    });
+    treatCondition.system.traits.value = ['archetype', 'skill'];
+    treatCondition.system.level.value = 4;
+
+    const holisticCare = createFeat({
+      name: 'Holistic Care',
+      prereqText: 'trained in Diplomacy, Treat Condition',
+      uuid: 'Compendium.pf2e.feats-srd.Item.holistic-care',
+      slug: 'holistic-care',
+    });
+    holisticCare.system.traits.value = ['archetype', 'skill'];
+    holisticCare.system.level.value = 6;
+
+    const picker = new FeatPicker(
+      createActor(),
+      'archetype',
+      6,
+      createBuildState({
+        level: 6,
+        feats: new Set(['medic-dedication', 'treat-condition']),
+      }),
+      jest.fn(),
+      {
+        preset: {
+          selectedFeatTypes: ['archetype'],
+          lockedFeatTypes: ['archetype'],
+          selectedTraits: ['archetype'],
+          lockedTraits: ['archetype', 'dedication'],
+          traitLogic: 'and',
+        },
+      },
+    );
+    picker.allFeats = [treatCondition, holisticCare];
+    picker.additionalArchetypeFeatLevels = new Map([
+      ['treat-condition', 4],
+      ['holistic-care', 6],
+    ]);
+
+    expect(picker._applyFilters().map((entry) => entry.name)).toEqual([
+      'Holistic Care',
+      'Treat Condition',
+    ]);
+  });
+
   test('dedication-unlocked archetype feats still respect unrelated failed prerequisites', () => {
     const feat = createFeat({
       name: 'Holistic Care',

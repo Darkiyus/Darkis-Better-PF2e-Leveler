@@ -1174,11 +1174,12 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const types = [];
 
     if (traits.includes('mythic')) types.push('mythic');
-    if (
-      traits.includes('dedication') ||
-      ((traits.includes('archetype') || isAdditionalArchetypeFeat) && !isSkillFeat)
-    )
-      types.push('archetype');
+    const countsAsArchetypeFeat = traits.includes('dedication')
+      || (
+        (traits.includes('archetype') || isAdditionalArchetypeFeat)
+        && (!isSkillFeat || this.category === 'archetype')
+      );
+    if (countsAsArchetypeFeat) types.push('archetype');
     if (traits.includes('general')) types.push('general');
     if (traits.includes('skill')) types.push('skill');
     if (ancestryTraits.some((trait) => traits.includes(trait))) types.push('ancestry');
@@ -1216,6 +1217,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const isSkillTaggedArchetype =
       traits.includes('skill') && traits.includes('archetype') && !traits.includes('dedication');
     const filteredTraits = isSkillTaggedArchetype
+      && this.category !== 'archetype'
       ? traits.filter((trait) => trait !== 'archetype')
       : traits;
     const featKeys = this._getAdditionalArchetypeFeatKeys(feat);
