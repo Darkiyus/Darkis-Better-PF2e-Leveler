@@ -240,6 +240,31 @@ export function matchDeityState(parsed, buildState) {
   };
 }
 
+export function matchSanctificationState(parsed, buildState) {
+  if (parsed.deityLists) {
+    const required = normalizeSanctification(parsed.deityLists);
+    const deitySanctifications = getDeitySanctifications(buildState?.deity);
+    if (!buildState?.deity) return { met: false, text: parsed.text };
+    if (!deitySanctifications) return { met: null, text: parsed.text };
+    return {
+      met: deitySanctifications.has(required),
+      text: parsed.text,
+    };
+  }
+
+  if (parsed.characterSanctification) {
+    const required = normalizeSanctification(parsed.characterSanctification);
+    const current = getCharacterSanctifications(buildState);
+    if (!current) return { met: null, text: parsed.text };
+    return {
+      met: current.has(required),
+      text: parsed.text,
+    };
+  }
+
+  return { met: null, text: parsed.text };
+}
+
 export function matchSpellcastingState(parsed, buildState) {
   if (parsed.focusPool === true) {
     return {
@@ -448,6 +473,54 @@ function normalizeText(value) {
   return String(value ?? '')
     .toLowerCase()
     .trim();
+}
+
+function normalizeSanctification(value) {
+  const normalized = normalizeText(value).replace(/[^a-z]/g, '');
+  return normalized === 'holy' || normalized === 'unholy' ? normalized : '';
+}
+
+function getDeitySanctifications(deity) {
+  const raw = deity?.sanctification?.what;
+  if (raw instanceof Set) {
+    return new Set([...raw].map(normalizeSanctification).filter(Boolean));
+  }
+  if (Array.isArray(raw)) {
+    return new Set(raw.map(normalizeSanctification).filter(Boolean));
+  }
+  return null;
+}
+
+function getCharacterSanctifications(buildState) {
+  const values = new Set();
+  const hasKnownSanctification =
+    addSanctificationValue(values, buildState?.sanctification) ||
+    addSanctificationValues(values, buildState?.traits) ||
+    addSanctificationValues(values, buildState?.ancestryTraits);
+  if (values.size > 0) return values;
+  return hasKnownSanctification ? values : null;
+}
+
+function addSanctificationValues(target, value) {
+  if (value instanceof Set || Array.isArray(value)) {
+    for (const entry of value) addSanctificationValue(target, entry);
+    return true;
+  }
+  return addSanctificationValue(target, value);
+}
+
+function addSanctificationValue(target, value) {
+  if (value === undefined || value === null) return false;
+  if (value && typeof value === 'object') {
+    const nestedKnown =
+      addSanctificationValue(target, value.value) ||
+      addSanctificationValue(target, value.actor) ||
+      addSanctificationValue(target, value.selected);
+    return nestedKnown || Object.keys(value).length > 0;
+  }
+  const normalized = normalizeSanctification(value);
+  if (normalized) target.add(normalized);
+  return true;
 }
 
 function normalizeDivineFont(value) {

@@ -1,11 +1,26 @@
 import { ContentGuidanceMenu } from '../../../scripts/ui/content-guidance-menu.js';
 
 jest.mock('../../../scripts/access/content-guidance.js', () => ({
+  buildGuidanceEntry: jest.fn((status, exclusive = false) => {
+    const normalizedStatus = status && status !== 'default' ? status : null;
+    const normalizedExclusive = exclusive === true && normalizedStatus !== 'disallowed';
+    if (!normalizedStatus && !normalizedExclusive) return null;
+    if (!normalizedExclusive) return normalizedStatus;
+    return normalizedStatus ? { status: normalizedStatus, exclusive: true } : { exclusive: true };
+  }),
+  CATEGORY_DEFAULT_POLICIES: { ALLOWED: 'allowed', DISALLOWED: 'disallowed' },
   getContentGuidance: jest.fn(() => ({})),
   invalidateGuidanceCache: jest.fn(),
+  getCategoryDefaultGuidanceKey: jest.fn((categoryKey) => `category-default:${categoryKey}`),
   getSourceGuidanceKey: jest.fn((title) => {
     const normalized = String(title ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
     return normalized ? `source-title:${normalized}` : null;
+  }),
+  normalizeGuidanceEntry: jest.fn((entry) => {
+    if (typeof entry === 'string') return { status: entry === 'default' ? null : entry, exclusive: false };
+    if (!entry || typeof entry !== 'object') return { status: null, exclusive: false };
+    const status = entry.status && entry.status !== 'default' ? entry.status : null;
+    return { status, exclusive: entry.exclusive === true && status !== 'disallowed' };
   }),
 }));
 
@@ -56,6 +71,81 @@ describe('ContentGuidanceMenu', () => {
     ]);
   });
 
+  test('context exposes active tab default policy', async () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'backgrounds';
+    menu._draft = {
+      'category-default:backgrounds': 'disallowed',
+    };
+    menu._itemCache.backgrounds = [
+      { uuid: 'bg-common', name: 'Scholar', rarity: 'common', level: 1 },
+    ];
+
+    const context = await menu._prepareContext();
+
+    expect(context.categoryDefaultPolicy).toBe('disallowed');
+    expect(context.categoryDefaultOptions).toEqual([
+      expect.objectContaining({ value: 'allowed', active: false }),
+      expect.objectContaining({ value: 'disallowed', active: true }),
+    ]);
+  });
+
+  test('allow bulk action only appears when unmarked items are disallowed', async () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'backgrounds';
+    menu._draft = {};
+    menu._itemCache.backgrounds = [
+      { uuid: 'bg-common', name: 'Scholar', rarity: 'common', level: 1 },
+    ];
+
+    let context = await menu._prepareContext();
+
+    expect(context.rarityBulkGroups[0].actions.map((action) => action.status)).toEqual([
+      'recommended',
+      'not-recommended',
+      'disallowed',
+      'default',
+    ]);
+
+    menu._draft = {
+      'category-default:backgrounds': 'disallowed',
+    };
+    context = await menu._prepareContext();
+
+    expect(context.rarityBulkGroups[0].actions.map((action) => action.status)).toEqual([
+      'allowed',
+      'recommended',
+      'not-recommended',
+      'disallowed',
+      'default',
+    ]);
+  });
+
+  test('item guidance cycle only includes allow in disallowed-default mode', () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'backgrounds';
+    menu._draft = {};
+
+    expect(menu._getGuidanceStatusCycle()).toEqual([
+      'default',
+      'recommended',
+      'not-recommended',
+      'disallowed',
+    ]);
+
+    menu._draft = {
+      'category-default:backgrounds': 'disallowed',
+    };
+
+    expect(menu._getGuidanceStatusCycle()).toEqual([
+      'default',
+      'allowed',
+      'recommended',
+      'not-recommended',
+      'disallowed',
+    ]);
+  });
+
   test('search state does not hide rarity bulk groups for the active category context', async () => {
     const menu = new ContentGuidanceMenu();
     menu.activeCategory = 'backgrounds';
@@ -87,10 +177,123 @@ describe('ContentGuidanceMenu', () => {
       'heritages',
       'backgrounds',
       'classes',
+      'classArchetypes',
       'skills',
       'languages',
     ]);
     expect(context.secondaryCategories.map((entry) => entry.key)).toEqual(['sources']);
+  });
+
+  test('class archetypes tab defaults to dedications and can show all archetype class feats', async () => {
+    game.packs.get = jest.fn((key) => {
+      if (key !== 'pf2e.feats-srd') return null;
+      return {
+        getDocuments: jest.fn(async () => [
+          {
+            type: 'feat',
+            uuid: 'Compendium.pf2e.feats-srd.Item.flexible-spellcaster',
+            name: 'Flexible Spellcaster',
+            img: 'flexible.webp',
+            system: {
+              category: 'class',
+              level: { value: 2 },
+              traits: { rarity: 'common', value: ['archetype'], otherTags: ['class-archetype'] },
+              publication: { title: 'Secrets of Magic' },
+            },
+          },
+          {
+            type: 'feat',
+            uuid: 'Compendium.pf2e.feats-srd.Item.wizard-dedication',
+            name: 'Wizard Dedication',
+            img: 'wizard.webp',
+            system: {
+              category: 'class',
+              level: { value: 2 },
+              traits: { rarity: 'common', value: ['archetype', 'dedication', 'multiclass'] },
+              publication: { title: 'Player Core' },
+            },
+          },
+          {
+            type: 'feat',
+            uuid: 'Compendium.pf2e.feats-srd.Item.acrobat-feat',
+            name: 'Acrobat Feat',
+            img: 'acrobat.webp',
+            system: {
+              category: 'class',
+              level: { value: 4 },
+              traits: { rarity: 'common', value: ['archetype'] },
+              publication: { title: 'Player Core' },
+            },
+          },
+          {
+            type: 'feat',
+            uuid: 'Compendium.pf2e.feats-srd.Item.archetype-skill-feat',
+            name: 'Archetype Skill Feat',
+            img: 'skill.webp',
+            system: {
+              category: 'skill',
+              level: { value: 4 },
+              traits: { rarity: 'common', value: ['archetype'] },
+              publication: { title: 'Player Core' },
+            },
+          },
+          {
+            type: 'feat',
+            uuid: 'Compendium.pf2e.feats-srd.Item.quick-bomber',
+            name: 'Quick Bomber',
+            img: 'quick.webp',
+            system: {
+              category: 'class',
+              level: { value: 1 },
+              traits: { rarity: 'common', value: ['alchemist'] },
+              publication: { title: 'Player Core' },
+            },
+          },
+        ]),
+      };
+    });
+
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'classArchetypes';
+    menu._draft = {
+      'Compendium.pf2e.feats-srd.Item.flexible-spellcaster': 'recommended',
+    };
+
+    const context = await menu._prepareContext();
+
+    expect(context.primaryCategories.map((entry) => entry.key)).toContain('classArchetypes');
+    expect(context.showClassArchetypeModeFilter).toBe(true);
+    expect(context.classArchetypesDedicationsOnly).toBe(true);
+    expect(context.items).toEqual([
+      expect.objectContaining({
+        uuid: 'Compendium.pf2e.feats-srd.Item.wizard-dedication',
+        name: 'Wizard Dedication',
+      }),
+    ]);
+    expect(context.rarityBulkGroups).toEqual([
+      expect.objectContaining({ scopeType: 'rarity', scopeValue: 'common' }),
+    ]);
+
+    menu.classArchetypesDedicationsOnly = false;
+    const allContext = await menu._prepareContext();
+
+    expect(allContext.classArchetypesDedicationsOnly).toBe(false);
+    expect(allContext.items).toEqual([
+      expect.objectContaining({
+        uuid: 'Compendium.pf2e.feats-srd.Item.acrobat-feat',
+        name: 'Acrobat Feat',
+      }),
+      expect.objectContaining({
+        uuid: 'Compendium.pf2e.feats-srd.Item.flexible-spellcaster',
+        name: 'Flexible Spellcaster',
+        isRecommended: true,
+        publicationTitle: 'Secrets of Magic',
+      }),
+      expect.objectContaining({
+        uuid: 'Compendium.pf2e.feats-srd.Item.wizard-dedication',
+        name: 'Wizard Dedication',
+      }),
+    ]);
   });
 
   test('bulk guidance applies to matching rarity within the active category', () => {
@@ -107,12 +310,92 @@ describe('ContentGuidanceMenu', () => {
     expect(menu._draft).toEqual({ 'bg-rare': 'not-recommended' });
   });
 
+  test('class archetype bulk guidance only applies to the active view mode', () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'classArchetypes';
+    menu._draft = {};
+    menu._itemCache.classArchetypes = [
+      { uuid: 'medic-dedication', name: 'Medic Dedication', rarity: 'common', traits: ['archetype', 'dedication', 'medic'] },
+      { uuid: 'doctors-visitation', name: "Doctor's Visitation", rarity: 'common', traits: ['archetype', 'medic'] },
+    ];
+
+    menu._applyBulkExclusive('rarity', 'common', true);
+
+    expect(menu._draft).toEqual({
+      'medic-dedication': { exclusive: true },
+    });
+
+    menu.classArchetypesDedicationsOnly = false;
+    menu._applyBulkExclusive('rarity', 'common', true);
+
+    expect(menu._draft).toEqual({
+      'medic-dedication': { exclusive: true },
+      'doctors-visitation': { exclusive: true },
+    });
+  });
+
+  test('bulk guidance can explicitly allow matching items', () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'backgrounds';
+    menu._draft = {
+      'category-default:backgrounds': 'disallowed',
+    };
+    menu._itemCache.backgrounds = [
+      { uuid: 'bg-common', name: 'Scholar', rarity: 'common', level: 1 },
+      { uuid: 'bg-rare', name: 'Time Traveler', rarity: 'rare', level: 1 },
+    ];
+
+    menu._applyBulkGuidance('rarity', 'common', 'allowed');
+
+    expect(menu._draft).toEqual({
+      'category-default:backgrounds': 'disallowed',
+      'bg-common': 'allowed',
+    });
+  });
+
+  test('bulk guidance actions expose distinct allow and exclusive visual classes', () => {
+    const menu = new ContentGuidanceMenu();
+
+    expect(menu._buildBulkActions({ includeAllowed: true }).find((action) => action.status === 'allowed')).toEqual(expect.objectContaining({
+      className: 'tag--allowed',
+    }));
+    expect(menu._buildBulkExclusiveActions().find((action) => action.exclusive === true)).toEqual(expect.objectContaining({
+      className: 'tag--exclusive',
+    }));
+  });
+
+  test('exclusive flag can be combined with suggested guidance', () => {
+    const menu = new ContentGuidanceMenu();
+    menu._draft = {
+      'medic-dedication': 'recommended',
+    };
+
+    menu._setGuidanceExclusive('medic-dedication', true);
+
+    expect(menu._draft).toEqual({
+      'medic-dedication': { status: 'recommended', exclusive: true },
+    });
+  });
+
+  test('category default policy writes and clears the tab default key', () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'classes';
+    menu._draft = {};
+
+    menu._setCategoryDefaultPolicy('disallowed');
+    expect(menu._draft).toEqual({ 'category-default:classes': 'disallowed' });
+
+    menu._setCategoryDefaultPolicy('allowed');
+    expect(menu._draft).toEqual({});
+  });
+
   test('clear tab only removes guidance entries from the active category', () => {
     document.body.innerHTML = '<button type="button" data-action="clear-all-guidance"></button>';
 
     const menu = new ContentGuidanceMenu();
     menu.activeCategory = 'heritages';
     menu._draft = {
+      'category-default:heritages': 'disallowed',
       'heritage-elf': 'recommended',
       'background-a': 'disallowed',
     };

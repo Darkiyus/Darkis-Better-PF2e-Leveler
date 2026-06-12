@@ -33,6 +33,12 @@
   border: 1px solid rgba(21, 101, 192, 0.3);
 }
 
+.pf2e-leveler .tag--allowed {
+  background: rgba(70, 150, 86, 0.2);
+  color: #63b66d;
+  border: 1px solid rgba(70, 150, 86, 0.38);
+}
+
 .pf2e-leveler .tag--muted {
   background: rgba(158, 158, 158, 0.15);
   color: var(--leveler-text-muted);
@@ -61,6 +67,12 @@
   background: rgba(196, 167, 71, 0.2);
   color: #c4a747;
   border: 1px solid rgba(196, 167, 71, 0.4);
+}
+
+.pf2e-leveler .tag--exclusive {
+  background: rgba(151, 91, 204, 0.22);
+  color: #c894ff;
+  border: 1px solid rgba(151, 91, 204, 0.44);
 }
 
 .pf2e-leveler .tag--disallowed {
@@ -997,8 +1009,41 @@
   width: 100%;
 }
 
+.pf2e-leveler .guidance-bulk__actions--filter {
+  padding-top: 2px;
+  border-top: 1px solid rgba(196, 180, 158, 0.1);
+}
+
+.pf2e-leveler .guidance-bulk__actionGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 420px);
+}
+
 .pf2e-leveler .guidance-bulk__button {
   min-width: 0;
+}
+
+.pf2e-leveler .guidance-default-policy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 0 10px;
+}
+
+.pf2e-leveler .guidance-mode-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 0 10px;
+}
+
+.pf2e-leveler .guidance-bulk__button.is-active {
+  border-color: rgba(213, 186, 132, 0.72);
+  background: rgba(213, 186, 132, 0.18);
 }
 
 .pf2e-leveler .guidance-item {
@@ -1057,6 +1102,10 @@
 
 .pf2e-leveler .guidance-item__toggle:hover {
   opacity: 0.8;
+}
+
+.pf2e-leveler .guidance-item__toggle.is-active {
+  color: #c894ff;
 }
 
 @media (max-width: 1100px) {

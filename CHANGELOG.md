@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.5.0
+
+### Character Creation
+
+- **Draconic sorcerer bloodlines now follow their exemplar tradition** - Draconic exemplar choices now drive the spellcasting tradition, sorcerous gift spells, and spell picker tradition instead of defaulting every dragon to arcane
+- **Sanctified feats now read the character's holy or unholy state** - Feats that require holy or unholy sanctification now validate against the actor's sanctification data instead of failing as unknown
+
+### Content Guidance
+
+- **Class archetype suggestions now include dedication-based filtering** - The Class Archetypes guidance tab defaults to dedication feats, can switch to all archetype class feats, and enforces guidance in archetype and free archetype feat picks
+- **Exclusive archetype guidance now keeps that archetype's follow-up feats** - Marking a dedication such as Acrobat Dedication exclusive now keeps Acrobat feats selectable while filtering unrelated archetype feats for players
+
 ## 3.4.44
 
 ### Level Planner

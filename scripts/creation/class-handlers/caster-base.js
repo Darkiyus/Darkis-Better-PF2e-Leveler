@@ -1,6 +1,6 @@
 import { SPELLBOOK_CLASSES } from '../../constants.js';
 import { BaseClassHandler } from './base.js';
-import { resolveSubclassSpells } from '../../data/subclass-spells.js';
+import { resolveSpellcastingTradition, resolveSubclassSpells } from '../../data/subclass-spells.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { capitalize } from '../../utils/pf2e-api.js';
 import { classUsesPhysicalSpellbook, ensureActorHasSpellbook } from '../../utils/spellcasting-support.js';
@@ -278,10 +278,7 @@ export class CasterBaseHandler extends BaseClassHandler {
   }
 
   _resolveTradition(tradition, subclass) {
-    if (['bloodline', 'patron', 'connection', 'paradox'].includes(tradition)) {
-      return subclass?.tradition ?? 'arcane';
-    }
-    return tradition;
+    return resolveSpellcastingTradition(tradition, subclass);
   }
 
   _findSpellcastingEntry(actor, { name, prepared = null, tradition = null }) {

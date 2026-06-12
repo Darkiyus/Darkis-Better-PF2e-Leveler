@@ -5,6 +5,9 @@ export const CHAMPION_DEVOTION_SPELLS = {
   touchOfTheVoid: 'Compendium.pf2e.spells-srd.Item.jFmWSIpJGGebim6y',
 };
 
+const SPELL_TRADITIONS = new Set(['arcane', 'divine', 'occult', 'primal']);
+const VARIABLE_SPELLCASTING_TRADITIONS = new Set(['bloodline', 'patron', 'connection', 'paradox']);
+
 export const SUBCLASS_SPELLS = {
   // magus — Aloof Firmament
   'aloof-firmament': {
@@ -72,6 +75,8 @@ export const SUBCLASS_SPELLS = {
     focusSpells: { "initial": "Compendium.pf2e.spells-srd.Item.K8vvrOgW4bGakXxm", "advanced": "Compendium.pf2e.spells-srd.Item.HWJODX2zPg5cg34F" },
     grantedSpells: { "1": "Compendium.pf2e.spells-srd.Item.4koZzrnMXhhosn0D", "2": ["Compendium.pf2e.spells-srd.Item.ZxHC7V7HtjUsB8zH", "Compendium.pf2e.spells-srd.Item.41TZEjhO6D1nWw2X", "Compendium.pf2e.spells-srd.Item.TaaMEYdZXQXF0Sks", "Compendium.pf2e.spells-srd.Item.1xbFBQDRs0hT5xZ9"], "3": "Compendium.pf2e.spells-srd.Item.o6YCGx4lycsYpww4", "4": "Compendium.pf2e.spells-srd.Item.A2JfEKe6BZcTG1S8", "5": ["Compendium.pf2e.spells-srd.Item.GP3wewkQXEPrLxYj", "Compendium.pf2e.spells-srd.Item.A16eFTRh82xIjMu8", "Compendium.pf2e.spells-srd.Item.xFp4EwVcYwSG336t", "Compendium.pf2e.spells-srd.Item.xxWhyl81w3ckslAU"], "6": "Compendium.pf2e.spells-srd.Item.5c692cCcTDXjSEzk", "7": "Compendium.pf2e.spells-srd.Item.O6VQC1Bs4aSYDa6R", "8": ["Compendium.pf2e.spells-srd.Item.Oj1PJBMQD9vuwCv7", "Compendium.pf2e.spells-srd.Item.KtTGLbLG9nqMbUYL", "Compendium.pf2e.spells-srd.Item.y2cQYLr5mljDSu1G", "Compendium.pf2e.spells-srd.Item.x7SPrsRxGb2Vy2nu"], "9": "Compendium.pf2e.spells-srd.Item.fkDeKktdmbeplYRY", "cantrip": "Compendium.pf2e.spells-srd.Item.TVKNbcgTee19PXZR" },
     choiceFlag: 'dragonBloodline',
+    choiceSpellKey: 'tradition',
+    choiceSpellOptions: ['arcane', 'divine', 'occult', 'primal'],
     choiceOptions: [{ "damageType": "force", "skill": "arcana", "slug": "arcane", "tradition": "arcane" }, { "damageType": "spirit", "skill": "religion", "slug": "divine", "tradition": "divine" }, { "damageType": "mental", "skill": "occultism", "slug": "occult", "tradition": "occult" }, { "damageType": "fire", "skill": "nature", "slug": "primal", "tradition": "primal" }, { "damageType": "bludgeoning", "skill": "nature", "slug": "adamantine", "tradition": "primal" }, { "damageType": "force", "skill": "arcana", "slug": "barrage", "tradition": "arcane" }, { "damageType": "fire", "skill": "nature", "slug": "bog", "tradition": "primal" }, { "damageType": "fire", "skill": "nature", "slug": "brine", "tradition": "primal" }, { "damageType": "fire", "skill": "nature", "slug": "cinder", "tradition": "primal" }, { "damageType": "fire", "skill": "nature", "slug": "cloud", "tradition": "primal" }, { "damageType": "poison", "skill": "occultism", "slug": "conspirator", "tradition": "occult" }, { "damageType": "fire", "skill": "nature", "slug": "coral", "tradition": "primal" }, { "damageType": "fire", "skill": "nature", "slug": "crystal", "tradition": "primal" }, { "damageType": "spirit", "skill": "religion", "slug": "delight", "tradition": "divine" }, { "damageType": "mental", "skill": "occultism", "slug": "despair", "tradition": "occult" }, { "damageType": "fire", "skill": "religion", "slug": "diabolic", "tradition": "divine" }, { "damageType": "spirit", "skill": "religion", "slug": "empyreal", "tradition": "divine" }, { "damageType": "spirit", "skill": "religion", "slug": "executor", "tradition": "divine" }, { "damageType": "fire", "skill": "nature", "slug": "forest", "tradition": "primal" }, { "damageType": "force", "skill": "arcana", "slug": "fortune", "tradition": "arcane" }, { "damageType": "poison", "skill": "nature", "slug": "horned", "tradition": "primal" }, { "damageType": "fire", "skill": "nature", "slug": "magma", "tradition": "primal" }, { "damageType": "mental", "skill": "arcana", "slug": "mirage", "tradition": "arcane" }, { "damageType": "mental", "skill": "occultism", "slug": "mocking", "tradition": "occult" }, { "damageType": "spirit", "skill": "religion", "slug": "oath", "tradition": "divine" }, { "damageType": "mental", "skill": "occultism", "slug": "omen", "tradition": "occult" }, { "damageType": "force", "skill": "arcana", "slug": "phase", "tradition": "arcane" }, { "damageType": "spirit", "skill": "religion", "slug": "requiem", "tradition": "divine" }, { "damageType": "spirit", "skill": "religion", "slug": "resurrection", "tradition": "divine" }, { "damageType": "fire", "skill": "nature", "slug": "rime", "tradition": "primal" }, { "damageType": "force", "skill": "arcana", "slug": "rune", "tradition": "arcane" }, { "damageType": "spirit", "skill": "occultism", "slug": "sage", "tradition": "occult" }, { "damageType": "force", "skill": "arcana", "slug": "sea", "tradition": "arcane" }, { "damageType": "spirit", "skill": "religion", "slug": "sky", "tradition": "divine" }, { "damageType": "electricity", "skill": "arcana", "slug": "sky", "tradition": "arcane" }, { "damageType": "mental", "skill": "occultism", "slug": "sovereign", "tradition": "occult" }, { "damageType": "fire", "skill": "nature", "slug": "stormcrown", "tradition": "primal" }, { "damageType": "force", "skill": "arcana", "slug": "time", "tradition": "arcane" }, { "damageType": "mental", "skill": "occultism", "slug": "umbral", "tradition": "occult" }, { "damageType": "force", "skill": "arcana", "slug": "underworld", "tradition": "arcane" }, { "damageType": "mental", "skill": "occultism", "slug": "vizier", "tradition": "occult" }, { "damageType": "force", "skill": "arcana", "slug": "vorpal", "tradition": "arcane" }, { "damageType": "force", "skill": "arcana", "slug": "wailing", "tradition": "arcane" }, { "damageType": "mental", "skill": "occultism", "slug": "whisper", "tradition": "occult" }, { "damageType": "force", "skill": "arcana", "slug": "wish", "tradition": "arcane" }, { "damageType": "acid", "skill": "arcana", "slug": "black", "tradition": "arcane" }, { "damageType": "electricity", "skill": "arcana", "slug": "blue", "tradition": "arcane" }, { "damageType": "fire", "skill": "arcana", "slug": "brass", "tradition": "arcane" }, { "damageType": "electricity", "skill": "arcana", "slug": "bronze", "tradition": "arcane" }, { "damageType": "acid", "skill": "arcana", "slug": "copper", "tradition": "arcane" }, { "damageType": "fire", "skill": "arcana", "slug": "gold", "tradition": "arcane" }, { "damageType": "poison", "skill": "arcana", "slug": "green", "tradition": "arcane" }, { "damageType": "fire", "skill": "arcana", "slug": "red", "tradition": "arcane" }, { "damageType": "cold", "skill": "arcana", "slug": "silver", "tradition": "arcane" }, { "damageType": "cold", "skill": "arcana", "slug": "white", "tradition": "arcane" }],
   },
   // sorcerer — Bloodline: Elemental
@@ -500,18 +505,100 @@ function resolveRankSpell(rankKey, data, choices) {
   if (!Array.isArray(spells)) return null;
   if (spells.length === 1) return spells[0];
 
-  // 3. Array without explicit choices map — fall back to index matching
+  // 3. Choice-dependent arrays either align one-to-one with options, or with
+  // grouped option properties such as Draconic exemplar tradition.
   if (data.choiceFlag && data.choiceOptions) {
     const choiceValue = choices[data.choiceFlag];
     if (choiceValue) {
-      const idx = data.choiceOptions.findIndex((o) =>
-        (typeof o === 'string' ? o : o.slug) === choiceValue,
-      );
+      const option = findChoiceOption(data.choiceOptions, choiceValue);
+      const groupedIndex = resolveGroupedChoiceIndex(data, option, choiceValue);
+      if (groupedIndex >= 0 && groupedIndex < spells.length) return spells[groupedIndex];
+
+      const idx = data.choiceOptions.indexOf(option);
       if (idx >= 0 && idx < spells.length) return spells[idx];
     }
   }
 
   return null;
+}
+
+function resolveGroupedChoiceIndex(data, option, choiceValue) {
+  if (!Array.isArray(data.choiceSpellOptions) || data.choiceSpellOptions.length === 0) return -1;
+  const key = data.choiceSpellKey
+    ? option?.[data.choiceSpellKey]
+    : typeof option === 'string'
+      ? option
+      : choiceValue;
+  const normalizedKey = normalizeChoiceIdentity(key);
+  if (!normalizedKey) return -1;
+  return data.choiceSpellOptions.findIndex((entry) => normalizeChoiceIdentity(entry) === normalizedKey);
+}
+
+function findChoiceOption(choiceOptions, choiceValue) {
+  const selected = normalizeChoiceIdentity(choiceValue);
+  if (!selected) return null;
+  return (choiceOptions ?? []).find((entry) =>
+    getChoiceOptionIdentities(entry).some((identity) => identity === selected),
+  ) ?? null;
+}
+
+function getChoiceOptionIdentities(entry) {
+  const values = [];
+  if (typeof entry === 'string') {
+    values.push(entry);
+  } else if (entry && typeof entry === 'object') {
+    values.push(entry.slug, entry.value, entry.label, entry.name, entry.uuid);
+    if (entry.slug) {
+      values.push(`${entry.slug}-dragon`, `${entry.slug} dragon`);
+    }
+  }
+  return values.map(normalizeChoiceIdentity).filter(Boolean);
+}
+
+function normalizeChoiceIdentity(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/^pf2e\.dragontype\./iu, '')
+    .replace(/([a-z0-9])([A-Z])/gu, '$1-$2')
+    .toLowerCase()
+    .replace(/\s+/gu, '-');
+}
+
+function normalizeSpellTradition(value) {
+  const normalized = normalizeChoiceIdentity(value);
+  return SPELL_TRADITIONS.has(normalized) ? normalized : null;
+}
+
+function getSubclassSpellData(subclassSlug) {
+  let data = SUBCLASS_SPELLS[subclassSlug];
+  if (!data && subclassSlug) {
+    const normalized = subclassSlug.replace(/[:\s]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+    data = SUBCLASS_SPELLS[normalized];
+  }
+  return data ?? null;
+}
+
+export function resolveSubclassChoiceTradition(subclassOrSlug, choices = null) {
+  const subclassSlug = typeof subclassOrSlug === 'string' ? subclassOrSlug : subclassOrSlug?.slug;
+  const data = getSubclassSpellData(subclassSlug);
+  if (!data?.choiceFlag || !Array.isArray(data.choiceOptions)) return null;
+
+  const rawChoices = choices ?? {
+    ...(subclassOrSlug?.choices ?? {}),
+    ...(subclassOrSlug?.flags?.pf2e?.rulesSelections ?? {}),
+    ...(subclassOrSlug?.flags?.system?.rulesSelections ?? {}),
+  };
+  const selected = rawChoices?.[data.choiceFlag];
+  const option = findChoiceOption(data.choiceOptions, selected);
+  return normalizeSpellTradition(option?.tradition);
+}
+
+export function resolveSpellcastingTradition(baseTradition, subclass, fallback = 'arcane') {
+  const normalizedBase = normalizeChoiceIdentity(baseTradition);
+  if (VARIABLE_SPELLCASTING_TRADITIONS.has(normalizedBase)) {
+    return resolveSubclassChoiceTradition(subclass) ?? normalizeSpellTradition(subclass?.tradition) ?? fallback;
+  }
+  return normalizeSpellTradition(baseTradition) ?? baseTradition ?? fallback;
 }
 
 /**
@@ -523,12 +610,7 @@ function resolveRankSpell(rankKey, data, choices) {
  * @returns {Object|null}
  */
 export function resolveSubclassSpells(subclassSlug, choices = {}, rank = null) {
-  let data = SUBCLASS_SPELLS[subclassSlug];
-  // Fallback: try normalizing the slug (strip colons, extra dashes)
-  if (!data && subclassSlug) {
-    const normalized = subclassSlug.replace(/[:\s]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
-    data = SUBCLASS_SPELLS[normalized];
-  }
+  const data = getSubclassSpellData(subclassSlug);
   if (!data) return null;
 
   if (rank === null) {
@@ -555,11 +637,7 @@ export function resolveSubclassSpells(subclassSlug, choices = {}, rank = null) {
  * @returns {{cantrips: string[], rank1s: string[]}}
  */
 export function resolvePsychicLevelOneSpells(subclassSlug) {
-  let data = SUBCLASS_SPELLS[subclassSlug];
-  if (!data && subclassSlug) {
-    const normalized = subclassSlug.replace(/[:\s]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
-    data = SUBCLASS_SPELLS[normalized];
-  }
+  const data = getSubclassSpellData(subclassSlug);
   if (!data) return { cantrips: [], rank1s: [] };
 
   const cantripData = data.grantedSpells?.cantrip;

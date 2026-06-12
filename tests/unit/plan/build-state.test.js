@@ -1411,6 +1411,29 @@ describe('computeBuildState', () => {
     expect(state.deity?.domains?.has('sun')).toBe(true);
   });
 
+  test('collects actor and deity sanctification state', () => {
+    mockActor.system.traits = { value: ['holy'] };
+    mockActor.items = [
+      {
+        type: 'deity',
+        slug: 'chamidu',
+        name: 'Chamidu',
+        system: {
+          sanctification: {
+            modal: 'can',
+            what: ['holy', 'unholy'],
+          },
+        },
+      },
+    ];
+
+    const state = computeBuildState(mockActor, plan, 2);
+    expect(state.sanctification).toBe('holy');
+    expect(state.deity?.sanctification?.modal).toBe('can');
+    expect(state.deity?.sanctification?.what?.has('holy')).toBe(true);
+    expect(state.deity?.sanctification?.what?.has('unholy')).toBe(true);
+  });
+
   test('applies planned feat fallback skill choices as trained skills', () => {
     const actor = createMockActor({
       system: {

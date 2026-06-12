@@ -106,6 +106,41 @@ function normalizeCp(totalCp) {
   const cp = totalCp % 10;
   return { gp, sp, cp };
 }
+
+function normalizeDeityDomainSet(domains) {
+  const values = [];
+  if (Array.isArray(domains)) {
+    values.push(...domains);
+  } else if (domains && typeof domains === 'object') {
+    for (const entry of Object.values(domains)) {
+      if (Array.isArray(entry)) values.push(...entry);
+      else values.push(entry);
+    }
+  }
+  return new Set(values.map((value) => slugify(value)).filter(Boolean));
+}
+
+function normalizeDeitySanctificationState(sanctification) {
+  if (!sanctification || typeof sanctification !== 'object') return null;
+  const what = new Set(
+    (Array.isArray(sanctification.what) ? sanctification.what : [])
+      .map((value) => normalizeSanctificationSelection(value))
+      .filter(Boolean),
+  );
+  const modal = String(sanctification.modal ?? '')
+    .trim()
+    .toLowerCase();
+  if (what.size === 0 && !modal) return null;
+  return { modal: modal || null, what };
+}
+
+function normalizeSanctificationSelection(value) {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+  return normalized === 'holy' || normalized === 'unholy' || normalized === 'none' ? normalized : null;
+}
 const HANDLER_STEP_IDS = new Set(['deity', 'sanctification', 'divineFont', 'implement', 'tactics', 'ikons', 'innovationDetails', 'kineticGate', 'subconsciousMind', 'thesis', 'apparitions']);
 const WIZARD_WINDOW_SELECTORS = ['#pf2e-leveler-wizard', '.pf2e-leveler.character-wizard'];
 
@@ -1115,6 +1150,15 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       senses,
       attributes,
       skills: skillsMap,
+      deity: classSelections.deity
+        ? {
+            slug: classSelections.deity.slug ?? null,
+            name: classSelections.deity.name ?? null,
+            domains: normalizeDeityDomainSet(classSelections.deity.domains),
+            sanctification: normalizeDeitySanctificationState(classSelections.deity.sanctification),
+          }
+        : null,
+      sanctification: normalizeSanctificationSelection(classSelections.sanctification ?? this.data.sanctification),
       divineFont: classSelections.divineFont,
       classFeatures,
     };

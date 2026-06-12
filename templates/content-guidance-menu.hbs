@@ -50,13 +50,45 @@
           data-action="search-guidance">
       </header>
 
+      <section class="guidance-default-policy">
+        <span class="guidance-bulk__title">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.DEFAULT_POLICY"}}</span>
+        <div class="guidance-bulk__actions">
+          {{#each categoryDefaultOptions}}
+          <button
+            type="button"
+            class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{#if this.active}}is-active{{/if}}"
+            data-action="set-category-default"
+            data-policy="{{this.value}}">
+            {{this.label}}
+          </button>
+          {{/each}}
+        </div>
+      </section>
+
+      {{#if showClassArchetypeModeFilter}}
+      <section class="guidance-mode-filter">
+        <span class="guidance-bulk__title">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.CLASS_ARCHETYPE_VIEW"}}</span>
+        <div class="guidance-bulk__actions">
+          {{#each classArchetypeModeOptions}}
+          <button
+            type="button"
+            class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{#if this.active}}is-active{{/if}}"
+            data-action="set-class-archetype-mode"
+            data-mode="{{this.value}}">
+            {{this.label}}
+          </button>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+
       {{#if rarityBulkGroups.length}}
       <section class="guidance-bulk">
         <div class="guidance-bulk__title">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BULK_RARITY"}}</div>
         {{#each rarityBulkGroups}}
         <div class="guidance-bulk__row">
           <span class="tag tag--rarity-{{this.scopeValue}}">{{this.label}}</span>
-          <div class="guidance-bulk__actions">
+          <div class="guidance-bulk__actions guidance-bulk__actions--status">
             {{#each this.actions}}
             <button
               type="button"
@@ -65,6 +97,19 @@
               data-scope-type="{{../scopeType}}"
               data-scope-value="{{../scopeValue}}"
               data-status="{{this.status}}">
+              {{this.label}}
+            </button>
+            {{/each}}
+          </div>
+          <div class="guidance-bulk__actions guidance-bulk__actions--filter">
+            {{#each this.exclusiveActions}}
+            <button
+              type="button"
+              class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{this.className}}"
+              data-action="bulk-exclusive-guidance"
+              data-scope-type="{{../scopeType}}"
+              data-scope-value="{{../scopeValue}}"
+              data-exclusive="{{this.exclusive}}">
               {{this.label}}
             </button>
             {{/each}}
@@ -79,18 +124,33 @@
           {{#each groupedItems}}
           <div class="wizard-browser__group-label guidance-group__header">
             <span>{{this.label}}</span>
-            <div class="guidance-bulk__actions">
-              {{#each this.bulkActions}}
-              <button
-                type="button"
-                class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{this.className}}"
-                data-action="bulk-guidance"
-                data-scope-type="{{../bulkScopeType}}"
-                data-scope-value="{{../bulkScopeValue}}"
-                data-status="{{this.status}}">
-                {{this.label}}
-              </button>
-              {{/each}}
+            <div class="guidance-bulk__actionGroups">
+              <div class="guidance-bulk__actions guidance-bulk__actions--status">
+                {{#each this.bulkActions}}
+                <button
+                  type="button"
+                  class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{this.className}}"
+                  data-action="bulk-guidance"
+                  data-scope-type="{{../bulkScopeType}}"
+                  data-scope-value="{{../bulkScopeValue}}"
+                  data-status="{{this.status}}">
+                  {{this.label}}
+                </button>
+                {{/each}}
+              </div>
+              <div class="guidance-bulk__actions guidance-bulk__actions--filter">
+                {{#each this.bulkExclusiveActions}}
+                <button
+                  type="button"
+                  class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{this.className}}"
+                  data-action="bulk-exclusive-guidance"
+                  data-scope-type="{{../bulkScopeType}}"
+                  data-scope-value="{{../bulkScopeValue}}"
+                  data-exclusive="{{this.exclusive}}">
+                  {{this.label}}
+                </button>
+                {{/each}}
+              </div>
             </div>
           </div>
             {{#each this.items}}
@@ -102,7 +162,9 @@
                 {{else}}
                 <span class="guidance-item__name">{{this.name}}</span>
                 {{/if}}
+                {{#if this.isAllowed}}<span class="tag tag--allowed tag--tiny"><i class="fa-solid fa-check"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_ALLOWED"}}</span>{{/if}}
                 {{#if this.isRecommended}}<span class="tag tag--recommended tag--tiny"><i class="fa-solid fa-star"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_SUGGESTED"}}</span>{{/if}}
+                {{#if this.isExclusive}}<span class="tag tag--exclusive tag--tiny"><i class="fa-solid fa-filter"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_EXCLUSIVE"}}</span>{{/if}}
                 {{#if this.isNotRecommended}}<span class="tag tag--muted tag--tiny"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_NOT_RECOMMENDED"}}</span>{{/if}}
                 {{#if this.isDisallowed}}<span class="tag tag--disallowed tag--tiny"><i class="fa-solid fa-ban"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_DISALLOWED"}}</span>{{/if}}
                 {{#if this.guidanceInherited}}<span class="tag tag--info tag--tiny">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_INHERITED"}}</span>{{/if}}
@@ -121,10 +183,20 @@
               </div>
               <button
                 type="button"
+                class="guidance-item__toggle {{#if this.isExclusive}}is-active{{/if}}"
+                data-action="toggle-exclusive-guidance"
+                data-uuid="{{this.uuid}}"
+                data-tooltip="{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_EXCLUSIVE"}}">
+                <i class="fa-solid fa-filter" style="{{#unless this.isExclusive}}opacity: 0.35;{{/unless}}"></i>
+              </button>
+              <button
+                type="button"
                 class="guidance-item__toggle"
                 data-action="cycle-guidance"
                 data-uuid="{{this.uuid}}">
-                {{#if this.isRecommended}}
+                {{#if this.isAllowed}}
+                <i class="fa-solid fa-check" style="color: #63b66d;"></i>
+                {{else if this.isRecommended}}
                 <i class="fa-solid fa-star" style="color: #c4a747;"></i>
                 {{else if this.isNotRecommended}}
                 <i class="fa-solid fa-triangle-exclamation" style="color: #8a6d3b;"></i>
@@ -147,7 +219,9 @@
               {{else}}
               <span class="guidance-item__name">{{this.name}}</span>
               {{/if}}
+              {{#if this.isAllowed}}<span class="tag tag--allowed tag--tiny"><i class="fa-solid fa-check"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_ALLOWED"}}</span>{{/if}}
               {{#if this.isRecommended}}<span class="tag tag--recommended tag--tiny"><i class="fa-solid fa-star"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_SUGGESTED"}}</span>{{/if}}
+              {{#if this.isExclusive}}<span class="tag tag--exclusive tag--tiny"><i class="fa-solid fa-filter"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_EXCLUSIVE"}}</span>{{/if}}
               {{#if this.isNotRecommended}}<span class="tag tag--muted tag--tiny"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_NOT_RECOMMENDED"}}</span>{{/if}}
               {{#if this.isDisallowed}}<span class="tag tag--disallowed tag--tiny"><i class="fa-solid fa-ban"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_DISALLOWED"}}</span>{{/if}}
               {{#if this.guidanceInherited}}<span class="tag tag--info tag--tiny">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_INHERITED"}}</span>{{/if}}
@@ -166,10 +240,20 @@
             </div>
             <button
               type="button"
+              class="guidance-item__toggle {{#if this.isExclusive}}is-active{{/if}}"
+              data-action="toggle-exclusive-guidance"
+              data-uuid="{{this.uuid}}"
+              data-tooltip="{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_EXCLUSIVE"}}">
+              <i class="fa-solid fa-filter" style="{{#unless this.isExclusive}}opacity: 0.35;{{/unless}}"></i>
+            </button>
+            <button
+              type="button"
               class="guidance-item__toggle"
               data-action="cycle-guidance"
               data-uuid="{{this.uuid}}">
-              {{#if this.isRecommended}}
+              {{#if this.isAllowed}}
+              <i class="fa-solid fa-check" style="color: #63b66d;"></i>
+              {{else if this.isRecommended}}
               <i class="fa-solid fa-star" style="color: #c4a747;"></i>
               {{else if this.isNotRecommended}}
               <i class="fa-solid fa-triangle-exclamation" style="color: #8a6d3b;"></i>

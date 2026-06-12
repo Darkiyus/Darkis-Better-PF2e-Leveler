@@ -183,8 +183,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       traitLogic: this.traitLogic,
       traitOptions,
       allVisibleSelected:
-        this.filteredFeats.length > 0 &&
-        this.filteredFeats.every((feat) => this.selectedFeatUuids.has(this._getFeatUuid(feat))),
+        this._getSelectableFilteredFeatUuids().length > 0 &&
+        this._getSelectableFilteredFeatUuids().every((uuid) => this.selectedFeatUuids.has(uuid)),
       isLoading: false,
     };
   }
@@ -770,8 +770,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       multiSelect: this.multiSelect,
       selectedCount: this.selectedFeatUuids.size,
       allVisibleSelected:
-        this.filteredFeats.length > 0 &&
-        this.filteredFeats.every((feat) => this.selectedFeatUuids.has(this._getFeatUuid(feat))),
+        this._getSelectableFilteredFeatUuids().length > 0 &&
+        this._getSelectableFilteredFeatUuids().every((uuid) => this.selectedFeatUuids.has(uuid)),
     });
 
     const temp = document.createElement('div');
@@ -837,6 +837,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (action === 'selectFeat') {
       const feat = this.filteredFeats.find((f) => this._getFeatUuid(f) === uuid);
       if (!feat || !this.onSelect) return;
+      if (this._isFeatSelectionBlocked(feat)) return;
       if (this.multiSelect) {
         this._toggleSelectedFeat(this._getFeatUuid(feat));
         this._updateSelectionUI();
@@ -887,14 +888,24 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       .filter((uuid) => typeof uuid === 'string' && uuid.length > 0);
   }
 
+  _getSelectableVisibleFeatUuids() {
+    return this._getVisibleFeatUuids().filter((uuid) => this._isFeatUuidSelectable(uuid));
+  }
+
+  _getSelectableFilteredFeatUuids() {
+    return this.filteredFeats
+      .map((feat) => this._getFeatUuid(feat))
+      .filter((uuid) => this._isFeatUuidSelectable(uuid));
+  }
+
   _toggleSelectedFeat(uuid) {
     if (!uuid) return;
     if (this.selectedFeatUuids.has(uuid)) this.selectedFeatUuids.delete(uuid);
-    else this.selectedFeatUuids.add(uuid);
+    else if (this._isFeatUuidSelectable(uuid)) this.selectedFeatUuids.add(uuid);
   }
 
   _toggleSelectAllVisible() {
-    const visibleUuids = this._getVisibleFeatUuids();
+    const visibleUuids = this._getSelectableVisibleFeatUuids();
     if (visibleUuids.length === 0) return;
     const allVisibleSelected = visibleUuids.every((uuid) => this.selectedFeatUuids.has(uuid));
     for (const uuid of visibleUuids) {
@@ -907,7 +918,9 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!this.multiSelect || this.selectedFeatUuids.size === 0 || !this.onSelect) return;
     const selectedFeats = this.allFeats
       .filter((feat) => this.selectedFeatUuids.has(this._getFeatUuid(feat)))
+      .filter((feat) => !this._isFeatSelectionBlocked(feat))
       .sort((a, b) => a.name.localeCompare(b.name));
+    if (selectedFeats.length === 0) return;
     await this.onSelect(selectedFeats);
     this.close();
   }
@@ -915,6 +928,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   _updateSelectionUI() {
     const root = this._getRootElement();
     if (!this.multiSelect || !root) return;
+    this._pruneBlockedSelections();
 
     for (const option of root.querySelectorAll('.feat-option')) {
       const uuid = option.dataset.uuid;
@@ -930,10 +944,11 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const count = this.selectedFeatUuids.size;
-    const visibleCount = this._getVisibleFeatUuids().length;
+    const visibleUuids = this._getSelectableVisibleFeatUuids();
+    const visibleCount = visibleUuids.length;
     const allVisibleSelected =
       visibleCount > 0 &&
-      this._getVisibleFeatUuids().every((uuid) => this.selectedFeatUuids.has(uuid));
+      visibleUuids.every((uuid) => this.selectedFeatUuids.has(uuid));
     const countEl = root.querySelector('.picker__selected-count');
     if (countEl) {
       countEl.textContent = game.i18n.format('PF2E_LEVELER.FEAT_PICKER.SELECTED_COUNT', { count });
@@ -951,6 +966,30 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const confirmButton = root.querySelector('[data-action="confirmSelection"]');
     if (confirmButton) confirmButton.disabled = count === 0;
+  }
+
+  _pruneBlockedSelections() {
+    for (const uuid of [...this.selectedFeatUuids]) {
+      if (!this._isFeatUuidSelectable(uuid)) this.selectedFeatUuids.delete(uuid);
+    }
+  }
+
+  _isFeatUuidSelectable(uuid) {
+    const feat = this._findFeatByUuid(uuid);
+    return !!feat && !this._isFeatSelectionBlocked(feat);
+  }
+
+  _findFeatByUuid(uuid) {
+    if (!uuid) return null;
+    return (
+      this.filteredFeats.find((feat) => this._getFeatUuid(feat) === uuid) ??
+      this.allFeats.find((feat) => this._getFeatUuid(feat) === uuid) ??
+      null
+    );
+  }
+
+  _isFeatSelectionBlocked(feat) {
+    return feat?.selectionBlocked === true || feat?.guidanceSelectionBlocked === true;
   }
 
   _featsHaveSkillRelevance() {

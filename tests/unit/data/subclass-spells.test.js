@@ -18,4 +18,16 @@ describe('resolveSubclassSpells', () => {
       expect.objectContaining({ grantedSpell: 'Compendium.pf2e.spells-srd.Item.XXqE1eY3w3z6xJCB' }),
     );
   });
+
+  test('resolves Draconic bloodline grants by selected exemplar tradition', () => {
+    expect(resolveSubclassSpells('bloodline-draconic', { dragonBloodline: 'forest' }, 2)).toEqual(
+      expect.objectContaining({ grantedSpell: 'Compendium.pf2e.spells-srd.Item.1xbFBQDRs0hT5xZ9' }),
+    );
+    expect(resolveSubclassSpells('bloodline-draconic', { dragonBloodline: 'forest' }, 5)).toEqual(
+      expect.objectContaining({ grantedSpell: 'Compendium.pf2e.spells-srd.Item.xxWhyl81w3ckslAU' }),
+    );
+    expect(resolveSubclassSpells('bloodline-draconic', { dragonBloodline: 'forest' }, 8)).toEqual(
+      expect.objectContaining({ grantedSpell: 'Compendium.pf2e.spells-srd.Item.x7SPrsRxGb2Vy2nu' }),
+    );
+  });
 });

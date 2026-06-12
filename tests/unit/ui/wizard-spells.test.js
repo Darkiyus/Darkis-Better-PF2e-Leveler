@@ -174,6 +174,83 @@ describe('buildSpellContext', () => {
     expect(context.cantrips.map((spell) => spell.uuid)).toContain('custom-cantrip');
   });
 
+  it('uses selected Draconic exemplar tradition for sorcerer spell choices', async () => {
+    ClassRegistry.get.mockReturnValue({
+      slug: 'sorcerer',
+      spellcasting: {
+        tradition: 'bloodline',
+        type: 'spontaneous',
+        slots: {
+          1: {
+            cantrips: 5,
+            1: 3,
+          },
+        },
+      },
+    });
+
+    const wizard = {
+      data: {
+        class: { slug: 'sorcerer' },
+        subclass: {
+          slug: 'bloodline-draconic',
+          name: 'Bloodline: Draconic',
+          tradition: null,
+          choices: { dragonBloodline: 'primal' },
+        },
+        spells: { cantrips: [], rank1: [] },
+      },
+      classHandler: {
+        needsNonCasterSpellStep: () => false,
+        getSpellbookCounts: () => null,
+        resolveGrantedSpells: async () => ({ cantrips: [], rank1s: [] }),
+        resolveFocusSpells: async () => [],
+        isFocusSpellChoice: () => false,
+        getSpellContext: async () => ({}),
+      },
+      _loadCompendiumCategory: async () => ([
+        {
+          uuid: 'arcane-cantrip',
+          name: 'Arcane Cantrip',
+          level: 0,
+          rarity: 'common',
+          traditions: ['arcane'],
+          traits: ['cantrip'],
+        },
+        {
+          uuid: 'primal-cantrip',
+          name: 'Primal Cantrip',
+          level: 0,
+          rarity: 'common',
+          traditions: ['primal'],
+          traits: ['cantrip'],
+        },
+        {
+          uuid: 'arcane-rank1',
+          name: 'Arcane Rank 1',
+          level: 1,
+          rarity: 'common',
+          traditions: ['arcane'],
+          traits: [],
+        },
+        {
+          uuid: 'primal-rank1',
+          name: 'Primal Rank 1',
+          level: 1,
+          rarity: 'common',
+          traditions: ['primal'],
+          traits: [],
+        },
+      ]),
+    };
+
+    const context = await buildSpellContext(wizard);
+
+    expect(context.tradition).toBe('primal');
+    expect(context.cantrips.map((spell) => spell.uuid)).toEqual(['primal-cantrip']);
+    expect(context.rank1Spells.map((spell) => spell.uuid)).toEqual(['primal-rank1']);
+  });
+
   it('shows psychic psi cantrips as focus cantrips and keeps them out of regular cantrip choices', async () => {
     ClassRegistry.get.mockReturnValue({
       slug: 'psychic',

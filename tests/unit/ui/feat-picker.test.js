@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { FeatPicker } from '../../../scripts/ui/feat-picker.js';
+import { annotateGuidance, invalidateGuidanceCache, PLAYER_DISALLOWED_CONTENT_MODES } from '../../../scripts/access/content-guidance.js';
 import * as featCache from '../../../scripts/feats/feat-cache.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { FIGHTER } from '../../../scripts/classes/fighter.js';
@@ -60,6 +61,27 @@ describe('FeatPicker prerequisite enforcement', () => {
       items: {
         filter: jest.fn(() => []),
       },
+    };
+  }
+
+  function applyPlayerGuidance(guidance) {
+    const originalIsGM = game.user.isGM;
+    const originalSettings = global._testSettings;
+    global._testSettings = {
+      ...(originalSettings ?? {}),
+      'pf2e-leveler': {
+        ...(originalSettings?.['pf2e-leveler'] ?? {}),
+        gmContentGuidance: guidance,
+        playerDisallowedContentMode: PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE,
+      },
+    };
+    game.user.isGM = false;
+    invalidateGuidanceCache();
+
+    return () => {
+      game.user.isGM = originalIsGM;
+      global._testSettings = originalSettings;
+      invalidateGuidanceCache();
     };
   }
 
@@ -1752,6 +1774,98 @@ describe('FeatPicker prerequisite enforcement', () => {
       expect.objectContaining({ uuid: 'power-attack', name: 'Power Attack' }),
     ]);
     expect(picker.close).toHaveBeenCalled();
+  });
+
+  test('blocks direct player selection of disallowed archetype feats', async () => {
+    const restoreGuidance = applyPlayerGuidance({
+      'wizard-dedication-uuid': 'disallowed',
+    });
+    try {
+      const feat = createFeat({
+        name: 'Wizard Dedication',
+        uuid: 'wizard-dedication-uuid',
+        slug: 'wizard-dedication',
+      });
+      feat.system.category = 'class';
+      feat.system.traits.value = ['archetype', 'dedication', 'multiclass'];
+
+      const onSelect = jest.fn();
+      const picker = new FeatPicker(createActor(), 'archetype', 2, createBuildState(), onSelect);
+      picker.allFeats = [feat];
+      annotateGuidance(picker.allFeats);
+      picker.filteredFeats = picker._applyFilters();
+
+      expect(picker.filteredFeats[0]).toEqual(expect.objectContaining({
+        isDisallowed: true,
+        guidanceSelectionBlocked: true,
+        selectionBlocked: true,
+      }));
+
+      const root = document.createElement('div');
+      root.innerHTML = '<div class="feat-option" data-uuid="wizard-dedication-uuid"><button type="button" data-action="selectFeat"></button></div>';
+      await picker._handleActionClick(root.querySelector('[data-action="selectFeat"]'));
+
+      expect(onSelect).not.toHaveBeenCalled();
+    } finally {
+      restoreGuidance();
+    }
+  });
+
+  test('free archetype multi-select skips guidance-blocked feats', async () => {
+    const restoreGuidance = applyPlayerGuidance({
+      'wizard-dedication-uuid': 'disallowed',
+    });
+    try {
+      const blockedFeat = createFeat({
+        name: 'Wizard Dedication',
+        uuid: 'wizard-dedication-uuid',
+        slug: 'wizard-dedication',
+      });
+      blockedFeat.system.category = 'class';
+      blockedFeat.system.traits.value = ['archetype', 'dedication', 'multiclass'];
+
+      const allowedFeat = createFeat({
+        name: 'Acrobat Dedication',
+        uuid: 'acrobat-dedication-uuid',
+        slug: 'acrobat-dedication',
+      });
+      allowedFeat.system.category = 'class';
+      allowedFeat.system.traits.value = ['archetype', 'dedication'];
+
+      const onSelect = jest.fn();
+      const picker = new FeatPicker(createActor(), 'archetype', 2, createBuildState(), onSelect, {
+        multiSelect: true,
+        preset: {
+          selectedTraits: ['archetype'],
+          lockedTraits: ['archetype'],
+        },
+      });
+      picker.allFeats = [blockedFeat, allowedFeat];
+      annotateGuidance(picker.allFeats);
+      picker.filteredFeats = picker._applyFilters();
+      picker.close = jest.fn();
+      picker.element = document.createElement('div');
+      picker.element.innerHTML = `
+        <div class="pf2e-leveler feat-picker">
+          <div class="feat-option" data-uuid="wizard-dedication-uuid"></div>
+          <div class="feat-option" data-uuid="acrobat-dedication-uuid"></div>
+        </div>
+      `;
+
+      picker._toggleSelectAllVisible();
+      expect(picker.selectedFeatUuids.has('acrobat-dedication-uuid')).toBe(true);
+      expect(picker.selectedFeatUuids.has('wizard-dedication-uuid')).toBe(false);
+
+      picker.selectedFeatUuids.add('wizard-dedication-uuid');
+      await picker._confirmSelection();
+
+      expect(onSelect).toHaveBeenCalledWith([
+        expect.objectContaining({ uuid: 'acrobat-dedication-uuid', name: 'Acrobat Dedication' }),
+      ]);
+      expect(picker.close).toHaveBeenCalled();
+    } finally {
+      restoreGuidance();
+    }
   });
 
   test('keeps rarity chips rendered after a list update', async () => {

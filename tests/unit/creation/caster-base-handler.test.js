@@ -3,6 +3,7 @@ import { ClassRegistry } from '../../../scripts/classes/registry.js';
 import { DRUID } from '../../../scripts/classes/druid.js';
 import { MAGUS } from '../../../scripts/classes/magus.js';
 import { PSYCHIC } from '../../../scripts/classes/psychic.js';
+import { SORCERER } from '../../../scripts/classes/sorcerer.js';
 import { WitchHandler } from '../../../scripts/creation/class-handlers/witch.js';
 
 describe('CasterBaseHandler._applySpellcasting', () => {
@@ -12,6 +13,7 @@ describe('CasterBaseHandler._applySpellcasting', () => {
     ClassRegistry.register(DRUID);
     ClassRegistry.register(MAGUS);
     ClassRegistry.register(PSYCHIC);
+    ClassRegistry.register(SORCERER);
     global.foundry = {
       utils: {
         deepClone: (value) => JSON.parse(JSON.stringify(value)),
@@ -196,6 +198,46 @@ describe('CasterBaseHandler._applySpellcasting', () => {
         type: 'spell',
         system: expect.objectContaining({
           location: { value: 'entry-0' },
+        }),
+      }),
+    ]));
+  });
+
+  it('creates Draconic sorcerer spellcasting entries with selected exemplar tradition', async () => {
+    const createdDocs = [];
+    const actor = {
+      items: [],
+      createEmbeddedDocuments: jest.fn(async (_type, docs) => {
+        createdDocs.push(...docs);
+        return docs.map((doc, index) => ({ id: doc.type === 'spellcastingEntry' ? `entry-${index}` : `spell-${index}`, ...doc }));
+      }),
+      updateEmbeddedDocuments: jest.fn(async () => []),
+      system: {
+        details: { level: { value: 1 } },
+      },
+    };
+
+    const handler = new CasterBaseHandler();
+    await handler._applySpellcasting(actor, {
+      class: { slug: 'sorcerer', name: 'Sorcerer' },
+      subclass: {
+        slug: 'bloodline-draconic',
+        name: 'Bloodline: Draconic',
+        tradition: null,
+        choices: { dragonBloodline: 'forest' },
+      },
+      spells: {
+        cantrips: [],
+        rank1: [],
+      },
+    });
+
+    expect(createdDocs).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'spellcastingEntry',
+        name: 'Sorcerer Spells',
+        system: expect.objectContaining({
+          tradition: { value: 'primal' },
         }),
       }),
     ]));

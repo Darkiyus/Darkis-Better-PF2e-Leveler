@@ -580,6 +580,45 @@ describe('checkPrerequisites', () => {
     expect(result.results[0].met).toBe(true);
   });
 
+  test('meets sanctification prerequisites when deity allows and character selected holy', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [
+            { value: 'expert in Religion' },
+            { value: 'Must Worship A Deity That Lists "Holy"' },
+            { value: 'Holy in their sanctification' },
+          ],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, {
+      ...buildState,
+      skills: { ...buildState.skills, religion: 2 },
+      deity: {
+        slug: 'chamidu',
+        name: 'Chamidu',
+        sanctification: { modal: 'can', what: new Set(['holy']) },
+      },
+      sanctification: 'holy',
+    });
+    expect(result.met).toBe(true);
+    expect(result.results.map((entry) => entry.met)).toEqual([true, true, true]);
+  });
+
+  test('leaves sanctification prerequisite unknown when actor sanctification is unavailable', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [{ value: 'Holy in their sanctification' }],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, buildState);
+    expect(result.met).toBe(true);
+    expect(result.results[0].met).toBeNull();
+  });
+
   test('meets focus pool prerequisite when actor has a focus pool', () => {
     const feat = {
       system: {

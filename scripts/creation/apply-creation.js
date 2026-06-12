@@ -14,6 +14,7 @@ import { buildFeatGrantRequirements, getAutomaticFeatGrantEntries, mergeFeatGran
 import { normalizeSkillSlug } from '../utils/skill-slugs.js';
 import { extractCompendiumUuidsByCategory, isCompendiumUuidInCategory } from '../system-support/profiles.js';
 import { hasEmbeddedSpellChoiceDescription } from '../utils/spell-description.js';
+import { resolveSpellcastingTradition } from '../data/subclass-spells.js';
 
 export async function applyCreation(actor, data, onProgress = null) {
   info(`Applying character creation for ${actor.name}`);
@@ -1148,12 +1149,15 @@ async function ensureSpellcastingEntry(actor, spell, data, { focusLike = false }
 }
 
 function resolveSpellTradition(spell, data, classDef, focusLike) {
-  if (focusLike && data.subclass?.tradition) return data.subclass.tradition;
+  const classTradition = classDef?.spellcasting?.tradition ?? null;
+  const resolvedClassTradition = classTradition
+    ? resolveSpellcastingTradition(classTradition, data.subclass, null)
+    : null;
+  if (focusLike && resolvedClassTradition) return resolvedClassTradition;
   if (focusLike && isDivineFocusSpell(spell, data)) return 'divine';
-  if (classDef?.spellcasting?.tradition && !['bloodline', 'patron', 'connection', 'paradox'].includes(classDef.spellcasting.tradition)) {
-    return classDef.spellcasting.tradition;
-  }
-  if (data.subclass?.tradition) return data.subclass.tradition;
+  if (resolvedClassTradition) return resolvedClassTradition;
+  const subclassTradition = resolveSpellcastingTradition('bloodline', data.subclass, null);
+  if (subclassTradition) return subclassTradition;
   const traditions = spell.system?.traits?.traditions ?? [];
   return traditions[0] ?? 'arcane';
 }

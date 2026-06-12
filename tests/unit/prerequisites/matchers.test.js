@@ -14,6 +14,7 @@ import {
   matchProficiency,
   matchClassHp,
   matchDeityState,
+  matchSanctificationState,
   matchSpellcastingState,
   matchClassIdentity,
   matchSubclassSpell,
@@ -414,6 +415,32 @@ describe('matchDeityState', () => {
       { deity: { slug: 'sarenrae', name: 'Sarenrae', domains: new Set() } },
     );
     expect(result.met).toBe(true);
+  });
+});
+
+describe('matchSanctificationState', () => {
+  test('meets deity-listed sanctification when selected deity allows holy', () => {
+    const result = matchSanctificationState(
+      { type: 'sanctificationState', deityLists: 'holy', text: 'Must Worship A Deity That Lists "Holy"' },
+      { deity: { sanctification: { modal: 'can', what: new Set(['holy', 'unholy']) } } },
+    );
+    expect(result.met).toBe(true);
+  });
+
+  test('meets character sanctification from selected actor sanctification', () => {
+    const result = matchSanctificationState(
+      { type: 'sanctificationState', characterSanctification: 'holy', text: 'Holy in their sanctification' },
+      { sanctification: 'holy' },
+    );
+    expect(result.met).toBe(true);
+  });
+
+  test('leaves character sanctification unknown when actor data is unavailable', () => {
+    const result = matchSanctificationState(
+      { type: 'sanctificationState', characterSanctification: 'holy', text: 'Holy in their sanctification' },
+      {},
+    );
+    expect(result.met).toBeNull();
   });
 });
 

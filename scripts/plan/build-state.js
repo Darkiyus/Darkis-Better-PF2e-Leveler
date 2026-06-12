@@ -54,6 +54,7 @@ export function computeBuildState(actor, plan, atLevel) {
   ]);
   const ancestryTraits = computeAncestryTraits(actor, plan, atLevel);
   const ancestryFeatTraits = computeAncestryFeatTraits(actor, plan, atLevel);
+  const deity = computeDeityState(actor);
 
   return {
     level: atLevel,
@@ -78,7 +79,8 @@ export function computeBuildState(actor, plan, atLevel) {
     equipment: computeEquipmentState(actor),
     feats: computeFeats(actor, plan, atLevel),
     featAliasSources: computeFeatAliasSources(actor, plan, atLevel),
-    deity: computeDeityState(actor),
+    deity,
+    sanctification: computeSanctificationState(actor),
     divineFont: computeDivineFontState(actor),
     spellcasting: computeSpellcastingState(actor, plan, atLevel, [classDef, dualClassDef]),
     archetypeDedications: computeArchetypeDedications(actor, plan, atLevel),
@@ -354,7 +356,46 @@ function computeDeityState(actor) {
     slug: value.slug ?? null,
     name: value.name ?? value.value ?? null,
     domains: collectDeityDomains(value),
+    sanctification: collectDeitySanctification(value),
   };
+}
+
+function computeSanctificationState(actor) {
+  const actorTraits = actor?.system?.traits?.value ?? [];
+  const sanctifications = actorTraits
+    .map((trait) => normalizeSanctificationValue(trait))
+    .filter(Boolean);
+
+  if (sanctifications.length === 1) return sanctifications[0];
+  return null;
+}
+
+function collectDeitySanctification(value) {
+  const source = value?.system?.sanctification ?? value?.sanctification ?? null;
+  if (!source || typeof source !== 'object') return null;
+
+  const what = new Set(
+    (Array.isArray(source.what) ? source.what : [])
+      .map((entry) => normalizeSanctificationValue(entry))
+      .filter(Boolean),
+  );
+  const modal = String(source.modal ?? '')
+    .trim()
+    .toLowerCase();
+
+  if (what.size === 0 && !modal) return null;
+  return {
+    modal: modal || null,
+    what,
+  };
+}
+
+function normalizeSanctificationValue(value) {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+  return normalized === 'holy' || normalized === 'unholy' ? normalized : null;
 }
 
 function computeHeritageAliases(actor, plan, atLevel) {

@@ -1,6 +1,7 @@
 import { ClassRegistry } from '../../classes/registry.js';
 import { getClassHandler } from '../../creation/class-handlers/registry.js';
 import { getEffectiveSubclassCurriculum } from '../../creation/creation-model.js';
+import { resolveSpellcastingTradition } from '../../data/subclass-spells.js';
 
 export async function resolveGrantedSpells(wizard) {
   return wizard.classHandler.resolveGrantedSpells(wizard.data);
@@ -119,10 +120,7 @@ export async function buildSpellContext(wizard) {
 
 async function buildCasterSpellSection(wizard, { target, classEntry, subclassEntry, classDef, classHandler }) {
   const sectionData = projectSpellSectionData(wizard.data, target);
-  let tradition = classDef.spellcasting.tradition;
-  if (['bloodline', 'patron', 'connection', 'paradox'].includes(tradition)) {
-    tradition = subclassEntry?.tradition ?? 'arcane';
-  }
+  const tradition = resolveSpellcastingTradition(classDef.spellcasting.tradition, subclassEntry);
 
   const level1Slots = classDef.spellcasting.slots?.[1] ?? {};
   let totalCantrips = Array.isArray(level1Slots.cantrips) ? level1Slots.cantrips[0] + level1Slots.cantrips[1] : (level1Slots.cantrips ?? 5);

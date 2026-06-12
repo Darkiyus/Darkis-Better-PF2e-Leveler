@@ -1,9 +1,13 @@
 import { MODULE_ID, SKILLS } from '../constants.js';
 import { getCompendiumKeysForCategory } from '../compendiums/catalog.js';
 import {
+  buildGuidanceEntry,
+  CATEGORY_DEFAULT_POLICIES,
+  getCategoryDefaultGuidanceKey,
   getContentGuidance,
   getSourceGuidanceKey,
   invalidateGuidanceCache,
+  normalizeGuidanceEntry,
 } from '../access/content-guidance.js';
 import { getLanguageMap, getLanguageRarityMap } from './character-wizard/skills-languages.js';
 
@@ -14,12 +18,24 @@ const GUIDANCE_CATEGORIES = [
   { key: 'heritages', type: 'heritage' },
   { key: 'backgrounds', type: 'background' },
   { key: 'classes', type: 'class' },
+  {
+    key: 'classArchetypes',
+    type: 'feat',
+    compendiumCategory: 'feats',
+    labelKey: 'PF2E_LEVELER.SETTINGS.COMPENDIUM_CATEGORIES.CLASS_ARCHETYPES',
+    matches: isClassArchetypeFeat,
+  },
   { key: 'sources', type: null, labelKey: 'PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.SOURCES' },
   { key: 'skills', type: null },
   { key: 'languages', type: null },
 ];
 
+const DEFAULT_GUIDANCE_STATUS_CYCLE = ['default', 'recommended', 'not-recommended', 'disallowed'];
+const ALLOWLIST_GUIDANCE_STATUS_CYCLE = ['default', 'allowed', 'recommended', 'not-recommended', 'disallowed'];
 const BULK_GUIDANCE_STATES = ['recommended', 'not-recommended', 'disallowed', 'default'];
+const ALLOWLIST_BULK_GUIDANCE_STATES = ['allowed', ...BULK_GUIDANCE_STATES];
+const VALID_BULK_GUIDANCE_STATES = new Set(ALLOWLIST_BULK_GUIDANCE_STATES);
+const CATEGORY_DEFAULT_OPTIONS = [CATEGORY_DEFAULT_POLICIES.ALLOWED, CATEGORY_DEFAULT_POLICIES.DISALLOWED];
 const SOURCE_SCAN_CATEGORIES = [
   ['ancestries', (doc) => doc.type === 'ancestry'],
   ['heritages', (doc) => doc.type === 'heritage'],
@@ -37,6 +53,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     super(options);
     this.activeCategory = 'ancestries';
     this.searchText = '';
+    this.classArchetypesDedicationsOnly = true;
     this._draft = null;
     this._itemCache = {};
     this._pendingScrollTop = null;
@@ -64,11 +81,13 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       this._draft = foundry.utils.deepClone(getContentGuidance());
     }
 
-    const items = await this._loadCategoryItems(this.activeCategory);
+    const loadedItems = await this._loadCategoryItems(this.activeCategory);
+    const items = this._filterActiveCategoryItems(loadedItems);
 
     const categories = GUIDANCE_CATEGORIES.map((cat) => {
       const label = game.i18n.localize(cat.labelKey ?? `PF2E_LEVELER.SETTINGS.COMPENDIUM_CATEGORIES.${cat.key.toUpperCase()}`);
       const count = Object.entries(this._draft).filter(([uuid]) => {
+        if (uuid === getCategoryDefaultGuidanceKey(cat.key)) return true;
         if (cat.key === 'sources') return String(uuid).startsWith('source-title:');
         const cached = this._findCachedItem(uuid);
         return cached?.categoryKey === cat.key;
@@ -98,12 +117,15 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       matchedCount: item.matchedCount ?? null,
       categorySummary: item.categorySummary ?? null,
       status: resolved.status ?? 'default',
+      isAllowed: resolved.status === 'allowed',
       isRecommended: resolved.status === 'recommended',
       isNotRecommended: resolved.status === 'not-recommended',
       isDisallowed: resolved.status === 'disallowed',
+      isExclusive: resolved.exclusive === true,
       guidanceInherited: resolved.inherited,
     };
     });
+    const categoryDefaultPolicy = this._getCategoryDefaultPolicy(this.activeCategory);
 
     return {
       categories,
@@ -116,6 +138,26 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       countLabel: game.i18n.format('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.COUNT', { count: totalMarked }),
       intro: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.INTRO'),
       searchPlaceholder: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.SEARCH'),
+      categoryDefaultPolicy,
+      categoryDefaultOptions: CATEGORY_DEFAULT_OPTIONS.map((policy) => ({
+        value: policy,
+        active: policy === categoryDefaultPolicy,
+        label: game.i18n.localize(`PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.DEFAULT_${policy.toUpperCase()}`),
+      })),
+      showClassArchetypeModeFilter: this.activeCategory === 'classArchetypes',
+      classArchetypesDedicationsOnly: this.classArchetypesDedicationsOnly,
+      classArchetypeModeOptions: [
+        {
+          value: 'dedications',
+          active: this.classArchetypesDedicationsOnly,
+          label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.CLASS_ARCHETYPE_DEDICATIONS'),
+        },
+        {
+          value: 'all',
+          active: !this.classArchetypesDedicationsOnly,
+          label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.CLASS_ARCHETYPE_ALL_FEATS'),
+        },
+      ],
       rarityBulkGroups: this._buildRarityBulkGroups(items),
       groupedItems: this.activeCategory === 'heritages' ? this._buildHeritageGroups(displayItems) : null,
     };
@@ -163,14 +205,14 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       return items;
     }
 
-    const keys = getCompendiumKeysForCategory(catDef.key);
+    const keys = getCompendiumKeysForCategory(catDef.compendiumCategory ?? catDef.key);
     const items = [];
     for (const key of keys) {
       const pack = game.packs.get(key);
       if (!pack) continue;
       const docs = await pack.getDocuments().catch(() => []);
       items.push(...docs
-        .filter((doc) => doc.type === catDef.type)
+        .filter((doc) => doc.type === catDef.type && (typeof catDef.matches !== 'function' || catDef.matches(doc)))
         .map((doc) => ({
           uuid: doc.uuid,
           name: doc.name,
@@ -179,6 +221,9 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
           level: doc.system?.level?.value ?? null,
           ancestrySlug: doc.system?.ancestry?.slug ?? null,
           publicationTitle: doc.system?.publication?.title ?? null,
+          slug: doc.slug ?? doc.system?.slug ?? null,
+          category: doc.system?.category ?? null,
+          traits: getTraitValues(doc),
         })),
       );
     }
@@ -213,19 +258,21 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       btn.addEventListener('click', () => {
         const uuid = btn.dataset.uuid;
         if (!uuid) return;
-        const current = this._draft[uuid] ?? 'default';
-        const next = current === 'default'
-          ? 'recommended'
-          : current === 'recommended'
-            ? 'not-recommended'
-            : current === 'not-recommended'
-              ? 'disallowed'
-              : 'default';
-        if (next === 'default') {
-          delete this._draft[uuid];
-        } else {
-          this._draft[uuid] = next;
-        }
+        const current = normalizeGuidanceEntry(this._draft[uuid]).status ?? 'default';
+        const cycle = this._getGuidanceStatusCycle();
+        const currentIndex = cycle.includes(current) ? cycle.indexOf(current) : 0;
+        const next = cycle[(currentIndex + 1) % cycle.length];
+        this._setGuidanceStatus(uuid, next);
+        this._rerenderPreservingScroll();
+      });
+    });
+
+    root.querySelectorAll('[data-action="toggle-exclusive-guidance"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const uuid = btn.dataset.uuid;
+        if (!uuid) return;
+        const current = normalizeGuidanceEntry(this._draft[uuid]);
+        this._setGuidanceExclusive(uuid, !current.exclusive);
         this._rerenderPreservingScroll();
       });
     });
@@ -244,9 +291,40 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
         const status = btn.dataset.status;
         const scopeType = btn.dataset.scopeType;
         const scopeValue = btn.dataset.scopeValue;
-        if (!BULK_GUIDANCE_STATES.includes(status) || !scopeType || !scopeValue) return;
+        if (!VALID_BULK_GUIDANCE_STATES.has(status) || !scopeType || !scopeValue) return;
         this._applyBulkGuidance(scopeType, scopeValue, status);
         this._rerenderPreservingScroll();
+      });
+    });
+
+    root.querySelectorAll('[data-action="bulk-exclusive-guidance"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const exclusive = btn.dataset.exclusive === 'true';
+        const scopeType = btn.dataset.scopeType;
+        const scopeValue = btn.dataset.scopeValue;
+        if (!scopeType || !scopeValue) return;
+        this._applyBulkExclusive(scopeType, scopeValue, exclusive);
+        this._rerenderPreservingScroll();
+      });
+    });
+
+    root.querySelectorAll('[data-action="set-category-default"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const policy = btn.dataset.policy;
+        if (!CATEGORY_DEFAULT_OPTIONS.includes(policy)) return;
+        this._setCategoryDefaultPolicy(policy);
+        this._rerenderPreservingScroll();
+      });
+    });
+
+    root.querySelectorAll('[data-action="set-class-archetype-mode"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (!['dedications', 'all'].includes(mode)) return;
+        const nextDedicationsOnly = mode === 'dedications';
+        if (nextDedicationsOnly === this.classArchetypesDedicationsOnly) return;
+        this.classArchetypesDedicationsOnly = nextDedicationsOnly;
+        this._rerenderPreservingScroll({ resetScroll: true });
       });
     });
 
@@ -259,6 +337,8 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     root.querySelector('[data-action="close-guidance"]')?.addEventListener('click', () => this.close());
 
     root.querySelector('[data-action="clear-all-guidance"]')?.addEventListener('click', () => {
+      const categoryDefaultKey = getCategoryDefaultGuidanceKey(this.activeCategory);
+      if (categoryDefaultKey) delete this._draft[categoryDefaultKey];
       for (const [uuid] of Object.entries(this._draft ?? {})) {
         if (this.activeCategory === 'sources' && String(uuid).startsWith('source-title:')) {
           delete this._draft[uuid];
@@ -296,17 +376,24 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
   }
 
   _applyBulkGuidance(scopeType, scopeValue, status) {
-    const items = this._itemCache[this.activeCategory] ?? [];
+    const items = this._getActiveBulkItems();
     const uuids = items
       .filter((item) => this._matchesBulkScope(item, scopeType, scopeValue))
       .map((item) => item.uuid);
 
     for (const uuid of uuids) {
-      if (status === 'default') {
-        delete this._draft[uuid];
-      } else {
-        this._draft[uuid] = status;
-      }
+      this._setGuidanceStatus(uuid, status);
+    }
+  }
+
+  _applyBulkExclusive(scopeType, scopeValue, exclusive) {
+    const items = this._getActiveBulkItems();
+    const uuids = items
+      .filter((item) => this._matchesBulkScope(item, scopeType, scopeValue))
+      .map((item) => item.uuid);
+
+    for (const uuid of uuids) {
+      this._setGuidanceExclusive(uuid, exclusive);
     }
   }
 
@@ -322,15 +409,34 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     return false;
   }
 
+  _getActiveBulkItems() {
+    return this._filterActiveCategoryItems(this._itemCache[this.activeCategory] ?? []);
+  }
+
+  _filterActiveCategoryItems(items) {
+    if (this.activeCategory !== 'classArchetypes' || !this.classArchetypesDedicationsOnly) return items;
+    return items.filter((item) => isDedicationFeat(item));
+  }
+
   _resolveDraftStatus(item) {
-    const direct = item?.uuid ? (this._draft?.[item.uuid] ?? null) : null;
-    if (direct) return { status: direct, inherited: false };
+    const direct = normalizeGuidanceEntry(item?.uuid ? this._draft?.[item.uuid] : null);
+    if (direct.status || direct.exclusive) return { ...direct, inherited: false };
 
     const sourceKey = getSourceGuidanceKey(item?.publicationTitle ?? item?.name ?? '');
-    const inherited = sourceKey ? (this._draft?.[sourceKey] ?? null) : null;
-    if (inherited) return { status: inherited, inherited: item?.uuid !== sourceKey };
+    const inherited = normalizeGuidanceEntry(sourceKey ? this._draft?.[sourceKey] : null);
+    if (inherited.status || inherited.exclusive) {
+      return { ...inherited, inherited: item?.uuid !== sourceKey };
+    }
 
-    return { status: null, inherited: false };
+    if (sourceKey && this._getCategoryDefaultPolicy('sources') === CATEGORY_DEFAULT_POLICIES.DISALLOWED) {
+      return { status: 'disallowed', exclusive: false, inherited: item?.uuid !== sourceKey };
+    }
+
+    if (this._getCategoryDefaultPolicy(this.activeCategory) === CATEGORY_DEFAULT_POLICIES.DISALLOWED) {
+      return { status: 'disallowed', exclusive: false, inherited: true };
+    }
+
+    return { status: null, exclusive: false, inherited: false };
   }
 
   async _loadSourceItems() {
@@ -419,6 +525,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
           bulkScopeType: 'ancestry',
           bulkScopeValue: item.ancestrySlug ? String(item.ancestrySlug).toLowerCase() : 'versatile',
           bulkActions: this._buildBulkActions(),
+          bulkExclusiveActions: this._buildBulkExclusiveActions(),
         });
       }
       groups.get(key).items.push(item);
@@ -434,22 +541,78 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       scopeType: 'rarity',
       scopeValue: rarity,
       actions: this._buildBulkActions(),
+      exclusiveActions: this._buildBulkExclusiveActions(),
     }));
   }
 
-  _buildBulkActions() {
-    return BULK_GUIDANCE_STATES.map((status) => ({
+  _buildBulkActions({ includeAllowed = this._shouldShowAllowedBulkAction() } = {}) {
+    const statuses = includeAllowed ? ALLOWLIST_BULK_GUIDANCE_STATES : BULK_GUIDANCE_STATES;
+    return statuses.map((status) => ({
       status,
       label: game.i18n.localize(`PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BULK_${status.replace(/-/g, '_').toUpperCase()}`),
       className: this._getBulkActionClass(status),
     }));
   }
 
+  _buildBulkExclusiveActions() {
+    return [
+      {
+        exclusive: true,
+        label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BULK_EXCLUSIVE'),
+        className: 'tag--exclusive',
+      },
+      {
+        exclusive: false,
+        label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BULK_CLEAR_EXCLUSIVE'),
+        className: '',
+      },
+    ];
+  }
+
   _getBulkActionClass(status) {
+    if (status === 'allowed') return 'tag--allowed';
     if (status === 'recommended') return 'tag--recommended';
     if (status === 'not-recommended') return 'tag--muted';
     if (status === 'disallowed') return 'tag--disallowed';
     return '';
+  }
+
+  _getGuidanceStatusCycle() {
+    return this._shouldShowAllowedBulkAction()
+      ? ALLOWLIST_GUIDANCE_STATUS_CYCLE
+      : DEFAULT_GUIDANCE_STATUS_CYCLE;
+  }
+
+  _shouldShowAllowedBulkAction() {
+    return this._getCategoryDefaultPolicy(this.activeCategory) === CATEGORY_DEFAULT_POLICIES.DISALLOWED;
+  }
+
+  _getCategoryDefaultPolicy(categoryKey) {
+    const key = getCategoryDefaultGuidanceKey(categoryKey);
+    return normalizeGuidanceEntry(this._draft?.[key]).status === CATEGORY_DEFAULT_POLICIES.DISALLOWED
+      ? CATEGORY_DEFAULT_POLICIES.DISALLOWED
+      : CATEGORY_DEFAULT_POLICIES.ALLOWED;
+  }
+
+  _setCategoryDefaultPolicy(policy) {
+    const key = getCategoryDefaultGuidanceKey(this.activeCategory);
+    if (!key) return;
+    if (policy === CATEGORY_DEFAULT_POLICIES.DISALLOWED) this._draft[key] = CATEGORY_DEFAULT_POLICIES.DISALLOWED;
+    else delete this._draft[key];
+  }
+
+  _setGuidanceStatus(uuid, status) {
+    const current = normalizeGuidanceEntry(this._draft?.[uuid]);
+    const entry = buildGuidanceEntry(status, current.exclusive);
+    if (entry) this._draft[uuid] = entry;
+    else delete this._draft[uuid];
+  }
+
+  _setGuidanceExclusive(uuid, exclusive) {
+    const current = normalizeGuidanceEntry(this._draft?.[uuid]);
+    const entry = buildGuidanceEntry(current.status, exclusive);
+    if (entry) this._draft[uuid] = entry;
+    else delete this._draft[uuid];
   }
 
   _getScrollContainer() {
@@ -480,6 +643,33 @@ function humanizeSlug(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function isClassArchetypeFeat(doc) {
+  const category = String(doc?.system?.category ?? doc?.category ?? '')
+    .trim()
+    .toLowerCase();
+  if (category !== 'class') return false;
+
+  const traits = getTraitValues(doc);
+  return ['class-archetype', 'archetype', 'multiclass', 'dedication'].some((trait) => traits.includes(trait));
+}
+
+function isDedicationFeat(doc) {
+  return getTraitValues(doc).includes('dedication');
+}
+
+function getTraitValues(doc) {
+  return [
+    ...normalizeStringArray(doc?.traits),
+    ...normalizeStringArray(doc?.system?.traits?.value),
+    ...normalizeStringArray(doc?.system?.traits?.otherTags),
+    ...normalizeStringArray(doc?.otherTags),
+  ];
+}
+
+function normalizeStringArray(values) {
+  return Array.isArray(values) ? values.map((value) => String(value).toLowerCase()) : [];
 }
 
 function getAllWorldItems() {

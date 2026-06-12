@@ -139,6 +139,18 @@ describe('parsePrerequisite', () => {
     expect(result.forbiddenDeity).toBe('walkena');
   });
 
+  test('parses deity sanctification prerequisite', () => {
+    const result = parsePrerequisite('Must Worship A Deity That Lists "Holy"');
+    expect(result.type).toBe('sanctificationState');
+    expect(result.deityLists).toBe('holy');
+  });
+
+  test('parses character sanctification prerequisite', () => {
+    const result = parsePrerequisite('"Unholy" In Their Sanctification');
+    expect(result.type).toBe('sanctificationState');
+    expect(result.characterSanctification).toBe('unholy');
+  });
+
   test('parses focus pool prerequisite', () => {
     const result = parsePrerequisite('Focus pool');
     expect(result.type).toBe('spellcastingState');

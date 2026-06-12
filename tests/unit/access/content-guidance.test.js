@@ -1,6 +1,8 @@
 import {
   annotateGuidance,
+  annotateGuidanceBySlug,
   filterDisallowedForCurrentUser,
+  getCategoryDefaultGuidanceKey,
   getGuidanceSelectionTooltip,
   getGuidanceForSourceTitle,
   getPlayerDisallowedContentMode,
@@ -42,6 +44,14 @@ describe('content guidance source rules', () => {
     expect(getGuidanceForSourceTitle('Pathfinder Player Core')).toBe('recommended');
   });
 
+  test('reads object-backed source guidance by publication title', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      'source-title:pathfinder player core': { status: 'allowed', exclusive: true },
+    };
+
+    expect(getGuidanceForSourceTitle('Pathfinder Player Core')).toBe('allowed');
+  });
+
   test('annotateGuidance applies source status when item has no direct override', () => {
     global._testSettings['pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'not-recommended',
@@ -75,6 +85,166 @@ describe('content guidance source rules', () => {
     expect(item.isNotRecommended).toBe(false);
     expect(item.isDisallowed).toBe(false);
     expect(item.guidanceInherited).toBe(false);
+  });
+
+  test('category default can disallow unmarked items while explicit allow overrides it', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      [getCategoryDefaultGuidanceKey('backgrounds')]: 'disallowed',
+      'Compendium.test.backgrounds.Item.allowed': 'allowed',
+    };
+
+    const [blocked, allowed] = annotateGuidance([
+      {
+        uuid: 'Compendium.test.backgrounds.Item.blocked',
+        type: 'background',
+        name: 'Blocked Background',
+      },
+      {
+        uuid: 'Compendium.test.backgrounds.Item.allowed',
+        type: 'background',
+        name: 'Allowed Background',
+      },
+    ]);
+
+    expect(blocked.isDisallowed).toBe(true);
+    expect(blocked.guidanceInherited).toBe(true);
+    expect(blocked.guidanceSelectionBlocked).toBe(true);
+    expect(allowed.isAllowed).toBe(true);
+    expect(allowed.isDisallowed).toBe(false);
+    expect(allowed.guidanceInherited).toBe(false);
+  });
+
+  test('exclusive direct guidance filters non-exclusive siblings for players', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      'Compendium.test.feats.Item.medic-dedication': { status: 'recommended', exclusive: true },
+    };
+
+    const [exclusive, filtered] = annotateGuidance([
+      {
+        uuid: 'Compendium.test.feats.Item.medic-dedication',
+        type: 'feat',
+        name: 'Medic Dedication',
+        system: { category: 'class', traits: { value: ['archetype', 'dedication'] } },
+      },
+      {
+        uuid: 'Compendium.test.feats.Item.wizard-dedication',
+        type: 'feat',
+        name: 'Wizard Dedication',
+        system: { category: 'class', traits: { value: ['archetype', 'dedication'] } },
+      },
+    ]);
+
+    expect(exclusive.isExclusive).toBe(true);
+    expect(exclusive.isRecommended).toBe(true);
+    expect(exclusive.isDisallowed).toBe(false);
+    expect(filtered.isExclusive).toBe(false);
+    expect(filtered.isDisallowed).toBe(true);
+    expect(filtered.guidanceExclusiveFiltered).toBe(true);
+    expect(filtered.guidanceSelectionBlocked).toBe(true);
+  });
+
+  test('exclusive archetype dedication keeps same archetype follow-up feats selectable', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      'Compendium.test.feats.Item.medic-dedication': { status: 'recommended', exclusive: true },
+    };
+
+    const [dedication, followup, unrelated] = annotateGuidance([
+      {
+        uuid: 'Compendium.test.feats.Item.medic-dedication',
+        type: 'feat',
+        name: 'Medic Dedication',
+        system: { category: 'class', traits: { value: ['archetype', 'dedication', 'medic'] } },
+      },
+      {
+        uuid: 'Compendium.test.feats.Item.doctors-visitation',
+        type: 'feat',
+        name: "Doctor's Visitation",
+        system: { category: 'class', traits: { value: ['archetype', 'medic'] } },
+      },
+      {
+        uuid: 'Compendium.test.feats.Item.wizard-dedication',
+        type: 'feat',
+        name: 'Wizard Dedication',
+        system: { category: 'class', traits: { value: ['archetype', 'dedication', 'multiclass', 'wizard'] } },
+      },
+    ]);
+
+    expect(dedication.isExclusive).toBe(true);
+    expect(dedication.isRecommended).toBe(true);
+    expect(followup.isExclusive).toBe(true);
+    expect(followup.isDisallowed).toBe(false);
+    expect(followup.guidanceSelectionBlocked).toBe(false);
+    expect(unrelated.isExclusive).toBe(false);
+    expect(unrelated.isDisallowed).toBe(true);
+    expect(unrelated.guidanceExclusiveFiltered).toBe(true);
+  });
+
+  test('exclusive source guidance filters non-exclusive items in the same list', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      'source-title:pathfinder player core': { status: 'allowed', exclusive: true },
+    };
+
+    const [exclusive, filtered] = annotateGuidance([
+      {
+        uuid: 'Compendium.test.spells.Item.core',
+        name: 'Core Spell',
+        publicationTitle: 'Pathfinder Player Core',
+      },
+      {
+        uuid: 'Compendium.test.spells.Item.other',
+        name: 'Other Spell',
+        publicationTitle: 'Other Book',
+      },
+    ]);
+
+    expect(exclusive.isAllowed).toBe(true);
+    expect(exclusive.isExclusive).toBe(true);
+    expect(exclusive.isDisallowed).toBe(false);
+    expect(filtered.isDisallowed).toBe(true);
+    expect(filtered.guidanceExclusiveFiltered).toBe(true);
+  });
+
+  test('sources category default disallows items from unmarked sources', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      [getCategoryDefaultGuidanceKey('sources')]: 'disallowed',
+      'source-title:pathfinder player core': 'allowed',
+    };
+
+    const [allowed, blocked] = annotateGuidance([
+      {
+        uuid: 'Compendium.test.feats.Item.core',
+        name: 'Core Feat',
+        publicationTitle: 'Pathfinder Player Core',
+      },
+      {
+        uuid: 'Compendium.test.feats.Item.other',
+        name: 'Other Feat',
+        publicationTitle: 'Other Book',
+      },
+    ]);
+
+    expect(allowed.isAllowed).toBe(true);
+    expect(allowed.isDisallowed).toBe(false);
+    expect(blocked.isDisallowed).toBe(true);
+    expect(blocked.guidanceInherited).toBe(true);
+  });
+
+  test('slug guidance respects category defaults and exclusive gates', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      [getCategoryDefaultGuidanceKey('skills')]: 'disallowed',
+      'skill:medicine': { status: 'allowed', exclusive: true },
+    };
+
+    const [medicine, arcana] = annotateGuidanceBySlug([
+      { slug: 'medicine', label: 'Medicine' },
+      { slug: 'arcana', label: 'Arcana' },
+    ], 'skill');
+
+    expect(medicine.isAllowed).toBe(true);
+    expect(medicine.isExclusive).toBe(true);
+    expect(medicine.isDisallowed).toBe(false);
+    expect(arcana.isDisallowed).toBe(true);
+    expect(arcana.guidanceExclusiveFiltered).toBe(true);
   });
 
   test('disallowed guidance blocks players but not GMs', () => {
