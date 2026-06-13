@@ -25,6 +25,7 @@ import { buildSpellContext, getSanitizedCurriculumSelections, limitCurriculumSel
 import { loadCommanderTactics, loadCompendium, loadCompendiumCategory, loadAncestries, loadBackgrounds, loadClasses, loadDeities, loadExemplarIkons, loadHeritages, loadInventorArmorModifications, loadInventorArmorOptions, loadInventorWeaponModifications, loadInventorWeaponOptions, loadKineticImpulses, loadRawHeritages, loadSubclasses, loadSubclassesForClass, loadTaggedClassFeatures, loadThaumaturgeImplements, loadTheses, parseCurriculum, parseSpellUuidsFromDescription, parseVesselSpell, resolveClassSubclassTag } from './loaders.js';
 import { annotateGuidance, annotateGuidanceBySlug, filterDisallowedForCurrentUser, sortByGuidancePriority } from '../../access/content-guidance.js';
 import { renderApplicationInFront, scheduleBringApplicationToFront } from '../shared/window-focus.js';
+import { resolveSpellcastingTradition } from '../../data/subclass-spells.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 registerHandlebarsHelpers();
@@ -1498,10 +1499,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const classDef = ClassRegistry.get(classEntry.slug);
     if (!classDef?.spellcasting) return;
-    let tradition = classDef.spellcasting.tradition;
-    if (['bloodline', 'patron', 'connection', 'paradox'].includes(tradition)) {
-      tradition = subclassEntry?.tradition ?? 'arcane';
-    }
+    const tradition = resolveSpellcastingTradition(classDef.spellcasting.tradition, subclassEntry);
 
     const currentSpells = isCantrip ? (spellStore?.cantrips ?? []) : (spellStore?.rank1 ?? []);
     const limits = this._cachedSpellSelectionLimits?.[target] ?? {};

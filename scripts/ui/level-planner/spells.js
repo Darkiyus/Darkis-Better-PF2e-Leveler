@@ -4,7 +4,7 @@ import { computeBuildState } from '../../plan/build-state.js';
 import { getAllPlannedFeats, getLevelData, getPlanApparitions } from '../../plan/plan-model.js';
 import { getSpellbookBonusCantripSelectionCount } from '../../plan/spellbook-feats.js';
 import { loadCompendiumCategory } from '../character-wizard/loaders.js';
-import { SUBCLASS_SPELLS, resolveSubclassSpells } from '../../data/subclass-spells.js';
+import { SUBCLASS_SPELLS, resolveSpellcastingTradition, resolveSubclassSpells } from '../../data/subclass-spells.js';
 import { collectArchetypeSpellcastingConfigs, normalizeSpellcastingFeatRecord } from '../../utils/spellcasting-support.js';
 import { SF2E_VARIABLE_SPELL_TRADITIONS, resolveSf2eSpellcastingTradition } from '../../utils/sf2e-spellcasting.js';
 
@@ -320,13 +320,7 @@ export function getDedicationSelectionLimitsForPlanner(planner, level, entryType
 }
 
 function resolveDedicationTradition(planner, classDef, _classSlug) {
-  const tradition = classDef?.spellcasting?.tradition ?? 'arcane';
-  if (!VARIABLE_SPELL_TRADITIONS.has(tradition)) return tradition;
-  const sf2eTradition = resolveSf2eSpellcastingTradition(planner?.actor, tradition);
-  if (sf2eTradition) return sf2eTradition;
-  if (SF2E_VARIABLE_SPELL_TRADITIONS.has(tradition)) return 'any';
-  const entry = planner.actor.items?.find?.((item) => item.type === 'spellcastingEntry');
-  return entry?.system?.tradition?.value ?? 'arcane';
+  return resolveVariableSpellTradition(planner, classDef, _classSlug);
 }
 
 export function shouldExcludeOwnedSpellIdentityForPlanner(classDef) {
@@ -437,12 +431,25 @@ export function getSubclassChoices(planner, classSlug = null) {
   const choices = {};
 
   for (const [key, value] of Object.entries(rawChoices)) {
-    if (typeof value === 'string' && value !== '[object Object]') {
+    if (value && typeof value === 'object') {
+      choices[key] = value;
+    } else if (typeof value === 'string' && value !== '[object Object]') {
       choices[key] = value;
     }
   }
 
   return choices;
+}
+
+function getSubclassSpellcastingEntry(planner, classSlug = null) {
+  const item = getSubclassItem(planner, classSlug);
+  if (!item) return null;
+  return {
+    slug: item.slug,
+    tradition: item.tradition ?? item.system?.tradition?.value ?? null,
+    flags: item.flags,
+    choices: getSubclassChoices(planner, classSlug),
+  };
 }
 
 export async function getGrantedSpellsForLevel(planner, classDef, level, classSlug = null) {
@@ -673,11 +680,17 @@ export function getActorSpellCounts(planner) {
 }
 
 export function resolveSpellTradition(planner, classDef) {
-  const tradition = classDef.spellcasting.tradition;
+  return resolveVariableSpellTradition(planner, classDef, classDef?.slug);
+}
+
+function resolveVariableSpellTradition(planner, classDef, classSlug = null) {
+  const tradition = classDef?.spellcasting?.tradition ?? 'arcane';
   if (!VARIABLE_SPELL_TRADITIONS.has(tradition)) return tradition;
   const sf2eTradition = resolveSf2eSpellcastingTradition(planner?.actor, tradition);
   if (sf2eTradition) return sf2eTradition;
   if (SF2E_VARIABLE_SPELL_TRADITIONS.has(tradition)) return 'any';
+  const subclassTradition = resolveSpellcastingTradition(tradition, getSubclassSpellcastingEntry(planner, classSlug), null);
+  if (subclassTradition) return subclassTradition;
   const entry = planner.actor.items?.find?.((item) => item.type === 'spellcastingEntry');
   return entry?.system?.tradition?.value ?? 'arcane';
 }

@@ -26,10 +26,14 @@ jest.mock('../../../scripts/plan/plan-model.js', () => ({
   getPlanApparitions: jest.fn(() => []),
 }));
 
-jest.mock('../../../scripts/data/subclass-spells.js', () => ({
-  SUBCLASS_SPELLS: {},
-  resolveSubclassSpells: jest.fn(() => null),
-}));
+jest.mock('../../../scripts/data/subclass-spells.js', () => {
+  const actual = jest.requireActual('../../../scripts/data/subclass-spells.js');
+  return {
+    SUBCLASS_SPELLS: {},
+    resolveSubclassSpells: jest.fn(() => null),
+    resolveSpellcastingTradition: actual.resolveSpellcastingTradition,
+  };
+});
 
 const { resolveSubclassSpells } = jest.requireMock('../../../scripts/data/subclass-spells.js');
 const { SUBCLASS_SPELLS } = jest.requireMock('../../../scripts/data/subclass-spells.js');
@@ -445,6 +449,46 @@ describe('level planner spell context', () => {
         spellcasting: { tradition: 'paradox' },
       }),
     ).toBe('arcane');
+  });
+
+  test('resolves Draconic sorcerer spell tradition from the selected exemplar object', () => {
+    const planner = {
+      actor: {
+        items: [
+          {
+            type: 'feat',
+            slug: 'bloodline-draconic',
+            flags: {
+              pf2e: {
+                rulesSelections: {
+                  dragonBloodline: {
+                    damageType: 'fire',
+                    skill: 'nature',
+                    slug: 'primal',
+                    tradition: 'primal',
+                  },
+                },
+              },
+            },
+            system: {
+              traits: {
+                otherTags: ['sorcerer-bloodline'],
+              },
+            },
+          },
+        ],
+      },
+      plan: {
+        classSlug: 'sorcerer',
+      },
+    };
+
+    expect(
+      resolveSpellTradition(planner, {
+        slug: 'sorcerer',
+        spellcasting: { tradition: 'bloodline' },
+      }),
+    ).toBe('primal');
   });
 
   test('leaves unresolved Starfinder variable spell traditions open in the planner', () => {

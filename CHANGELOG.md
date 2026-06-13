@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.5.3
+
+### Character Creation
+
+- **Draconic sorcerer spell pickers now use the selected exemplar tradition** - Creation and level planner spell pickers now resolve the Draconic ChoiceSet object before falling back, so Primal Dragon and other non-arcane exemplars no longer lock the picker to arcane
+
 ## 3.5.2
 
 ### Character Creation
