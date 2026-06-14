@@ -1159,18 +1159,19 @@ function isDeityChoiceRule(rule) {
 
 async function resolveChoiceSetOptions(wizard, rule, currentChoices = {}, sourceItem = null, rollOptions = {}) {
   if (Array.isArray(rule.choices)) {
+    const selectedValue = currentChoices?.[rule.flag] ?? null;
     const validChoices = rule.choices
       .filter((c) => extractChoiceValue(c) || extractChoiceLabel(c))
-      .filter((c) => matchesChoiceSetPredicate(c?.predicate ?? c?.value?.predicate, rollOptions))
-      .filter((c) => !choiceGrantsKnownDefenseTraining(c, rollOptions));
+      .filter((c) => isSelectedChoiceOption(c, selectedValue) || matchesChoiceSetPredicate(c?.predicate ?? c?.value?.predicate, rollOptions))
+      .filter((c) => isSelectedChoiceOption(c, selectedValue) || !choiceGrantsKnownDefenseTraining(c, rollOptions));
 
-    if (isRawValueChoiceSet(rule)) {
+    if (isRawValueChoiceSet(rule, sourceItem)) {
       return validChoices
         .map((c) => normalizeRawChoiceOption(c));
     }
 
     return Promise.all(validChoices
-      .map((c) => enrichChoiceOption(wizard, c, { preserveRawValue: shouldPreserveRawChoiceValue(rule) })));
+      .map((c) => enrichChoiceOption(wizard, c, { preserveRawValue: shouldPreserveRawChoiceValue(rule, sourceItem) })));
   }
 
   if (isSkillChoiceSet(rule)) {
@@ -2025,12 +2026,25 @@ function isSkillChoiceSet(rule) {
   return filters.includes('item:type:skill');
 }
 
-function shouldPreserveRawChoiceValue(choiceSet) {
-  return isRawValueChoiceSet(choiceSet);
+function shouldPreserveRawChoiceValue(choiceSet, sourceItem = null) {
+  return isRawValueChoiceSet(choiceSet, sourceItem);
 }
 
-export function isRawValueChoiceSet(choiceSet) {
-  return String(choiceSet?.flag ?? '').trim() === 'specialtyCrafting';
+export function isRawValueChoiceSet(choiceSet, sourceItem = null) {
+  const flag = normalizeChoiceSetIdentity(choiceSet?.flag);
+  if (flag === 'specialtycrafting') return true;
+  if (flag.includes('iruxi') && flag.includes('armament')) return true;
+
+  const sourceSlug = normalizeChoiceSetIdentity(sourceItem?.system?.slug ?? sourceItem?.slug);
+  const sourceName = normalizeChoiceSetIdentity(sourceItem?.name);
+  return sourceSlug === 'iruxiarmaments' || sourceName === 'iruxiarmaments';
+}
+
+function normalizeChoiceSetIdentity(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, '');
 }
 
 function normalizeRawChoiceOption(choice) {
@@ -2227,6 +2241,10 @@ function normalizeChoiceLookupValue(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+function isSelectedChoiceOption(choice, selectedValue) {
+  return findMatchingChoiceOption([choice], selectedValue) != null;
 }
 
 async function loadChoiceSetCandidates(wizard, choiceConfig) {

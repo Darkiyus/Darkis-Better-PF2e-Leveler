@@ -680,6 +680,177 @@ describe('level planner grant previews', () => {
     ]);
   });
 
+  test('keeps repeatable Iruxi Armaments choices as raw armament values', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-iruxi-armaments') {
+        return {
+          uuid,
+          name: 'Iruxi Armaments',
+          slug: 'iruxi-armaments',
+          type: 'feat',
+          system: {
+            slug: 'iruxi-armaments',
+            category: 'ancestry',
+            maxTakable: 3,
+            traits: { value: ['lizardfolk'], rarity: 'common' },
+            rules: [
+              {
+                key: 'ChoiceSet',
+                flag: 'iruxiArmament',
+                rollOption: 'iruxi-armaments',
+                prompt: 'Choose an armament.',
+                choices: [
+                  { value: 'claws', label: 'Claws' },
+                  { value: 'tail', label: 'Tail' },
+                  { value: 'fangs', label: 'Fangs' },
+                ],
+              },
+            ],
+          },
+        };
+      }
+
+      if (uuid === 'Compendium.pf2e.feats-srd.Item.dhampir-fangs') {
+        return {
+          uuid,
+          name: 'Fangs',
+          slug: 'fangs',
+          type: 'feat',
+          img: 'icons/fangs.webp',
+          system: {
+            category: 'ancestry',
+            traits: { value: ['dhampir'], rarity: 'common' },
+            level: { value: 1 },
+            description: { value: '<p>Dhampir fangs.</p>' },
+          },
+        };
+      }
+
+      return null;
+    });
+
+    const planner = {
+      actor: createMockActor({ items: [] }),
+      selectedLevel: 5,
+      plan: {
+        classSlug: 'fighter',
+        levels: {
+          5: {
+            ancestryFeats: [{
+              uuid: 'feat-iruxi-armaments',
+              name: 'Iruxi Armaments',
+              slug: 'iruxi-armaments',
+              choices: {},
+            }],
+            featGrants: [],
+          },
+        },
+      },
+      _compendiumCache: {
+        'pf2e.feats-srd': [
+          { uuid: 'Compendium.pf2e.feats-srd.Item.dhampir-fangs', name: 'Fangs', type: 'feat', category: 'ancestry', level: 1, rarity: 'common', traits: ['dhampir'], slug: 'fangs' },
+        ],
+        'pf2e.classfeatures': [],
+      },
+      _buildAttributeContext: jest.fn(() => ({})),
+      _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+      _buildIntBonusSkillContext: jest.fn(() => []),
+      _buildIntBonusLanguageContext: jest.fn(() => []),
+      _buildSkillContext: jest.fn(() => []),
+      _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+      _isCustomPlanOpen: jest.fn(() => false),
+    };
+
+    const context = await buildLevelContext(planner, FIGHTER, {});
+    const armamentChoice = context.ancestryFeatChoiceSets.find((entry) => entry.flag === 'iruxiArmament');
+
+    expect(armamentChoice).toEqual(expect.objectContaining({
+      choiceType: 'item',
+      options: [
+        expect.objectContaining({ value: 'claws', label: 'Claws', uuid: null }),
+        expect.objectContaining({ value: 'tail', label: 'Tail', uuid: null }),
+        expect.objectContaining({ value: 'fangs', label: 'Fangs', uuid: null }),
+      ],
+    }));
+    expect(armamentChoice.choicePicker).toBeUndefined();
+  });
+
+  test('filters already-taken Iruxi Armaments choices from planner options', async () => {
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'feat-iruxi-armaments') {
+        return {
+          uuid,
+          name: 'Iruxi Armaments',
+          slug: 'iruxi-armaments',
+          type: 'feat',
+          flags: { core: { sourceId: 'feat-iruxi-armaments' } },
+          system: {
+            slug: 'iruxi-armaments',
+            category: 'ancestry',
+            maxTakable: 3,
+            traits: { value: ['lizardfolk'], rarity: 'common' },
+            rules: [
+              {
+                key: 'ChoiceSet',
+                flag: 'iruxiArmament',
+                rollOption: 'iruxi-armaments',
+                prompt: 'Choose an armament.',
+                choices: [
+                  { value: 'claws', label: 'Claws' },
+                  { value: 'tail', label: 'Tail' },
+                  { value: 'fangs', label: 'Fangs' },
+                ],
+              },
+            ],
+          },
+        };
+      }
+
+      return null;
+    });
+
+    const planner = {
+      actor: createMockActor({
+        items: [{
+          type: 'feat',
+          name: 'Iruxi Armaments',
+          slug: 'iruxi-armaments',
+          sourceId: 'feat-iruxi-armaments',
+          flags: { pf2e: { rulesSelections: { iruxiArmament: 'claws' } } },
+          system: { slug: 'iruxi-armaments' },
+        }],
+      }),
+      selectedLevel: 5,
+      plan: {
+        classSlug: 'fighter',
+        levels: {
+          5: {
+            ancestryFeats: [{
+              uuid: 'feat-iruxi-armaments',
+              name: 'Iruxi Armaments',
+              slug: 'iruxi-armaments',
+              choices: {},
+            }],
+            featGrants: [],
+          },
+        },
+      },
+      _compendiumCache: {},
+      _buildAttributeContext: jest.fn(() => ({})),
+      _buildIntelligenceBenefitContext: jest.fn(() => ({})),
+      _buildIntBonusSkillContext: jest.fn(() => []),
+      _buildIntBonusLanguageContext: jest.fn(() => []),
+      _buildSkillContext: jest.fn(() => []),
+      _buildSpellContext: jest.fn(async () => ({ showSpells: false })),
+      _isCustomPlanOpen: jest.fn(() => false),
+    };
+
+    const context = await buildLevelContext(planner, FIGHTER, {});
+    const armamentChoice = context.ancestryFeatChoiceSets.find((entry) => entry.flag === 'iruxiArmament');
+
+    expect(armamentChoice.options.map((option) => option.value)).toEqual(['tail', 'fangs']);
+  });
+
   test('exposes selected Free Heart background skill choices and fixed training', async () => {
     global.fromUuid = jest.fn(async (uuid) => {
       if (uuid === 'feat-free-heart') {

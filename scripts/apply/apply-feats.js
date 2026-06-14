@@ -70,7 +70,7 @@ export async function applyFeats(actor, plan, level) {
       const sourceId = getItemSourceId(item);
       if (
         sourceId
-        && !hasSyntheticRepeatableGrantChoice(featEntry)
+        && !canCreateDuplicateFeatSource(featEntry, item)
         && (existingSources.has(sourceId) || pendingSources.has(sourceId))
       ) continue;
 
@@ -404,6 +404,32 @@ function findActorSpell(actor, slug, name) {
 function hasSyntheticRepeatableGrantChoice(featEntry) {
   return typeof featEntry?.choices?.[ADVANCED_MULTICLASS_FEAT_CHOICE_FLAG] === 'string'
     && featEntry.choices[ADVANCED_MULTICLASS_FEAT_CHOICE_FLAG].length > 0;
+}
+
+function canCreateDuplicateFeatSource(featEntry, item) {
+  if (hasSyntheticRepeatableGrantChoice(featEntry)) return true;
+  if (!isRepeatableFeat(item)) return false;
+  return !hasChoiceSetRules(item) || hasMeaningfulChoiceSelection(featEntry);
+}
+
+function isRepeatableFeat(item) {
+  const rawLimit = item?.system?.maxTakable ?? item?.maxTakable;
+  const limit = Number(rawLimit?.value ?? rawLimit);
+  return Number.isFinite(limit) && limit > 1;
+}
+
+function hasChoiceSetRules(item) {
+  return (item?.system?.rules ?? []).some((rule) => rule?.key === 'ChoiceSet');
+}
+
+function hasMeaningfulChoiceSelection(featEntry) {
+  return Object.values(featEntry?.choices ?? {}).some((value) => {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed.length > 0 && trimmed !== '[object Object]';
+    }
+    return typeof value === 'number';
+  });
 }
 
 function addSyntheticGrantItemRule(data, featEntry) {

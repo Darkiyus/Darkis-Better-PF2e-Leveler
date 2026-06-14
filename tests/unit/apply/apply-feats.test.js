@@ -1264,6 +1264,70 @@ describe('applyFeats', () => {
     expect(mockActor.createEmbeddedDocuments).not.toHaveBeenCalled();
   });
 
+  test('creates selected repeatable feats already present on the actor by source id', async () => {
+    const uuid = 'Compendium.pf2e.feats-srd.Item.iruxi-armaments';
+    mockActor.items = [{
+      type: 'feat',
+      name: 'Iruxi Armaments',
+      sourceId: uuid,
+      flags: { pf2e: { rulesSelections: { iruxiArmament: 'claws' } } },
+      system: { level: { value: 1 } },
+    }];
+
+    global.fromUuid = jest.fn(async (requestedUuid) => {
+      if (requestedUuid !== uuid) return null;
+      return {
+        uuid,
+        name: 'Iruxi Armaments',
+        flags: { core: { sourceId: uuid } },
+        system: {
+          slug: 'iruxi-armaments',
+          level: { value: 1 },
+          location: null,
+          maxTakable: 3,
+          rules: [{ key: 'ChoiceSet', flag: 'iruxiArmament' }],
+        },
+        toObject: jest.fn(() => ({
+          name: 'Iruxi Armaments',
+          flags: { core: { sourceId: uuid } },
+          system: {
+            slug: 'iruxi-armaments',
+            level: { value: 1 },
+            location: null,
+            maxTakable: 3,
+            rules: [{ key: 'ChoiceSet', flag: 'iruxiArmament' }],
+          },
+        })),
+      };
+    });
+
+    await applyFeats(mockActor, {
+      levels: {
+        5: {
+          ancestryFeats: [{
+            uuid,
+            name: 'Iruxi Armaments',
+            slug: 'iruxi-armaments',
+            choices: { iruxiArmament: 'tail' },
+          }],
+        },
+      },
+    }, 5);
+
+    expect(mockActor.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      expect.objectContaining({
+        name: 'Iruxi Armaments',
+        flags: expect.objectContaining({
+          pf2e: { rulesSelections: { iruxiArmament: 'tail' } },
+        }),
+        system: expect.objectContaining({
+          location: 'ancestry-5',
+          level: { value: 1, taken: 5 },
+        }),
+      }),
+    ]);
+  });
+
   test('skips manually creating feats already granted by another selected feat in same batch', async () => {
     global.fromUuid = jest.fn(async (uuid) => {
       if (uuid === 'feat-root') {

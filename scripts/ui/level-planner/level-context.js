@@ -868,11 +868,106 @@ async function buildPlannerFeatChoiceSets(planner, feat) {
   const authoredOrFallbackChoiceSets = [...choiceSets, ...dedicationFallbackSets];
   const specialChoiceSets = await buildPlannerSpecialChoiceSets(planner, feat, source, authoredOrFallbackChoiceSets);
   const combined = dedupePlannerChoiceSets([...choiceSets, ...dedicationFallbackSets, ...fallbackSets, ...specialChoiceSets]);
-  syncPlannerChoiceSetSkillRules(feat, [...combined, ...(feat?.grantChoiceSets ?? [])]);
+  const availableChoiceSets = filterActorSelectedRepeatableFeatChoiceSets(planner, feat, source, combined);
+  syncPlannerChoiceSetSkillRules(feat, [...availableChoiceSets, ...(feat?.grantChoiceSets ?? [])]);
 
-  return combined
+  return availableChoiceSets
     .map((entry) => decoratePlannerChoiceSetForRender(planner, entry, feat))
     .filter((entry) => entry.choiceType === 'lore' || entry.options.length > 0);
+}
+
+function filterActorSelectedRepeatableFeatChoiceSets(planner, feat, source, choiceSets) {
+  if (!isRepeatablePlannerFeat(source)) return choiceSets;
+  const actorSelections = getActorSelectedFeatChoiceValues(planner?.actor, feat, source);
+  if (actorSelections.size === 0) return choiceSets;
+
+  return (choiceSets ?? []).map((choiceSet) => {
+    const selectedValues = actorSelections.get(choiceSet?.flag);
+    if (!selectedValues?.length) return choiceSet;
+
+    const plannedValue = feat?.choices?.[choiceSet.flag];
+    if (selectedValues.some((value) => plannerChoiceValueMatches(plannedValue, value)) && feat?.choices) {
+      delete feat.choices[choiceSet.flag];
+    }
+
+    return {
+      ...choiceSet,
+      options: (choiceSet.options ?? []).filter((option) =>
+        !selectedValues.some((value) => plannerOptionMatchesChoiceValue(option, value))),
+    };
+  });
+}
+
+function isRepeatablePlannerFeat(source) {
+  const rawLimit = source?.system?.maxTakable ?? source?.maxTakable;
+  const limit = Number(rawLimit?.value ?? rawLimit);
+  return Number.isFinite(limit) && limit > 1;
+}
+
+function getActorSelectedFeatChoiceValues(actor, feat, source) {
+  const choicesByFlag = new Map();
+
+  for (const item of getActorItems(actor)) {
+    if (!isSamePlannerFeatSource(item, feat, source)) continue;
+    for (const [flag, value] of Object.entries(getActorItemRuleSelections(item))) {
+      if (!hasUsablePlannerChoiceValue(value)) continue;
+      const entries = choicesByFlag.get(flag) ?? [];
+      entries.push(value);
+      choicesByFlag.set(flag, entries);
+    }
+  }
+
+  return choicesByFlag;
+}
+
+function isSamePlannerFeatSource(item, feat, source) {
+  const targetIds = new Set([feat?.uuid, feat?.sourceId, source?.uuid, source?.sourceId, source?.flags?.core?.sourceId, source?._stats?.compendiumSource]
+    .map(normalizePlannerSourceIdentity)
+    .filter(Boolean));
+  const itemIds = [item?.uuid, item?.sourceId, item?.flags?.core?.sourceId, item?._stats?.compendiumSource]
+    .map(normalizePlannerSourceIdentity)
+    .filter(Boolean);
+  if (itemIds.some((id) => targetIds.has(id))) return true;
+
+  const targetSlug = normalizePlannerSlugIdentity(source?.slug ?? source?.system?.slug ?? feat?.slug);
+  const itemSlug = normalizePlannerSlugIdentity(item?.slug ?? item?.system?.slug);
+  if (targetSlug && itemSlug && targetSlug === itemSlug) return true;
+
+  const targetName = normalizePlannerSlugIdentity(source?.name ?? feat?.name);
+  const itemName = normalizePlannerSlugIdentity(item?.name);
+  return !!targetName && !!itemName && targetName === itemName;
+}
+
+function normalizePlannerSourceIdentity(value) {
+  const normalized = normalizePf2eCompendiumUuid(value);
+  return String(normalized ?? '').trim().toLowerCase();
+}
+
+function normalizePlannerSlugIdentity(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-+|-+$/gu, '');
+}
+
+function getActorItemRuleSelections(item) {
+  return {
+    ...(item?.flags?.system?.rulesSelections ?? {}),
+    ...(item?.flags?.pf2e?.rulesSelections ?? {}),
+  };
+}
+
+function hasUsablePlannerChoiceValue(value) {
+  if (typeof value === 'string') return value.trim().length > 0 && value !== '[object Object]';
+  return typeof value === 'number';
+}
+
+function plannerOptionMatchesChoiceValue(option, value) {
+  return plannerChoiceValueMatches(option?.value, value)
+    || plannerChoiceValueMatches(option?.uuid, value)
+    || plannerChoiceValueMatches(option?.slug, value)
+    || plannerChoiceValueMatches(option?.label, value);
 }
 
 async function buildPlannerSpecialChoiceSets(planner, feat, source, parsedChoiceSets = []) {

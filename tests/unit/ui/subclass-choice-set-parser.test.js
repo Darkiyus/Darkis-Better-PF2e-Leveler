@@ -5442,6 +5442,37 @@ describe('CharacterWizard subclass choice-set parsing', () => {
     expect(hydrated[0].isItemChoice).toBe(false);
   });
 
+  it('keeps selected Iruxi Armaments enum choices visible in creation options', async () => {
+    const wizard = new CharacterWizard(createMockActor());
+    const source = {
+      name: 'Iruxi Armaments',
+      slug: 'iruxi-armaments',
+      system: { slug: 'iruxi-armaments' },
+    };
+    const choiceRule = {
+      key: 'ChoiceSet',
+      flag: 'iruxiArmament',
+      rollOption: 'iruxi-armaments',
+      prompt: 'Select an unarmed attack.',
+      choices: [
+        { value: 'claws', label: 'Claw' },
+        { value: 'tail', label: 'Tail' },
+        { value: 'fangs', label: 'Fangs', predicate: { not: 'iruxi-armaments' } },
+      ],
+    };
+
+    const parsed = await parseChoiceSets(wizard, [choiceRule], { iruxiArmament: 'fangs' }, source);
+    const hydrated = await hydrateChoiceSets(wizard, parsed, { iruxiArmament: 'fangs' });
+
+    expect(hydrated[0].options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: 'fangs', label: 'Fangs', selected: true }),
+    ]));
+    expect(hydrated[0].selectedOption).toEqual(expect.objectContaining({
+      value: 'fangs',
+      label: 'Fangs',
+    }));
+  });
+
   it('does not treat selected Specialty Crafting enum choices as selected grant sources', async () => {
     const wizard = new CharacterWizard(createMockActor());
     wizard._loadCompendium = jest.fn(async () => [

@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.5.5
+
+### Character Creation
+
+- **Iruxi Armaments choices now stay as PF2e armament selections** - Fangs no longer resolves to unrelated dhampir feat data, selected Fangs stays visible in creation, and the planner hides armament choices already taken on the actor while still applying new repeat selections
+
 ## 3.5.4
 
 ### Feat Picker
