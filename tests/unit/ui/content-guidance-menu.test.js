@@ -343,6 +343,59 @@ describe('ContentGuidanceMenu', () => {
     });
   });
 
+  test('class archetype all-feats view exposes archetype-only no-prerequisite bulk actions', async () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'classArchetypes';
+    menu.classArchetypesDedicationsOnly = false;
+    menu._draft = {};
+    menu._itemCache.classArchetypes = [
+      { uuid: 'artifact-feat', name: 'Artifact Feat', rarity: 'rare', category: 'class', traits: ['archetype'], hasPrerequisites: false },
+      { uuid: 'medic-feat', name: 'Medic Feat', rarity: 'common', category: 'class', traits: ['archetype', 'medic'], hasPrerequisites: false },
+      { uuid: 'wizard-dedication', name: 'Wizard Dedication', rarity: 'common', category: 'class', traits: ['archetype', 'dedication', 'multiclass'], hasPrerequisites: false },
+    ];
+
+    const context = await menu._prepareContext();
+
+    expect(context.specialBulkGroups).toEqual([
+      expect.objectContaining({
+        scopeType: 'orphanArchetypeNoPrerequisites',
+        scopeValue: 'true',
+        actions: [
+          expect.objectContaining({ status: 'disallowed' }),
+          expect.objectContaining({ status: 'default' }),
+        ],
+      }),
+    ]);
+
+    menu.classArchetypesDedicationsOnly = true;
+    const dedicationsContext = await menu._prepareContext();
+
+    expect(dedicationsContext.specialBulkGroups).toEqual([]);
+  });
+
+  test('archetype-only no-prerequisite bulk guidance only targets orphan archetype feats', () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'classArchetypes';
+    menu.classArchetypesDedicationsOnly = false;
+    menu._draft = {};
+    menu._itemCache.classArchetypes = [
+      { uuid: 'artifact-feat', name: 'Artifact Feat', rarity: 'rare', category: 'class', traits: ['archetype'], hasPrerequisites: false },
+      { uuid: 'artifact-prereq-feat', name: 'Artifact Prereq Feat', rarity: 'rare', category: 'class', traits: ['archetype'], hasPrerequisites: true },
+      { uuid: 'medic-feat', name: 'Medic Feat', rarity: 'common', category: 'class', traits: ['archetype', 'medic'], hasPrerequisites: false },
+      { uuid: 'wizard-dedication', name: 'Wizard Dedication', rarity: 'common', category: 'class', traits: ['archetype', 'dedication', 'multiclass'], hasPrerequisites: false },
+    ];
+
+    menu._applyBulkGuidance('orphanArchetypeNoPrerequisites', 'true', 'disallowed');
+
+    expect(menu._draft).toEqual({
+      'artifact-feat': 'disallowed',
+    });
+
+    menu._applyBulkGuidance('orphanArchetypeNoPrerequisites', 'true', 'default');
+
+    expect(menu._draft).toEqual({});
+  });
+
   test('bulk guidance can explicitly allow matching items', () => {
     const menu = new ContentGuidanceMenu();
     menu.activeCategory = 'backgrounds';

@@ -9,6 +9,10 @@
 - **Dual Class feat slots now support archetype feats** - Dual Class pickers can select archetype and dedication options, including Additional Feats unlocked by existing dedications and required level 2 class-archetype dedications
 - **Universal ancestry feats now appear in ancestry feat pickers** - Ancestry feat choices include universal ancestry-category feats and Rare `reincarnated` trait feats when Rare content is enabled, without leaking ancestry-specific feats across ancestries
 
+### Content Guidance
+
+- **Archetype-only feats can now be bulk banned** - The Class Archetypes All Feats view adds a bulk filter for class feats with only the Archetype trait and no prerequisites, letting GMs ban or clear artifact-style archetype entries without marking each feat manually
+
 ## 3.5.5
 
 ### Character Creation

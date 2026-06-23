@@ -34,7 +34,9 @@ const DEFAULT_GUIDANCE_STATUS_CYCLE = ['default', 'recommended', 'not-recommende
 const ALLOWLIST_GUIDANCE_STATUS_CYCLE = ['default', 'allowed', 'recommended', 'not-recommended', 'disallowed'];
 const BULK_GUIDANCE_STATES = ['recommended', 'not-recommended', 'disallowed', 'default'];
 const ALLOWLIST_BULK_GUIDANCE_STATES = ['allowed', ...BULK_GUIDANCE_STATES];
+const ORPHAN_ARCHETYPE_BULK_STATES = ['disallowed', 'default'];
 const VALID_BULK_GUIDANCE_STATES = new Set(ALLOWLIST_BULK_GUIDANCE_STATES);
+const ORPHAN_ARCHETYPE_NO_PREREQS_SCOPE = 'orphanArchetypeNoPrerequisites';
 const CATEGORY_DEFAULT_OPTIONS = [CATEGORY_DEFAULT_POLICIES.ALLOWED, CATEGORY_DEFAULT_POLICIES.DISALLOWED];
 const SOURCE_SCAN_CATEGORIES = [
   ['ancestries', (doc) => doc.type === 'ancestry'],
@@ -161,6 +163,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
         },
       ],
       rarityBulkGroups: this._buildRarityBulkGroups(items),
+      specialBulkGroups: this._buildSpecialBulkGroups(items),
       groupedItems: this.activeCategory === 'heritages' ? this._buildHeritageGroups(displayItems) : null,
     };
   }
@@ -226,6 +229,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
           slug: doc.slug ?? doc.system?.slug ?? null,
           category: doc.system?.category ?? null,
           traits: getTraitValues(doc),
+          hasPrerequisites: getPrerequisiteValues(doc).length > 0,
         })),
       );
     }
@@ -440,6 +444,9 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       const ancestrySlug = String(item.ancestrySlug ?? '').toLowerCase();
       return scopeValue === 'versatile' ? !ancestrySlug : ancestrySlug === scopeValue;
     }
+    if (scopeType === ORPHAN_ARCHETYPE_NO_PREREQS_SCOPE) {
+      return isOrphanArchetypeNoPrerequisitesFeat(item) && this._matchesCurrentSearch(item);
+    }
     return false;
   }
 
@@ -583,6 +590,27 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     }));
   }
 
+  _buildSpecialBulkGroups(items) {
+    if (this.activeCategory !== 'classArchetypes' || this.classArchetypesDedicationsOnly) return [];
+    const matchingCount = items.filter((item) =>
+      isOrphanArchetypeNoPrerequisitesFeat(item) && this._matchesCurrentSearch(item),
+    ).length;
+    if (matchingCount === 0) return [];
+    return [
+      {
+        label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BULK_ARCHETYPE_ONLY_NO_PREREQS'),
+        count: matchingCount,
+        scopeType: ORPHAN_ARCHETYPE_NO_PREREQS_SCOPE,
+        scopeValue: 'true',
+        actions: ORPHAN_ARCHETYPE_BULK_STATES.map((status) => ({
+          status,
+          label: game.i18n.localize(`PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BULK_${status.replace(/-/g, '_').toUpperCase()}`),
+          className: this._getBulkActionClass(status),
+        })),
+      },
+    ];
+  }
+
   _buildBulkActions({ includeAllowed = this._shouldShowAllowedBulkAction() } = {}) {
     const statuses = includeAllowed ? ALLOWLIST_BULK_GUIDANCE_STATES : BULK_GUIDANCE_STATES;
     return statuses.map((status) => ({
@@ -640,6 +668,12 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     return this._shouldShowAllowedBulkAction()
       ? ALLOWLIST_GUIDANCE_STATUS_CYCLE
       : DEFAULT_GUIDANCE_STATUS_CYCLE;
+  }
+
+  _matchesCurrentSearch(item) {
+    const query = String(this.searchText ?? '').trim().toLowerCase();
+    if (!query) return true;
+    return String(item?.name ?? '').toLowerCase().includes(query);
   }
 
   _shouldShowAllowedBulkAction() {
@@ -725,6 +759,17 @@ function isDedicationFeat(doc) {
   return getTraitValues(doc).includes('dedication');
 }
 
+function isOrphanArchetypeNoPrerequisitesFeat(doc) {
+  const category = String(doc?.system?.category ?? doc?.category ?? '')
+    .trim()
+    .toLowerCase();
+  if (category !== 'class') return false;
+  if (doc?.hasPrerequisites === true || getPrerequisiteValues(doc).length > 0) return false;
+
+  const traits = new Set(getTraitValues(doc));
+  return traits.size === 1 && traits.has('archetype');
+}
+
 function getTraitValues(doc) {
   return [
     ...normalizeStringArray(doc?.traits),
@@ -732,6 +777,14 @@ function getTraitValues(doc) {
     ...normalizeStringArray(doc?.system?.traits?.otherTags),
     ...normalizeStringArray(doc?.otherTags),
   ];
+}
+
+function getPrerequisiteValues(doc) {
+  const values = doc?.prerequisites ?? doc?.system?.prerequisites?.value ?? [];
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((entry) => String(entry?.value ?? entry ?? '').trim())
+    .filter(Boolean);
 }
 
 function normalizeStringArray(values) {
