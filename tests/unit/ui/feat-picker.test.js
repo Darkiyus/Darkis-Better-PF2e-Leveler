@@ -2428,4 +2428,25 @@ describe('FeatPicker prerequisite enforcement', () => {
       }),
     ]);
   });
+
+  test('selecting the general feat type keeps skill feats (skill feats are general feats)', () => {
+    const generalFeat = createFeat({ name: 'Fleet', uuid: 'fleet', slug: 'fleet', level: 1 });
+    generalFeat.system.traits.value = ['general'];
+
+    const skillFeat = createFeat({ name: 'Cat Fall', uuid: 'cat-fall', slug: 'cat-fall', level: 1 });
+    skillFeat.system.traits.value = ['general', 'skill'];
+
+    const classFeat = createFeat({ name: 'Power Attack', uuid: 'power-attack', slug: 'power-attack', level: 1 });
+    classFeat.system.traits.value = ['fighter'];
+
+    const picker = new FeatPicker(createActor(), 'general', 1, createBuildState({ level: 1 }), jest.fn());
+    picker.allFeats = [generalFeat, skillFeat, classFeat];
+    picker.selectedFeatTypes = new Set(['general']);
+
+    const names = picker._applyFilters().map((entry) => entry.name);
+
+    expect(names).toContain('Fleet');
+    expect(names).toContain('Cat Fall');
+    expect(names).not.toContain('Power Attack');
+  });
 });

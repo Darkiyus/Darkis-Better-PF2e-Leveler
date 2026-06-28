@@ -596,6 +596,7 @@ function computeSpellcastingState(actor, plan, atLevel, classDefs) {
 
   return {
     hasAny: traditions.size > 0,
+    hasSpellcastingEntry: entries.length > 0,
     hasSpellSlots,
     spellNames,
     spellTraits,

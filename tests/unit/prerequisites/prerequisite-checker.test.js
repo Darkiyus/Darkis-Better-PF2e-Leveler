@@ -879,6 +879,56 @@ describe('checkPrerequisites', () => {
     expect(result.results[0].met).toBe(true);
   });
 
+  test('meets generic able-to-cast-spells prerequisite when actor has a spellcasting entry', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [{ value: 'able to cast spells' }],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, {
+      ...buildState,
+      spellcasting: {
+        hasAny: false,
+        hasSpellcastingEntry: true,
+        hasSpellSlots: false,
+        spellNames: new Set(),
+        spellTraits: new Set(),
+        traditions: new Set(),
+        focusPool: false,
+        focusPointsMax: 0,
+      },
+    });
+    expect(result.met).toBe(true);
+    expect(result.results[0].met).toBe(true);
+  });
+
+  test('fails generic able-to-cast-spells prerequisite when actor has no spellcasting entry', () => {
+    const feat = {
+      system: {
+        prerequisites: {
+          value: [{ value: 'able to cast spells' }],
+        },
+      },
+    };
+    const result = checkPrerequisites(feat, {
+      ...buildState,
+      spellcasting: {
+        hasAny: false,
+        hasSpellcastingEntry: false,
+        hasSpellSlots: false,
+        spellNames: new Set(),
+        spellTraits: new Set(),
+        traditions: new Set(),
+        focusPool: false,
+        focusPointsMax: 0,
+      },
+    });
+    expect(result.met).toBe(false);
+    expect(result.results[0].met).toBe(false);
+  });
+
   test('meets spell-trait casting prerequisite when actor can cast a matching spell trait', () => {
     const feat = {
       system: {

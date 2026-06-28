@@ -73,6 +73,7 @@ const INNATE_SPELL_FROM_ANCESTRY_FEAT_PATTERN =
   /^at least one innate spell gained from an?\s+(.+?)\s+ancestry feat$/i;
 const SPECIFIC_SPELL_WITH_SLOT_PATTERN = /^able to cast\s+(.+?)\s+with a spell slot$/i;
 const SPELL_SLOTS_PATTERN = /^(?:ability|able) to cast spells (?:from|using) spell slots$/i;
+const ANY_SPELLCASTING_PATTERN = /^(?:ability|able) to cast spells$/i;
 const SPELL_TRAIT_PATTERN = /^able to cast at least one\s+(.+?)\s+spell$/i;
 const SPECIFIC_CANTRIP_PATTERN =
   /^(?:you\s+(?:can|must\s+be\s+able\s+to)\s+cast|able\s+to\s+cast|ability\s+to\s+cast|have)\s+(?:the\s+)?(.+?)\s+cantrip$/i;
@@ -599,6 +600,14 @@ function tryParseSpellcastingRequirement(text, fullText = text) {
     return {
       type: 'spellcastingState',
       spellSlots: true,
+      text: fullText,
+    };
+  }
+
+  if (ANY_SPELLCASTING_PATTERN.test(text)) {
+    return {
+      type: 'spellcastingState',
+      anySpellcasting: true,
       text: fullText,
     };
   }

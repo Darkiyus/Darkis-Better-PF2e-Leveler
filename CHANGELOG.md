@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.5.7
+
+### Prerequisites
+
+- **Generic "able to cast spells" feat prerequisites are now evaluated** - Feats requiring the ability to cast spells (without naming a tradition or spell slots) are met whenever the character has any spellcasting entry, instead of being left unverified
+
+### Feat Choices
+
+- **General feat selections now include skill feats** - Grants that let you choose a general feat (such as General Training) now offer skill feats too, since skill feats are a subtype of general feats
+
 ## 3.5.6
 
 ### Level Planner

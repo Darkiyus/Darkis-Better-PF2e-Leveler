@@ -181,6 +181,18 @@ describe('parsePrerequisite', () => {
     expect(result.spellSlots).toBe(true);
   });
 
+  test('parses generic able-to-cast-spells prerequisite', () => {
+    const result = parsePrerequisite('able to cast spells');
+    expect(result.type).toBe('spellcastingState');
+    expect(result.anySpellcasting).toBe(true);
+  });
+
+  test('parses generic ability-to-cast-spells prerequisite wording variant', () => {
+    const result = parsePrerequisite('ability to cast spells');
+    expect(result.type).toBe('spellcastingState');
+    expect(result.anySpellcasting).toBe(true);
+  });
+
   test('parses specific spell with spell-slot prerequisite', () => {
     const result = parsePrerequisite('able to cast animate dead with a spell slot');
     expect(result.type).toBe('spellcastingState');

@@ -353,11 +353,10 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (this._showSkillFilter && this.selectedSkills.size > 0)
       feats = filterBySkill(feats, [...this.selectedSkills], this.skillLogic);
     if (this.selectedFeatTypes.size > 0) {
-      const hideSkillFromGeneral =
-        this.selectedFeatTypes.has('general') && !this.selectedFeatTypes.has('skill');
+      // Skill feats are a subtype of general feats (they carry the general trait), so a
+      // "general" filter must keep them - selecting general should never exclude skill feats.
       feats = feats.filter((feat) => {
         const types = this._getFeatTypes(feat);
-        if (hideSkillFromGeneral && types.includes('skill')) return false;
         return types.some((type) => this.selectedFeatTypes.has(type));
       });
     }

@@ -266,6 +266,13 @@ export function matchSanctificationState(parsed, buildState) {
 }
 
 export function matchSpellcastingState(parsed, buildState) {
+  if (parsed.anySpellcasting === true) {
+    return {
+      met: !!buildState.spellcasting?.hasSpellcastingEntry,
+      text: parsed.text,
+    };
+  }
+
   if (parsed.focusPool === true) {
     return {
       met: !!buildState.spellcasting?.focusPool,
