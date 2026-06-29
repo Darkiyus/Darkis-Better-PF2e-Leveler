@@ -15,6 +15,7 @@ import { extractFeatSpellcastingMetadata, FEAT_SPELLCASTING_METADATA_VERSION } f
 import { localize } from '../../utils/i18n.js';
 import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug, SKILL_ALIASES } from '../../utils/skill-slugs.js';
 import { getReplacementRankAfterSkillRetrain } from '../../utils/skill-retrains.js';
+import { promptReviewRequest, isReviewFeatureActive, isApplyBlockedForActor } from '../../access/review-requests.js';
 import { FeatPicker } from '../feat-picker.js';
 import { captureScrollState, restoreScrollState } from '../shared/scroll-state.js';
 import { scheduleBringApplicationToFront } from '../shared/window-focus.js';
@@ -984,6 +985,8 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
       sequentialCurrentLevel: seq?.currentLevel ?? 0,
       showNextLevel: isSequential && sequentialLevelComplete && !isLastSequentialLevel,
       showFinishSequential: isSequential && sequentialLevelComplete && isLastSequentialLevel,
+      enableReviewRequests: isReviewFeatureActive(),
+      isGM: game.user?.isGM === true,
       ...(await this._buildLevelContext(classDef, options)),
     };
   }
@@ -1353,6 +1356,13 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     await clearPlan(this.actor);
     this.plan = this._createPlanFromActor(this.actor);
     this.render(true);
+  }
+
+  async _requestReview() {
+    await promptReviewRequest({
+      item: { uuid: this.actor?.uuid ?? null, name: `${this.actor?.name ?? ''} — Level Plan` },
+      actor: this.actor,
+    });
   }
 
   async _clearSelectedLevel() {
@@ -2568,11 +2578,19 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _applySelectedPlan() {
+    if (isApplyBlockedForActor(this.actor)) {
+      ui.notifications?.warn(game.i18n.localize('PF2E_LEVELER.REVIEW_REQUEST.APPROVAL_REQUIRED'));
+      return;
+    }
     if (!this.plan || !Number.isInteger(this.selectedLevel)) return;
     await promptApplyPlan(this.actor, this.plan, this.selectedLevel, this.selectedLevel - 1);
   }
 
   async _applySelectedRetraining() {
+    if (isApplyBlockedForActor(this.actor)) {
+      ui.notifications?.warn(game.i18n.localize('PF2E_LEVELER.REVIEW_REQUEST.APPROVAL_REQUIRED'));
+      return;
+    }
     if (!this.plan || !Number.isInteger(this.selectedLevel)) return;
     await promptApplyRetraining(this.actor, this.plan, this.selectedLevel);
   }

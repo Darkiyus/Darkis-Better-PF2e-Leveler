@@ -1,7 +1,8 @@
 import { MODULE_ID } from '../constants.js';
 import { getCompendiumKeysForCategory } from '../compendiums/catalog.js';
 import { isRarityAllowedForCurrentUser, getAllowedRaritiesForCurrentUser } from '../access/player-content.js';
-import { annotateGuidance, filterDisallowedForCurrentUser } from '../access/content-guidance.js';
+import { annotateGuidance, filterDisallowedForCurrentUser, matchesGuidanceTagFilter, getGuidanceTagLabels, GUIDANCE_TAG_VALUES } from '../access/content-guidance.js';
+import { filterPublicationsForCurrentUser, isRemasterItem, itemHasExcludedTechTrait, buildPublicationGroupChips, getPublicationGroupMembers } from '../access/source-classification.js';
 import { openContentGuidanceMenu } from './content-guidance-menu.js';
 import {
   applyRarityFilter,
@@ -75,6 +76,7 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.traitFilterMode = 'include';
     this.selectedRarities = getAllowedRaritiesForCurrentUser();
     this.lockedRarities = new Set();
+    this.selectedGuidanceTags = new Set();
     this.selectedPublications = new Set();
     this.filterSections = {
       publications: true,
@@ -87,6 +89,8 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.customTitle = typeof options.title === 'string' && options.title.trim().length > 0
       ? options.title.trim()
       : null;
+    this.remasterOnly = false;
+    this.hideGunsTech = false;
     this._applyPreset(this.preset);
   }
 
@@ -154,6 +158,7 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const publicationOptions = this._getPublicationOptions();
+    const publicationGroupChips = buildPublicationGroupChips(this._publicationTitles, this.selectedPublications);
     const rankOptions = this._getRankOptions();
     const traditionOptions = this._getTraditionOptions();
     const categoryOptions = this._getCategoryOptions();
@@ -172,6 +177,7 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       spells: this.filteredSpells.map((spell) => this._toTemplateSpell(spell)),
       filterSections: this._getFilterSections(),
       publicationOptions,
+      publicationGroupChips,
       rankOptions,
       traditionOptions,
       categoryOptions,
@@ -184,6 +190,11 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         labels: this._getRarityLabels(),
         lockedValues: this._getRarityToggleLockedValues(),
       }),
+      guidanceTagOptions: buildChipOptions(
+        (game.user?.isGM === true ? GUIDANCE_TAG_VALUES : GUIDANCE_TAG_VALUES.filter((v) => v !== 'disallowed')),
+        this.selectedGuidanceTags,
+        { labels: getGuidanceTagLabels() },
+      ),
       traitLogic: this.traitLogic,
       traitFilterMode: this.traitFilterMode,
       rank: this.rank,
@@ -196,6 +207,8 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       selectedSpells: this.selectedSpells.map((spell, index) => this._toSelectedTemplateSpell(spell, index)),
       maxSelect: this.maxSelect,
       remainingSlots: this.maxSelect != null ? this.maxSelect - this.selectedSpellUuids.size : null,
+      remasterOnly: this.remasterOnly,
+      hideGunsTech: this.hideGunsTech,
     };
   }
 
@@ -356,10 +369,43 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         return;
       }
 
+      if (action === 'togglePublicationGroup') {
+        e.preventDefault();
+        e.stopPropagation();
+        const groupId = target.dataset.group;
+        if (!groupId) return;
+        const members = getPublicationGroupMembers(groupId, this._publicationTitles);
+        const allSelected = members.length > 0 && members.every((title) => this.selectedPublications.has(title));
+        for (const title of members) {
+          if (allSelected) this.selectedPublications.delete(title);
+          else this.selectedPublications.add(title);
+        }
+        this._updateFilterControlState();
+        this._scheduleListUpdate();
+        return;
+      }
+
       if (action === 'toggleFilterSection') {
         e.preventDefault();
         e.stopPropagation();
         this._toggleFilterSection(target.dataset.section);
+        return;
+      }
+
+      if (action === 'toggleRemasterOnly') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.remasterOnly = !this.remasterOnly;
+        target.classList.toggle('active', this.remasterOnly);
+        this._scheduleListUpdate();
+        return;
+      }
+      if (action === 'toggleHideGunsTech') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideGunsTech = !this.hideGunsTech;
+        target.classList.toggle('active', this.hideGunsTech);
+        this._scheduleListUpdate();
         return;
       }
 
@@ -419,6 +465,20 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         return;
       }
 
+      if (action === 'toggleGuidanceTag') {
+        e.preventDefault();
+        e.stopPropagation();
+        const tag = String(target.dataset.tag ?? '').trim().toLowerCase();
+        if (!tag) return;
+        if (this.selectedGuidanceTags.has(tag)) this.selectedGuidanceTags.delete(tag);
+        else this.selectedGuidanceTags.add(tag);
+        for (const chip of el.querySelectorAll('[data-action="toggleGuidanceTag"]')) {
+          chip.classList.toggle('selected', this.selectedGuidanceTags.has(chip.dataset.tag));
+        }
+        this._scheduleListUpdate();
+        return;
+      }
+
       if (action === 'toggleTraitLogic') {
         e.preventDefault();
         e.stopPropagation();
@@ -443,7 +503,9 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         if (target.dataset.mode === 'exclude') this.excludedTraits.delete(trait);
         else this.selectedTraits.delete(trait);
         this._scheduleListUpdate();
+        return;
       }
+
     }, { signal });
 
     this._updateResultCount();
@@ -470,10 +532,12 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const listContainer = root?.querySelector('.spell-picker__list');
     if (!listContainer) return;
 
+    const publicationOptions = this._getPublicationOptions();
     const html = await resolveRenderHandlebarsTemplate()(`modules/${MODULE_ID}/templates/spell-picker.hbs`, {
       spells: this.filteredSpells.map((spell) => this._toTemplateSpell(spell)),
       filterSections: this._getFilterSections(),
-      publicationOptions: this._getPublicationOptions(),
+      publicationOptions,
+      publicationGroupChips: buildPublicationGroupChips(this._publicationTitles, this.selectedPublications),
       rankOptions: this._getRankOptions(),
       traditionOptions: this._getTraditionOptions(),
       categoryOptions: this._getCategoryOptions(),
@@ -485,6 +549,11 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         labels: this._getRarityLabels(),
         lockedValues: this._getRarityToggleLockedValues(),
       }),
+      guidanceTagOptions: buildChipOptions(
+        (game.user?.isGM === true ? GUIDANCE_TAG_VALUES : GUIDANCE_TAG_VALUES.filter((v) => v !== 'disallowed')),
+        this.selectedGuidanceTags,
+        { labels: getGuidanceTagLabels() },
+      ),
       traitLogic: this.traitLogic,
       traitFilterMode: this.traitFilterMode,
       rank: this.rank,
@@ -497,6 +566,8 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       selectedSpells: this.selectedSpells.map((spell, index) => this._toSelectedTemplateSpell(spell, index)),
       maxSelect: this.maxSelect,
       remainingSlots: this.maxSelect != null ? this.maxSelect - this.selectedSpellUuids.size : null,
+      remasterOnly: this.remasterOnly,
+      hideGunsTech: this.hideGunsTech,
     });
 
     const temp = document.createElement('div');
@@ -509,6 +580,12 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const newRarityContainer = temp.querySelector('[data-role="rarity-chips"]');
     if (rarityContainer && newRarityContainer) {
       rarityContainer.innerHTML = newRarityContainer.innerHTML;
+    }
+
+    const guidanceContainer = root?.querySelector('[data-role="guidance-tag-chips"]');
+    const newGuidanceContainer = temp.querySelector('[data-role="guidance-tag-chips"]');
+    if (guidanceContainer && newGuidanceContainer) {
+      guidanceContainer.innerHTML = newGuidanceContainer.innerHTML;
     }
 
     this._updateResultCount();
@@ -545,10 +622,15 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         return [...this.excludedTraits].every((trait) => !traits.has(trait));
       });
     }
+    if (this.remasterOnly) spells = spells.filter((spell) => isRemasterItem(spell));
+    if (this.hideGunsTech) spells = spells.filter((spell) => !itemHasExcludedTechTrait(spell));
     if (this.searchText) spells = spells.filter((s) => (s._levelerSearchName ?? s.name.toLowerCase()).includes(this.searchText));
     if (this.multiSelect) {
       const preSelectedUuids = new Set(this.selectedSpells.map((s) => s.uuid));
       spells = spells.filter((spell) => !this.selectedSpellUuids.has(spell.uuid) && !preSelectedUuids.has(spell.uuid));
+    }
+    if (this.selectedGuidanceTags.size > 0) {
+      spells = spells.filter((entry) => matchesGuidanceTagFilter(entry, this.selectedGuidanceTags));
     }
     if (!ignoreRarity) {
       spells = applyRarityFilter(
@@ -744,6 +826,12 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       for (const chip of publicationSection.querySelectorAll('[data-action="togglePublication"]')) {
         chip.classList.toggle('selected', this.selectedPublications.has(chip.dataset.publication));
       }
+      for (const chip of publicationSection.querySelectorAll('[data-action="togglePublicationGroup"]')) {
+        const members = getPublicationGroupMembers(chip.dataset.group, this._publicationTitles);
+        const selectedCount = members.filter((title) => this.selectedPublications.has(title)).length;
+        chip.classList.toggle('selected', members.length > 0 && selectedCount === members.length);
+        chip.classList.toggle('partial', selectedCount > 0 && selectedCount < members.length);
+      }
     }
   }
 
@@ -859,10 +947,11 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const options = [...unique.values()].sort((a, b) => a.label.localeCompare(b.label));
     this._publicationTitles = options.map((entry) => entry.key);
     this.selectedPublications = initializeSelectionSet(this.selectedPublications, this._publicationTitles, { defaultValues: [] });
-    return options.map((entry) => ({
+    const displayOptions = options.map((entry) => ({
       ...entry,
       selected: this.selectedPublications.has(entry.key),
     }));
+    return filterPublicationsForCurrentUser(displayOptions);
   }
 
   _getRankOptions() {

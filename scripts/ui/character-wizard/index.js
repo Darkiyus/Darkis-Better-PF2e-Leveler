@@ -23,7 +23,9 @@ import { buildLanguageContext, buildSkillContext, collectWizardDeitySkillMap, co
 import { activateCharacterWizardListeners } from './listeners.js';
 import { buildSpellContext, getSanitizedCurriculumSelections, limitCurriculumSelections, resolveFocusSpells, resolveGrantedSpells, resolveSummaryCurriculumSpells, resolveSummaryFocusSpells } from './spells.js';
 import { loadCommanderTactics, loadCompendium, loadCompendiumCategory, loadAncestries, loadBackgrounds, loadClasses, loadDeities, loadExemplarIkons, loadHeritages, loadInventorArmorModifications, loadInventorArmorOptions, loadInventorWeaponModifications, loadInventorWeaponOptions, loadKineticImpulses, loadRawHeritages, loadSubclasses, loadSubclassesForClass, loadTaggedClassFeatures, loadThaumaturgeImplements, loadTheses, parseCurriculum, parseSpellUuidsFromDescription, parseVesselSpell, resolveClassSubclassTag } from './loaders.js';
+import { promptReviewRequest, isReviewFeatureActive, isApplyBlockedForActor } from '../../access/review-requests.js';
 import { annotateGuidance, annotateGuidanceBySlug, filterDisallowedForCurrentUser, sortByGuidancePriority } from '../../access/content-guidance.js';
+import { filterPublicationsForCurrentUser } from '../../access/source-classification.js';
 import { renderApplicationInFront, scheduleBringApplicationToFront } from '../shared/window-focus.js';
 import { resolveSpellcastingTradition } from '../../data/subclass-spells.js';
 
@@ -495,6 +497,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       publicationFilter,
       hasPublicationFilter: publicationOptions.length > 0,
       showGlobalPublicationFilter: publicationOptions.length > 0 && !browserStep,
+      enableReviewRequests: isReviewFeatureActive(),
+      isGM: game.user?.isGM === true,
       ...applyOverlay,
       ...stepContext,
     };
@@ -1636,6 +1640,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _apply() {
+    if (isApplyBlockedForActor(this.actor)) {
+      ui.notifications?.warn(game.i18n.localize('PF2E_LEVELER.REVIEW_REQUEST.APPROVAL_REQUIRED'));
+      return;
+    }
     if (this.isApplying) return;
     const confirmed = await foundry.applications.api.DialogV2.confirm({
       window: { title: localize('CREATION.CONFIRM_TITLE') },
@@ -1767,6 +1775,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     });
     input.click();
+  }
+
+  async _requestReview() {
+    await promptReviewRequest({
+      item: { uuid: this.actor?.uuid ?? null, name: `${this.actor?.name ?? ''} — Character` },
+      actor: this.actor,
+    });
   }
 
   _captureWizardScroll() {
@@ -3378,10 +3393,11 @@ export function buildPublicationOptions(stepContext, storedSelection = []) {
   const allKeys = new Set(publications.map((publication) => publication.key));
   const selectedKeys = new Set((storedSelection ?? []).filter((key) => allKeys.has(key)));
 
-  return publications.map((publication) => ({
+  const displayOptions = publications.map((publication) => ({
     ...publication,
     selected: selectedKeys.has(publication.key),
   }));
+  return filterPublicationsForCurrentUser(displayOptions);
 }
 
 export function buildPublicationFilterState(publicationOptions = [], collapsed = true) {

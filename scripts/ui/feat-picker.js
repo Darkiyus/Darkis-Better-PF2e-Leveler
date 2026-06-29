@@ -16,7 +16,8 @@ import { isMythicEnabled } from '../utils/pf2e-api.js';
 import { getBuildStateAncestryFeatTraits } from '../utils/ancestry-feat-traits.js';
 import { getActiveSkillConfigEntry, getActiveSkillSlugs } from '../utils/skill-slugs.js';
 import { ClassRegistry } from '../classes/registry.js';
-import { annotateGuidance, filterDisallowedForCurrentUser } from '../access/content-guidance.js';
+import { annotateGuidance, filterDisallowedForCurrentUser, matchesGuidanceTagFilter, getGuidanceTagLabels, GUIDANCE_TAG_VALUES } from '../access/content-guidance.js';
+import { filterPublicationsForCurrentUser, isRemasterItem, itemHasExcludedTechTrait, buildPublicationGroupChips, getPublicationGroupMembers } from '../access/source-classification.js';
 import { openContentGuidanceMenu } from './content-guidance-menu.js';
 import {
   applyRarityFilter,
@@ -50,6 +51,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.searchText = '';
     this.sortMethod = game.settings.get(MODULE_ID, 'featSortMethod');
     this.hideFailedPrereqs = game.settings.get(MODULE_ID, 'defaultEligibleOnly');
+    this.remasterOnly = false;
+    this.hideGunsTech = false;
     this.selectedRarities = new Set(['common']);
     if (category === 'custom') {
       this.selectedRarities = new Set(['common', 'uncommon', 'rare', 'unique']);
@@ -74,6 +77,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.additionalArchetypeFeatLevels = new Map();
     this.additionalArchetypeFeatTraits = new Map();
     this.enforcePrerequisites = game.settings.get(MODULE_ID, 'enforcePrerequisites');
+    this.selectedGuidanceTags = new Set();
     this.selectedTraits = new Set();
     this.excludedTraits = new Set();
     this.traitLogic = 'or';
@@ -145,6 +149,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const publicationOptions = this._getPublicationOptions();
+    const publicationGroupChips = buildPublicationGroupChips(this._publicationTitles, this.selectedPublications);
     const featTypeOptions = this._getFeatTypeOptions();
     const traitOptions = this._getTraitOptions();
     const skillChips = this._getSkillChipOptions();
@@ -157,6 +162,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       filteredCount: this.filteredFeats.length,
       filterSections: this._getFilterSections(),
       publicationOptions,
+      publicationGroupChips,
       featTypeOptions,
       levelOptions: this._getLevelOptions(),
       category: this.category,
@@ -164,9 +170,16 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       minLevelLocked: this._minLevelLocked,
       maxLevelLocked: this._maxLevelLocked,
       hideFailedPrereqs: this.hideFailedPrereqs,
+      remasterOnly: this.remasterOnly,
+      hideGunsTech: this.hideGunsTech,
       rarityOptions: buildChipOptions(this._availableRarityValues, this.selectedRarities, {
         labels: this._getRarityLabels(),
       }),
+      guidanceTagOptions: buildChipOptions(
+        (game.user?.isGM === true ? GUIDANCE_TAG_VALUES : GUIDANCE_TAG_VALUES.filter((v) => v !== 'disallowed')),
+        this.selectedGuidanceTags,
+        { labels: getGuidanceTagLabels() },
+      ),
       sortMethod: this.sortMethod,
       minLevel: this.minLevel,
       maxLevel: this.maxLevel,
@@ -281,6 +294,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       filteredCount: 0,
       filterSections: this._getFilterSections(),
       publicationOptions: [],
+      publicationGroupChips: [],
       featTypeOptions: [],
       levelOptions: this._getLevelOptions(),
       category: this.category,
@@ -288,9 +302,12 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       minLevelLocked: this._minLevelLocked,
       maxLevelLocked: this._maxLevelLocked,
       hideFailedPrereqs: this.hideFailedPrereqs,
+      remasterOnly: this.remasterOnly,
+      hideGunsTech: this.hideGunsTech,
       rarityOptions: buildChipOptions(this._availableRarityValues, this.selectedRarities, {
         labels: this._getRarityLabels(),
       }),
+      guidanceTagOptions: [],
       sortMethod: this.sortMethod,
       minLevel: this.minLevel,
       maxLevel: this.maxLevel,
@@ -380,6 +397,9 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         );
       });
     }
+    if (this.selectedGuidanceTags.size > 0) {
+      feats = feats.filter((entry) => matchesGuidanceTagFilter(entry, this.selectedGuidanceTags));
+    }
     if (!ignoreRarity) {
       feats = applyRarityFilter(
         feats,
@@ -390,6 +410,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     this._enrichWithPrerequisites(feats);
     if (this.hideFailedPrereqs) feats = feats.filter((f) => !f.prerequisitesFailed);
+    if (this.remasterOnly) feats = feats.filter((feat) => isRemasterItem(feat));
+    if (this.hideGunsTech) feats = feats.filter((feat) => !itemHasExcludedTechTrait(feat));
     return sortFeats(feats, this.sortMethod);
   }
 
@@ -493,6 +515,32 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         () => {
           this.hideFailedPrereqs = !this.hideFailedPrereqs;
           prereqToggle.classList.toggle('active', this.hideFailedPrereqs);
+          this._scheduleListUpdate();
+        },
+        { signal },
+      );
+    }
+
+    const remasterToggle = el.querySelector('[data-action="toggleRemasterOnly"]');
+    if (remasterToggle) {
+      remasterToggle.addEventListener(
+        'click',
+        () => {
+          this.remasterOnly = !this.remasterOnly;
+          remasterToggle.classList.toggle('active', this.remasterOnly);
+          this._scheduleListUpdate();
+        },
+        { signal },
+      );
+    }
+
+    const hideGunsTechToggle = el.querySelector('[data-action="toggleHideGunsTech"]');
+    if (hideGunsTechToggle) {
+      hideGunsTechToggle.addEventListener(
+        'click',
+        () => {
+          this.hideGunsTech = !this.hideGunsTech;
+          hideGunsTechToggle.classList.toggle('active', this.hideGunsTech);
           this._scheduleListUpdate();
         },
         { signal },
@@ -711,6 +759,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this._bindTraitChipListeners(el, signal);
 
     this._bindRarityChipListeners(el, signal);
+    this._bindGuidanceTagListeners(el, signal);
 
     this._bindActionButtons(el, signal);
   }
@@ -729,6 +778,23 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
             rarity,
             this._availableRarityValues ?? RARITY_VALUES,
           );
+          this._scheduleListUpdate();
+        },
+        { signal },
+      );
+    });
+  }
+
+  _bindGuidanceTagListeners(root, signal) {
+    root.querySelectorAll('[data-action="toggleGuidanceTag"]').forEach((btn) => {
+      btn.addEventListener(
+        'click',
+        () => {
+          const tag = String(btn.dataset.tag ?? '').trim().toLowerCase();
+          if (!tag) return;
+          if (this.selectedGuidanceTags.has(tag)) this.selectedGuidanceTags.delete(tag);
+          else this.selectedGuidanceTags.add(tag);
+          btn.classList.toggle('selected', this.selectedGuidanceTags.has(tag));
           this._scheduleListUpdate();
         },
         { signal },
@@ -766,12 +832,18 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       filteredCount: this.filteredFeats.length,
       filterSections: this._getFilterSections(),
       publicationOptions,
+      publicationGroupChips: buildPublicationGroupChips(this._publicationTitles, this.selectedPublications),
       category: this.category,
       targetLevel: this.targetLevel,
       sortMethod: this.sortMethod,
       rarityOptions: buildChipOptions(this._availableRarityValues, this.selectedRarities, {
         labels: this._getRarityLabels(),
       }),
+      guidanceTagOptions: buildChipOptions(
+        (game.user?.isGM === true ? GUIDANCE_TAG_VALUES : GUIDANCE_TAG_VALUES.filter((v) => v !== 'disallowed')),
+        this.selectedGuidanceTags,
+        { labels: getGuidanceTagLabels() },
+      ),
       selectedTraitChips: this._getSelectedTraitChips(this._getTraitOptions()),
       selectedTraits: [...this.selectedTraits],
       excludedTraits: [...this.excludedTraits],
@@ -796,6 +868,12 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       rarityContainer.innerHTML = newRarityContainer.innerHTML;
     }
 
+    const guidanceContainer = root?.querySelector('[data-role="guidance-tag-chips"]');
+    const newGuidanceContainer = temp.querySelector('[data-role="guidance-tag-chips"]');
+    if (guidanceContainer && newGuidanceContainer) {
+      guidanceContainer.innerHTML = newGuidanceContainer.innerHTML;
+    }
+
     const publicationSection = root?.querySelector('[data-section="publications"]');
     const newPublicationSection = temp.querySelector('[data-section="publications"]');
     if (publicationSection && newPublicationSection) {
@@ -805,6 +883,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (this._domListeners?.signal) {
       this._bindPublicationFilterListeners(root, this._domListeners.signal);
       this._bindRarityChipListeners(root, this._domListeners.signal);
+      this._bindGuidanceTagListeners(root, this._domListeners.signal);
     }
 
     const resultCount = root?.querySelector('.picker__results-count');
@@ -886,6 +965,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
           speaker: { alias: this.actor.name },
         });
       }
+      return;
     }
   }
 
@@ -1145,10 +1225,11 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     );
     this._publicationFilterInitialized = true;
 
-    return options.map((entry) => ({
+    const displayOptions = options.map((entry) => ({
       ...entry,
       selected: this.selectedPublications.has(entry.key),
     }));
+    return filterPublicationsForCurrentUser(displayOptions);
   }
 
   _getFeatTypeOptions() {
@@ -1593,6 +1674,10 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const prereqToggle = root.querySelector('[data-action="togglePrereqFilter"]');
     if (prereqToggle) prereqToggle.classList.toggle('active', this.hideFailedPrereqs);
+    const remasterToggle = root.querySelector('[data-action="toggleRemasterOnly"]');
+    if (remasterToggle) remasterToggle.classList.toggle('active', this.remasterOnly);
+    const hideGunsTechToggle = root.querySelector('[data-action="toggleHideGunsTech"]');
+    if (hideGunsTechToggle) hideGunsTechToggle.classList.toggle('active', this.hideGunsTech);
 
     const skillFeatToggle = root.querySelector('[data-action="toggleGeneralSkillFeats"]');
     if (skillFeatToggle) skillFeatToggle.classList.toggle('active', this.showSkillFeats);
@@ -1735,6 +1820,24 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
               'selected',
               this.selectedPublications.has(chip.dataset.publication),
             );
+          }
+          this._scheduleListUpdate();
+        },
+        { signal },
+      );
+    });
+
+    root.querySelectorAll('[data-action="togglePublicationGroup"]').forEach((btn) => {
+      btn.addEventListener(
+        'click',
+        () => {
+          const groupId = btn.dataset.group;
+          if (!groupId) return;
+          const members = getPublicationGroupMembers(groupId, this._publicationTitles);
+          const allSelected = members.length > 0 && members.every((title) => this.selectedPublications.has(title));
+          for (const title of members) {
+            if (allSelected) this.selectedPublications.delete(title);
+            else this.selectedPublications.add(title);
           }
           this._scheduleListUpdate();
         },

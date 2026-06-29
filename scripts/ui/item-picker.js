@@ -1,7 +1,8 @@
 import { MODULE_ID } from '../constants.js';
 import { getCompendiumKeysForCategory } from '../compendiums/catalog.js';
 import { isRarityAllowedForCurrentUser } from '../access/player-content.js';
-import { annotateGuidance, filterDisallowedForCurrentUser } from '../access/content-guidance.js';
+import { annotateGuidance, filterDisallowedForCurrentUser, matchesGuidanceTagFilter, getGuidanceTagLabels, GUIDANCE_TAG_VALUES } from '../access/content-guidance.js';
+import { filterPublicationsForCurrentUser, isRemasterItem, itemHasExcludedTechTrait, buildPublicationGroupChips, getPublicationGroupMembers } from '../access/source-classification.js';
 import { openContentGuidanceMenu } from './content-guidance-menu.js';
 import {
   applyRarityFilter,
@@ -91,6 +92,7 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.selectedCategories = new Set();
     this.selectedRarities = new Set(['common', 'uncommon', 'rare', 'unique']);
     this.lockedRarities = new Set();
+    this.selectedGuidanceTags = new Set();
     this.selectedTraits = new Set();
     this.requiredTraits = new Set();
     this.selectedArmorFilters = new Set();
@@ -114,6 +116,8 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this._domListeners = null;
     this._loading = this.allItems.length === 0;
     if (!this._loading) annotateGuidance(this.allItems);
+    this.remasterOnly = false;
+    this.hideGunsTech = false;
     this._applyPreset(options.preset);
   }
 
@@ -139,6 +143,7 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       return { loading: true };
     }
     const publicationOptions = this._getPublicationOptions();
+    const publicationGroupChips = buildPublicationGroupChips(this._publicationTitles, this.selectedPublications);
     const categoryOptions = this._getCategoryOptions();
     const armorFilterOptions = this._getArmorFilterOptions();
     const weaponFilterOptions = this._getWeaponFilterOptions();
@@ -161,10 +166,13 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       capped,
       multiSelect: this.multiSelect,
       isGM: game.user?.isGM === true,
+      remasterOnly: this.remasterOnly,
+      hideGunsTech: this.hideGunsTech,
       selectedCount: this.selectedItemUuids.size,
       maxSelect: this.maxSelect,
       allVisibleSelected: this._areAllVisibleSelected(),
       publicationOptions,
+      publicationGroupChips,
       categoryOptions,
       armorFilterOptions,
       weaponFilterOptions,
@@ -175,6 +183,11 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         labels: { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', unique: 'Unique' },
         lockedValues: this._getRarityToggleLockedValues(),
       }),
+      guidanceTagOptions: buildChipOptions(
+        (game.user?.isGM === true ? GUIDANCE_TAG_VALUES : GUIDANCE_TAG_VALUES.filter((v) => v !== 'disallowed')),
+        this.selectedGuidanceTags,
+        { labels: getGuidanceTagLabels() },
+      ),
       traitOptions: this._getTraitOptions(),
       selectedTraitChips: this._getTraitOptions().filter((o) => o.selected),
       traitLogic: this.traitLogic,
@@ -262,6 +275,11 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       const query = this.searchText.toLowerCase();
       items = items.filter((item) => String(item.name ?? '').toLowerCase().includes(query));
     }
+    if (this.remasterOnly) items = items.filter((item) => isRemasterItem(item));
+    if (this.hideGunsTech) items = items.filter((item) => !itemHasExcludedTechTrait(item));
+    if (this.selectedGuidanceTags.size > 0) {
+      items = items.filter((entry) => matchesGuidanceTagFilter(entry, this.selectedGuidanceTags));
+    }
     if (!ignoreRarity) {
       items = applyRarityFilter(
         items,
@@ -308,7 +326,8 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const options = [...unique.values()].sort((a, b) => a.label.localeCompare(b.label));
     this._publicationTitles = options.map((e) => e.key);
     this.selectedPublications = initializeSelectionSet(this.selectedPublications, this._publicationTitles, { defaultValues: [] });
-    return options.map((e) => ({ ...e, selected: this.selectedPublications.has(e.key) }));
+    const displayOptions = options.map((e) => ({ ...e, selected: this.selectedPublications.has(e.key) }));
+    return filterPublicationsForCurrentUser(displayOptions);
   }
 
   _getSourceOptions() {
@@ -506,10 +525,13 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       capped,
       multiSelect: this.multiSelect,
       isGM: game.user?.isGM === true,
+      remasterOnly: this.remasterOnly,
+      hideGunsTech: this.hideGunsTech,
       selectedCount: this.selectedItemUuids.size,
       maxSelect: this.maxSelect,
       allVisibleSelected: this._areAllVisibleSelected(),
       publicationOptions: this._getPublicationOptions(),
+      publicationGroupChips: buildPublicationGroupChips(this._publicationTitles, this.selectedPublications),
       armorFilterOptions: this._getArmorFilterOptions(),
       weaponFilterOptions: this._getWeaponFilterOptions(),
       showArmorFilters: this._shouldShowEquipmentFilters('armor'),
@@ -521,6 +543,11 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         labels: { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', unique: 'Unique' },
         lockedValues: this._getRarityToggleLockedValues(),
       }),
+      guidanceTagOptions: buildChipOptions(
+        (game.user?.isGM === true ? GUIDANCE_TAG_VALUES : GUIDANCE_TAG_VALUES.filter((v) => v !== 'disallowed')),
+        this.selectedGuidanceTags,
+        { labels: getGuidanceTagLabels() },
+      ),
       sortMode: this.sortMode,
       sortOptions: this._getSortOptions(),
     };
@@ -532,6 +559,9 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     const rarityContainer = root?.querySelector('[data-role="rarity-chips"]');
     const newRarityContainer = temp.querySelector('[data-role="rarity-chips"]');
     if (rarityContainer && newRarityContainer) rarityContainer.innerHTML = newRarityContainer.innerHTML;
+    const guidanceContainer = root?.querySelector('[data-role="guidance-tag-chips"]');
+    const newGuidanceContainer = temp.querySelector('[data-role="guidance-tag-chips"]');
+    if (guidanceContainer && newGuidanceContainer) guidanceContainer.innerHTML = newGuidanceContainer.innerHTML;
     const publicationSection = root?.querySelector('[data-section="publications"]');
     const newPublicationSection = temp.querySelector('[data-section="publications"]');
     if (publicationSection && newPublicationSection) publicationSection.replaceWith(newPublicationSection);
@@ -756,6 +786,16 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         return;
       }
 
+      if (action === 'toggleGuidanceTag') {
+        const tag = String(target.dataset.tag ?? '').trim().toLowerCase();
+        if (!tag) return;
+        if (this.selectedGuidanceTags.has(tag)) this.selectedGuidanceTags.delete(tag);
+        else this.selectedGuidanceTags.add(tag);
+        target.classList.toggle('selected', this.selectedGuidanceTags.has(tag));
+        this._updateList();
+        return;
+      }
+
       if (action === 'toggleFilterSection') {
         this._toggleFilterSection(target.dataset.section);
         return;
@@ -771,6 +811,19 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       if (action === 'toggleArmorFilterLogic') {
         this.armorFilterLogic = this.armorFilterLogic === 'and' ? 'or' : 'and';
         target.textContent = this.armorFilterLogic === 'and' ? 'AND' : 'OR';
+        this._updateList();
+        return;
+      }
+
+      if (action === 'toggleRemasterOnly') {
+        this.remasterOnly = !this.remasterOnly;
+        target.classList.toggle('active', this.remasterOnly);
+        this._updateList();
+        return;
+      }
+      if (action === 'toggleHideGunsTech') {
+        this.hideGunsTech = !this.hideGunsTech;
+        target.classList.toggle('active', this.hideGunsTech);
         this._updateList();
         return;
       }
@@ -792,6 +845,19 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       if (action === 'togglePublication') {
         this.selectedPublications = toggleSelectableChip(this.selectedPublications, target.dataset.publication, this._publicationTitles);
         target.classList.toggle('selected', this.selectedPublications.has(target.dataset.publication));
+        this._updateList();
+        return;
+      }
+
+      if (action === 'togglePublicationGroup') {
+        const groupId = target.dataset.group;
+        if (!groupId) return;
+        const members = getPublicationGroupMembers(groupId, this._publicationTitles);
+        const allSelected = members.length > 0 && members.every((title) => this.selectedPublications.has(title));
+        for (const title of members) {
+          if (allSelected) this.selectedPublications.delete(title);
+          else this.selectedPublications.add(title);
+        }
         this._updateList();
         return;
       }
@@ -841,7 +907,9 @@ export class ItemPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         e.preventDefault();
         e.stopPropagation();
         await this._confirmSelection();
+        return;
       }
+
     }, { signal });
   }
 
