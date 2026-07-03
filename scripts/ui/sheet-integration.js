@@ -30,8 +30,15 @@ function isWithoutClass(actor) {
   return !actor.class;
 }
 
+function canUseLevelerForActor(actor) {
+  if (!actor || actor.type !== 'character') return false;
+  if (game.user?.isGM === true) return true;
+  if (actor.isOwner === true) return true;
+  return actor.testUserPermission?.(game.user, 'OWNER') === true;
+}
+
 function canOpenCreationWizard(actor) {
-  return actor?.type === 'character' && !shouldRedirectCreationWizardToPlanner(actor);
+  return actor?.type === 'character' && canUseLevelerForActor(actor) && !shouldRedirectCreationWizardToPlanner(actor);
 }
 
 function shouldRedirectCreationWizardToPlanner(actor) {
@@ -69,6 +76,7 @@ function onRenderCharacterSheet(sheet, html) {
 
   appElement.find('.pf2e-leveler-plan-btn').remove();
   appElement.find('.pf2e-leveler-create-btn').remove();
+  if (!canUseLevelerForActor(actor)) return;
 
   const windowHeader = appElement.find('.window-header');
   const closeBtn = windowHeader.find('button.close, a.close, .header-button.close, [data-action="close"]').first();
@@ -209,6 +217,8 @@ function cssIdentifierEscape(value) {
 }
 
 async function openPlanner(actor, openerElement = null) {
+  if (!canUseLevelerForActor(actor)) return;
+
   const lowerSelectors = getActorSheetSelectors(actor);
   const existing = Object.values(ui.windows).find(
     (w) => w instanceof LevelPlanner && w.actor.id === actor.id,
@@ -243,6 +253,8 @@ async function openPlanner(actor, openerElement = null) {
 }
 
 async function openWizard(actor, openerElement = null) {
+  if (!canUseLevelerForActor(actor)) return;
+
   await ensureLevelerTemplatesLoaded();
   const lowerSelectors = getActorSheetSelectors(actor);
   if (shouldRedirectCreationWizardToPlanner(actor)) {

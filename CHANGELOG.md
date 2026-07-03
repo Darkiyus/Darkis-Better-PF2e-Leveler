@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.6.1
+
+### Access
+
+- **Players only see their own Leveler buttons** - Player clients now show the Level Planner and Character Creation sheet buttons only for PCs they own. The launch paths also recheck ownership, so stale buttons cannot open another player's plan or character creator
+
 ## 3.6.0
 
 ### Collaborative Build Comments

@@ -7,6 +7,7 @@ import {
   registerSheetIntegration,
   shouldRedirectCreationWizardToPlanner,
 } from '../../../scripts/ui/sheet-integration.js';
+import { resetLevelerTemplatePreloadForTests } from '../../../scripts/ui/template-preload.js';
 import { ClassRegistry } from '../../../scripts/classes/registry.js';
 
 describe('normalizePreparationGroupRank', () => {
@@ -29,6 +30,7 @@ describe('normalizePreparationGroupRank', () => {
 describe('creation wizard sheet access', () => {
   beforeEach(() => {
     ClassRegistry.clear();
+    game.user.isGM = true;
   });
 
   test('allows opening the creation wizard for creation-stage characters', () => {
@@ -47,6 +49,26 @@ describe('creation wizard sheet access', () => {
       class: { slug: 'wizard' },
       system: { details: { level: { value: 5 } } },
     }))).toBe(false);
+  });
+
+  test('blocks the creation wizard for non-owner players', () => {
+    game.user.isGM = false;
+    const actor = createMockActor({
+      isOwner: false,
+      testUserPermission: jest.fn(() => false),
+    });
+
+    expect(canOpenCreationWizard(actor)).toBe(false);
+  });
+
+  test('allows the creation wizard for the owning player', () => {
+    game.user.isGM = false;
+    const actor = createMockActor({
+      isOwner: false,
+    });
+    actor.testUserPermission = jest.fn((user, permission) => user === game.user && permission === 'OWNER');
+
+    expect(canOpenCreationWizard(actor)).toBe(true);
   });
 
   test('uses an edit label after a class exists', () => {
@@ -269,6 +291,130 @@ describe('character sheet render integration', () => {
       expect(header.querySelector('.pf2e-leveler-create-btn')).toBeNull();
       expect(header.querySelector('.pf2e-leveler-plan-btn')).not.toBeNull();
     } finally {
+      restoreJQuery();
+    }
+  });
+
+  test('does not add planner or creation buttons for a non-owner player', () => {
+    const restoreJQuery = useDomJQuery();
+    const originalIsGM = game.user.isGM;
+    try {
+      game.user.isGM = false;
+      const actor = createMockActor({
+        id: 'abc123',
+        isOwner: false,
+        testUserPermission: jest.fn(() => false),
+      });
+      const app = document.createElement('section');
+      app.id = 'CharacterSheetPF2e-Actor-abc123';
+      app.className = 'application sheet actor character';
+
+      const header = document.createElement('header');
+      header.className = 'window-header';
+      const closeButton = document.createElement('button');
+      closeButton.className = 'close header-control';
+      header.append(closeButton);
+
+      const content = document.createElement('div');
+      content.className = 'sheet-content';
+      app.append(header, content);
+      document.body.append(app);
+
+      registerSheetIntegration();
+      const renderHandler = Hooks.on.mock.calls.find(
+        ([hook]) => hook === 'renderCharacterSheetPF2e',
+      )[1];
+      renderHandler({ actor }, content);
+
+      expect(header.querySelector('.pf2e-leveler-create-btn')).toBeNull();
+      expect(header.querySelector('.pf2e-leveler-plan-btn')).toBeNull();
+    } finally {
+      game.user.isGM = originalIsGM;
+      restoreJQuery();
+    }
+  });
+
+  test('stale planner buttons cannot open another player character plan', () => {
+    const restoreJQuery = useDomJQuery();
+    const originalIsGM = game.user.isGM;
+    try {
+      game.user.isGM = true;
+      const actor = createMockActor({
+        id: 'abc123',
+        isOwner: false,
+        testUserPermission: jest.fn(() => false),
+      });
+      const app = document.createElement('section');
+      app.id = 'CharacterSheetPF2e-Actor-abc123';
+      app.className = 'application sheet actor character';
+
+      const header = document.createElement('header');
+      header.className = 'window-header';
+      const closeButton = document.createElement('button');
+      closeButton.className = 'close header-control';
+      header.append(closeButton);
+
+      const content = document.createElement('div');
+      content.className = 'sheet-content';
+      app.append(header, content);
+      document.body.append(app);
+
+      registerSheetIntegration();
+      const renderHandler = Hooks.on.mock.calls.find(
+        ([hook]) => hook === 'renderCharacterSheetPF2e',
+      )[1];
+      renderHandler({ actor }, content);
+
+      game.user.isGM = false;
+      header.querySelector('.pf2e-leveler-plan-btn').click();
+
+      expect(document.querySelector('[data-pf2e-leveler-launch-overlay="planner"]')).toBeNull();
+    } finally {
+      document.querySelector('[data-pf2e-leveler-launch-overlay="planner"]')?.remove();
+      game.user.isGM = originalIsGM;
+      restoreJQuery();
+    }
+  });
+
+  test('stale creation buttons cannot open another player character creator', () => {
+    const restoreJQuery = useDomJQuery();
+    const originalIsGM = game.user.isGM;
+    try {
+      game.user.isGM = true;
+      resetLevelerTemplatePreloadForTests();
+      foundry.applications.handlebars.loadTemplates.mockClear();
+      const actor = createMockActor({
+        id: 'abc123',
+        isOwner: false,
+        testUserPermission: jest.fn(() => false),
+      });
+      const app = document.createElement('section');
+      app.id = 'CharacterSheetPF2e-Actor-abc123';
+      app.className = 'application sheet actor character';
+
+      const header = document.createElement('header');
+      header.className = 'window-header';
+      const closeButton = document.createElement('button');
+      closeButton.className = 'close header-control';
+      header.append(closeButton);
+
+      const content = document.createElement('div');
+      content.className = 'sheet-content';
+      app.append(header, content);
+      document.body.append(app);
+
+      registerSheetIntegration();
+      const renderHandler = Hooks.on.mock.calls.find(
+        ([hook]) => hook === 'renderCharacterSheetPF2e',
+      )[1];
+      renderHandler({ actor }, content);
+
+      game.user.isGM = false;
+      header.querySelector('.pf2e-leveler-create-btn').click();
+
+      expect(foundry.applications.handlebars.loadTemplates).not.toHaveBeenCalled();
+    } finally {
+      game.user.isGM = originalIsGM;
       restoreJQuery();
     }
   });
