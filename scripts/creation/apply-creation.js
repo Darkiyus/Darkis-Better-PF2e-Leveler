@@ -339,12 +339,21 @@ async function applySelectedItems(actor, data) {
   }
 }
 
+function applyActorSizeToItem(itemData, actorSize) {
+  if (!actorSize || actorSize === 'med') return;
+  if (itemData?.system && 'size' in itemData.system) {
+    itemData.system.size = actorSize;
+  }
+}
+
 async function applyEquipment(actor, data) {
+  const actorSize = actor.system?.traits?.size?.value;
   for (const entry of data.permanentItems ?? []) {
     if (!entry) continue;
     const item = await fromUuid(entry.uuid).catch(() => null);
     if (!item) continue;
     const itemData = foundry.utils.deepClone(item.toObject());
+    applyActorSizeToItem(itemData, actorSize);
     await actor.createEmbeddedDocuments('Item', [itemData]);
   }
   for (const entry of data.equipment ?? []) {
@@ -352,6 +361,7 @@ async function applyEquipment(actor, data) {
     if (!item) continue;
     const itemData = foundry.utils.deepClone(item.toObject());
     itemData.system.quantity = entry.quantity ?? 1;
+    applyActorSizeToItem(itemData, actorSize);
     await actor.createEmbeddedDocuments('Item', [itemData]);
   }
 }

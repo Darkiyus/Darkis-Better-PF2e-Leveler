@@ -2758,3 +2758,86 @@ describe('applyCreation ancestry paragon', () => {
     }));
   });
 });
+
+describe('applyCreation equipment sizing', () => {
+  it('resizes permanent items and purchased equipment to match a non-Medium actor size', async () => {
+    game.settings.get = jest.fn(() => false);
+
+    const actor = createMockActor({
+      items: [],
+      system: {
+        details: { level: { value: 1 } },
+        traits: { size: { value: 'tiny' } },
+      },
+    });
+    actor.createEmbeddedDocuments = jest.fn(async (_type, docs) =>
+      docs.map((doc, index) => ({ ...doc, id: `created-${index}` })),
+    );
+    actor.update = jest.fn(async () => {});
+    actor.testUserPermission = jest.fn(() => true);
+    game.users = [{ isGM: true, id: 'gm-user' }];
+    ChatMessage.create = jest.fn(async () => {});
+
+    global.fromUuid = jest.fn(async (uuid) => {
+      if (uuid === 'permanent-dagger') {
+        return {
+          uuid,
+          name: 'Dagger',
+          toObject: () => ({
+            name: 'Dagger',
+            type: 'weapon',
+            system: { size: 'med', quantity: 1 },
+          }),
+        };
+      }
+      if (uuid === 'equipment-rope') {
+        return {
+          uuid,
+          name: 'Rope',
+          toObject: () => ({
+            name: 'Rope',
+            type: 'equipment',
+            system: { size: 'med', quantity: 1 },
+          }),
+        };
+      }
+      return null;
+    });
+
+    await applyCreation(actor, {
+      ancestry: null,
+      heritage: null,
+      background: null,
+      class: null,
+      subclass: null,
+      boosts: { free: [] },
+      languages: [],
+      skills: [],
+      lores: [],
+      ancestryFeat: null,
+      ancestryParagonFeat: null,
+      classFeat: null,
+      dualClassFeat: null,
+      skillFeat: null,
+      grantedFeatSections: [],
+      grantedFeatChoices: {},
+      featGrants: [],
+      permanentItems: [{ uuid: 'permanent-dagger', name: 'Dagger' }],
+      equipment: [{ uuid: 'equipment-rope', name: 'Rope', quantity: 2 }],
+      spells: { cantrips: [], rank1: [] },
+    });
+
+    expect(actor.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      expect.objectContaining({
+        name: 'Dagger',
+        system: expect.objectContaining({ size: 'tiny' }),
+      }),
+    ]);
+    expect(actor.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      expect.objectContaining({
+        name: 'Rope',
+        system: expect.objectContaining({ size: 'tiny', quantity: 2 }),
+      }),
+    ]);
+  });
+});

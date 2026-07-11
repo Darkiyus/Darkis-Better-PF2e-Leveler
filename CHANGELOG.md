@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.6.4
+
+### Fixed
+
+- **Starting equipment now matches your ancestry's size** - Permanent items and purchased gear applied during character creation used to always default to Medium, no matter your character's actual size. A Tiny or Small (or Large) ancestry now receives equipment sized to match
+
 ## 3.6.3
 
 ### Fixed
