@@ -14,8 +14,9 @@
 - Equipment, feat, spell, content-guidance, and character-wizard searches no longer rebuild their lists for one- or two-character input
 - Equipment, feat, and spell result lists are capped at 200 rendered rows; static equipment facets are cached and spell compendiums load in parallel
 - Delayed equipment loading no longer rerenders a picker that has already been closed
+- The Ability Boosts step now explains the selection rules and displays the number of remaining free boosts in English, German, French, and Chinese
 - Hard-coded interface labels in the character wizard, pickers, and level planner now use localization keys
-- README now documents the changes and their rationale in German and English, the tested Foundry/PF2e versions, and the planned homebrew-deity companion module
+- README now documents the changes and their rationale in German and English, the tested Foundry/PF2e versions, character-creation imports, and the planned homebrew-deity companion module
 
 ### Attribution
 

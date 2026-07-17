@@ -65,6 +65,20 @@ describe('CharacterWizard boosts completion', () => {
     await wizard._prepareContext();
 
     expect(wizard._isStepComplete('boosts')).toBe(false);
+
+    const context = await wizard._buildBoostContext();
+    expect(context.freeBoostTotal).toBe(4);
+    expect(context.freeBoostRemaining).toBe(0);
+  });
+
+  it('reports how many free boosts remain for the guidance text', async () => {
+    const wizard = new CharacterWizard(createMockActor());
+    wizard.data.boosts = { ancestry: [], background: [], class: [], free: ['str', 'dex'] };
+
+    const context = await wizard._buildBoostContext();
+
+    expect(context.freeBoostTotal).toBe(4);
+    expect(context.freeBoostRemaining).toBe(2);
   });
 
   it('keeps flawed ancestry abilities selectable when they are part of a boost choice', async () => {

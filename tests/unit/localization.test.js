@@ -45,3 +45,35 @@ describe('German localization', () => {
       .toEqual(['Ungeübt', 'Geübt', 'Experte', 'Meister', 'Legende']);
   });
 });
+
+describe('Ability boost guidance localization', () => {
+  const keys = ['BOOSTS_GUIDE_TITLE', 'BOOSTS_GUIDE_BODY', 'BOOSTS_FREE_REMAINING', 'BOOSTS_ALTERNATE_HINT'];
+
+  test.each(['en', 'de', 'fr', 'cn'])('%s contains every guidance string with matching placeholders', (language) => {
+    const english = readLanguage('en').PF2E_LEVELER.CREATION;
+    const translation = readLanguage(language).PF2E_LEVELER.CREATION;
+
+    for (const key of keys) {
+      expect(translation[key]).toEqual(expect.any(String));
+      expect(translation[key].length).toBeGreaterThan(0);
+      expect(placeholders(translation[key])).toEqual(placeholders(english[key]));
+    }
+  });
+});
+
+describe('Fork feature localization', () => {
+  test.each(['de', 'fr', 'cn'])('%s translates quick-equipment and item-picker additions', (language) => {
+    const english = readLanguage('en').PF2E_LEVELER;
+    const translation = readLanguage(language).PF2E_LEVELER;
+
+    for (const section of ['QUICK_EQUIPMENT', 'ITEM_PICKER']) {
+      const englishEntries = flattenLeaves(english[section]);
+      const translatedEntries = flattenLeaves(translation[section]);
+
+      for (const [key, value] of englishEntries) {
+        expect(translatedEntries.get(key)).toEqual(expect.any(String));
+        expect(placeholders(translatedEntries.get(key))).toEqual(placeholders(value));
+      }
+    }
+  });
+});

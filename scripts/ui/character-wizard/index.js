@@ -2564,7 +2564,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
-    buildRow('free', 'Level 1', 'Free', [], [], 4, [...ATTRIBUTES], this.data.boosts.free ?? []);
+    const freeBoostTotal = 4;
+    buildRow('free', 'Level 1', 'Free', [], [], freeBoostTotal, [...ATTRIBUTES], this.data.boosts.free ?? []);
 
     const allBoosts = [...boostRows.flatMap((r) => r.fixed), ...boostRows.flatMap((r) => r.selected)];
     const allFlaws = boostRows.flatMap((r) => r.flaws);
@@ -2592,10 +2593,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const summary = ATTRIBUTES.map((key) => ({ key, label: key.toUpperCase(), mod: totals[key] }));
+    const freeBoostSelected = Math.min(this.data.boosts.free?.length ?? 0, freeBoostTotal);
     this._cachedBoostStepComplete = boostRows.every((row) => row.complete);
     return {
       boostRows,
       summary,
+      freeBoostTotal,
+      freeBoostRemaining: Math.max(0, freeBoostTotal - freeBoostSelected),
       alternateAncestryBoosts: this.data.alternateAncestryBoosts,
       hasAncestry: !!this.data.ancestry,
     };

@@ -1189,6 +1189,20 @@
     {{else if (eq stepId "boosts")}}
       <h2>{{localize "PF2E_LEVELER.CREATION.STEPS.BOOSTS"}}</h2>
 
+      <aside class="wizard-boost-guide">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <div class="wizard-boost-guide__content">
+          <strong>{{localize "PF2E_LEVELER.CREATION.BOOSTS_GUIDE_TITLE"}}</strong>
+          <p>{{localize "PF2E_LEVELER.CREATION.BOOSTS_GUIDE_BODY"}}</p>
+          <span class="wizard-boost-guide__remaining">
+            {{format "PF2E_LEVELER.CREATION.BOOSTS_FREE_REMAINING" remaining=freeBoostRemaining total=freeBoostTotal}}
+          </span>
+          {{#if hasAncestry}}
+          <small>{{localize "PF2E_LEVELER.CREATION.BOOSTS_ALTERNATE_HINT"}}</small>
+          {{/if}}
+        </div>
+      </aside>
+
       {{#if hasAncestry}}
       <label class="wizard-rarity-toggle" style="margin-bottom: var(--leveler-spacing-sm);">
         <input type="checkbox" data-action="toggleAlternateBoosts" {{#if alternateAncestryBoosts}}checked{{/if}}>
