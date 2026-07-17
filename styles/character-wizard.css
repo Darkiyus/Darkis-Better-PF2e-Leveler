@@ -1276,6 +1276,63 @@
   margin-top: var(--leveler-spacing-sm);
 }
 
+.pf2e-leveler .wizard-quick-equipment__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--leveler-spacing-md);
+}
+
+.pf2e-leveler .wizard-quick-equipment__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--leveler-spacing-sm);
+  margin-top: var(--leveler-spacing-sm);
+}
+
+.pf2e-leveler .wizard-quick-equipment__package {
+  display: flex;
+  align-items: center;
+  gap: var(--leveler-spacing-md);
+  padding: var(--leveler-spacing-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-sm);
+}
+
+.pf2e-leveler .wizard-quick-equipment__image {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  object-fit: cover;
+  border-radius: var(--leveler-radius-sm);
+}
+
+.pf2e-leveler .wizard-quick-equipment__info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pf2e-leveler .wizard-quick-equipment__info p {
+  max-height: 3.2em;
+  margin: 2px 0;
+  overflow: hidden;
+  color: var(--leveler-text-muted);
+  font-size: var(--leveler-font-sm);
+}
+
+.pf2e-leveler .wizard-quick-equipment__info small,
+.pf2e-leveler .wizard-quick-equipment__meta {
+  overflow: hidden;
+  color: var(--leveler-text-muted);
+  font-size: var(--leveler-font-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pf2e-leveler .wizard-equipment-row {
   display: flex;
   align-items: center;
@@ -1704,6 +1761,48 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.pf2e-leveler .wizard-boost-guide {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--leveler-spacing-sm);
+  margin-bottom: var(--leveler-spacing-md);
+  padding: var(--leveler-spacing-sm) var(--leveler-spacing-md);
+  color: var(--leveler-text);
+  background: color-mix(in srgb, var(--leveler-accent) 12%, var(--leveler-bg-surface));
+  border: 1px solid color-mix(in srgb, var(--leveler-accent) 45%, var(--leveler-border));
+  border-radius: var(--leveler-radius-md);
+}
+
+.pf2e-leveler .wizard-boost-guide > i {
+  margin-top: 2px;
+  color: var(--leveler-accent-light);
+  font-size: 1rem;
+}
+
+.pf2e-leveler .wizard-boost-guide__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf2e-leveler .wizard-boost-guide__content p {
+  margin: 0;
+  color: var(--leveler-text-muted);
+  font-size: var(--leveler-font-sm);
+  line-height: 1.4;
+}
+
+.pf2e-leveler .wizard-boost-guide__remaining {
+  color: var(--leveler-accent-light);
+  font-size: var(--leveler-font-sm);
+  font-weight: 700;
+}
+
+.pf2e-leveler .wizard-boost-guide__content small {
+  color: var(--leveler-text-muted);
+  line-height: 1.35;
 }
 
 .pf2e-leveler .boost-row {

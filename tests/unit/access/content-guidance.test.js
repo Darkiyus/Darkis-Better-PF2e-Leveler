@@ -114,6 +114,38 @@ describe('content guidance source rules', () => {
     expect(allowed.guidanceInherited).toBe(false);
   });
 
+  test('heritages use their own guidance category for recommendations and bans', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      [getCategoryDefaultGuidanceKey('heritages')]: 'disallowed',
+      'Compendium.test.heritages.Item.ancient-elf': 'recommended',
+    };
+
+    const [recommended, blocked] = annotateGuidance([
+      {
+        uuid: 'Compendium.test.heritages.Item.ancient-elf',
+        type: 'heritage',
+        name: 'Ancient Elf',
+      },
+      {
+        uuid: 'Compendium.test.heritages.Item.woodland-elf',
+        type: 'heritage',
+        name: 'Woodland Elf',
+      },
+    ]);
+
+    expect(recommended).toEqual(expect.objectContaining({
+      isRecommended: true,
+      isDisallowed: false,
+      guidanceSelectionBlocked: false,
+    }));
+    expect(blocked).toEqual(expect.objectContaining({
+      isRecommended: false,
+      isDisallowed: true,
+      guidanceInherited: true,
+      guidanceSelectionBlocked: true,
+    }));
+  });
+
   test('exclusive direct guidance filters non-exclusive siblings for players', () => {
     global._testSettings['pf2e-leveler'].gmContentGuidance = {
       'Compendium.test.feats.Item.medic-dedication': { status: 'recommended', exclusive: true },

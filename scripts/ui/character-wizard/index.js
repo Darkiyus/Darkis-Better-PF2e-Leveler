@@ -1,11 +1,12 @@
 import { MODULE_ID, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, SKILLS, ATTRIBUTES, SUBCLASS_TAGS, ANCESTRY_TRAIT_ALIASES, WEALTH_MODES, CHARACTER_WEALTH, PERMANENT_ITEM_TYPES, expandPermanentItemSlots } from '../../constants.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { ensureClassItemRegistered } from '../../classes/ensure.js';
-import { createCreationData, getClassSelectionData, normalizeCreationData, setAncestry, setHeritage, setMixedAncestry, setBackground, setClass, setDualClass, setImplement, setSubconsciousMind, setThesis, setDeity, setSkills, setLanguages, setLores, addSpell, removeSpell, setGrantedFeatSections, setAncestryFeat, setAncestryParagonFeat, setClassFeat, setDualClassFeat, setSkillFeat, setFeatChoice, getGrantedFeatChoiceValues, upsertCreationFeatGrant, addEquipment, removeCreationFeatGrantSelection, setPermanentItem } from '../../creation/creation-model.js';
+import { createCreationData, getClassSelectionData, normalizeCreationData, setAncestry, setHeritage, setMixedAncestry, setBackground, setClass, setDualClass, setImplement, setSubconsciousMind, setThesis, setDeity, setSkills, setLanguages, setLores, addSpell, removeSpell, setGrantedFeatSections, setAncestryFeat, setAncestryParagonFeat, setClassFeat, setDualClassFeat, setSkillFeat, setFeatChoice, getGrantedFeatChoiceValues, upsertCreationFeatGrant, addEquipment, addEquipmentPackage, removeCreationFeatGrantSelection, setPermanentItem } from '../../creation/creation-model.js';
 import { buildFeatGrantRequirements, getFeatGrantCompletion, getFeatGrantSelections } from '../../plan/feat-grants.js';
 import { getCreationData, saveCreationData, exportCreationData, importCreationData } from '../../creation/creation-store.js';
 import { applyCreation } from '../../creation/apply-creation.js';
 import { localize } from '../../utils/i18n.js';
+import { localizeOr } from '../../utils/i18n-fallback.js';
 import { evaluatePredicate } from '../../utils/predicate.js';
 import { getBuildStateAncestryFeatTraits } from '../../utils/ancestry-feat-traits.js';
 import { registerHandlebarsHelpers } from '../../hooks/lifecycle.js';
@@ -27,8 +28,10 @@ import { promptReviewRequest, isReviewFeatureActive, isApplyBlockedForActor } fr
 import { annotateGuidance, annotateGuidanceBySlug, filterDisallowedForCurrentUser, sortByGuidancePriority } from '../../access/content-guidance.js';
 import { filterPublicationsForCurrentUser } from '../../access/source-classification.js';
 import { renderApplicationInFront, scheduleBringApplicationToFront } from '../shared/window-focus.js';
+import { getActiveSearchQuery } from '../shared/search-utils.js';
 import { resolveSpellcastingTradition } from '../../data/subclass-spells.js';
 import { mountPlanComments, collectWizardCommentAnchors } from '../plan-comments-ui.js';
+import { copperToCoins, equipmentEntriesTotalCopper, getQuickEquipmentPackages } from '../../equipment/quick-equipment-packages.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 registerHandlebarsHelpers();
@@ -93,22 +96,11 @@ const ATTRIBUTE_SLUG_ALIASES = {
 const STEPS = ['ancestry', 'heritage', 'mixedAncestry', 'background', 'class', 'deity', 'sanctification', 'divineFont', 'subclass', 'implement', 'tactics', 'ikons', 'innovationDetails', 'kineticGate', 'subconsciousMind', 'thesis', 'apparitions', 'subclassChoices', 'boosts', 'skills', 'feats', 'featChoices', 'languages', 'spells', 'equipment', 'summary'];
 
 function equipmentTotalCp(equipment) {
-  let cp = 0;
-  for (const entry of equipment) {
-    if (!entry.price) continue;
-    const qty = entry.quantity ?? 1;
-    const per = entry.pricePer ?? 1;
-    const unitCp = (entry.price.gp ?? 0) * 100 + (entry.price.sp ?? 0) * 10 + (entry.price.cp ?? 0);
-    cp += Math.ceil((qty / per) * unitCp);
-  }
-  return cp;
+  return equipmentEntriesTotalCopper(equipment);
 }
 
 function normalizeCp(totalCp) {
-  const gp = Math.floor(totalCp / 100);
-  const sp = Math.floor((totalCp % 100) / 10);
-  const cp = totalCp % 10;
-  return { gp, sp, cp };
+  return copperToCoins(totalCp);
 }
 
 function normalizeDeityDomainSet(domains) {
@@ -1102,7 +1094,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       },
       {
         preset,
-        title: `${choiceContainer.featName ?? choiceContainer.name ?? 'Feat Choice'} | ${choiceSet.prompt}`,
+        title: `${choiceContainer.featName ?? choiceContainer.name ?? localizeOr('UI.FEAT_CHOICE', 'Feat Choice')} | ${choiceSet.prompt}`,
       },
     );
     this._renderPickerInFront(picker);
@@ -1383,6 +1375,29 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     });
   }
 
+  _openQuickEquipmentPackagesManager() {
+    import('../quick-equipment-packages-menu.js').then(({ QuickEquipmentPackagesMenu }) => {
+      const menu = new QuickEquipmentPackagesMenu();
+      this._renderPickerInFront(menu);
+    });
+  }
+
+  _addQuickEquipmentPackage(packageId) {
+    const quickPackage = getQuickEquipmentPackages().find((entry) => entry.id === packageId);
+    if (!quickPackage) return;
+    const budgetCp = this._getGoldBudgetCp();
+    const currentCp = equipmentTotalCp(this.data.equipment ?? []);
+    if (budgetCp > 0 && !game.user.isGM && currentCp + quickPackage.priceCp > budgetCp) {
+      ui.notifications.warn(
+        game.i18n.format('PF2E_LEVELER.QUICK_EQUIPMENT.BUDGET_EXCEEDED', { name: quickPackage.name }),
+      );
+      return;
+    }
+    addEquipmentPackage(this.data, quickPackage);
+    ui.notifications.info(game.i18n.format('PF2E_LEVELER.QUICK_EQUIPMENT.ADDED', { name: quickPackage.name }));
+    this._saveAndRender();
+  }
+
   async _openSpellChoicePicker(slot, flag) {
     const choiceContainer = slot === 'ancestry' ? this.data.ancestryFeat : slot === 'ancestryParagon' ? this.data.ancestryParagonFeat : slot === 'class' ? this.data.classFeat : slot === 'skill' ? this.data.skillFeat : (this.data.grantedFeatSections ?? []).find((section) => section.slot === slot);
     if (!choiceContainer) return;
@@ -1395,7 +1410,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const allowedUuids = (choiceSet.options ?? []).map((option) => option?.uuid).filter((uuid) => typeof uuid === 'string' && uuid.startsWith('Compendium.'));
     if (allowedUuids.length === 0) return;
 
-    const title = `${choiceContainer.featName ?? choiceContainer.name ?? 'Spell Choice'} | ${choiceSet.prompt}`;
+    const title = `${choiceContainer.featName ?? choiceContainer.name ?? localizeOr('UI.SPELL_CHOICE', 'Spell Choice')} | ${choiceSet.prompt}`;
 
     import('../spell-picker.js').then(({ SpellPicker }) => {
       const picker = new SpellPicker(
@@ -1484,6 +1499,25 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       }));
     }
 
+    const classSlug = slugify(this.data.class?.slug ?? this.data.class?.name);
+    const quickEquipmentPackages = getQuickEquipmentPackages()
+      .filter((quickPackage) => (
+        quickPackage.classSlugs.length === 0 || quickPackage.classSlugs.includes(classSlug)
+      ))
+      .map((quickPackage) => ({
+        ...quickPackage,
+        description: quickPackage.system.description.value,
+        classLabel: quickPackage.classSlugs.length > 0
+          ? quickPackage.classSlugs.join(', ')
+          : game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.ALL_CLASSES'),
+        itemCountLabel: game.i18n.format('PF2E_LEVELER.QUICK_EQUIPMENT.ITEM_COUNT', {
+          count: quickPackage.items.reduce((count, item) => count + item.quantity, 0),
+        }),
+        contentsLabel: quickPackage.items
+          .map((item) => `${item.quantity}× ${item.name}`)
+          .join(', '),
+      }));
+
     return {
       wealthMode: mode,
       characterLevel: level,
@@ -1494,6 +1528,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       remaining: remainingParts?.join(', ') ?? null,
       overBudget,
       permanentItemSlots,
+      quickEquipmentPackages,
+      showQuickEquipmentPackages: game.user.isGM || quickEquipmentPackages.length > 0,
+      canManageQuickEquipmentPackages: game.user.isGM,
     };
   }
 
@@ -1540,7 +1577,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   _filterItems(el, query) {
-    const effectiveQuery = typeof query === 'string' ? query : (el.querySelector?.('[data-action="searchItems"]')?.value?.toLowerCase() ?? '');
+    const rawQuery = typeof query === 'string'
+      ? query
+      : el.querySelector?.('[data-action="searchItems"]')?.value;
+    const effectiveQuery = getActiveSearchQuery(rawQuery);
     const hiddenRarities = new Set([...(el.querySelectorAll?.('[data-action="toggleRarity"]') ?? [])].filter((toggle) => !toggle.checked).map((toggle) => toggle.dataset.rarity));
     const requiredSkills = el.querySelector?.('[data-action="toggleBackgroundSkillFilter"]') ? new Set(this._backgroundSkillFilters) : new Set();
     const requiredAttributes = el.querySelector?.('[data-action="toggleBackgroundAttributeFilter"]') ? new Set(this._backgroundAttributeFilters) : new Set();
@@ -2068,7 +2108,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
             this.data.subclass
               ? {
                   key: 'class',
-                  className: this.data.class?.name ?? 'Class',
+                  className: this.data.class?.name ?? localizeOr('UI.CLASS', 'Class'),
                   selected: this.data.subclass,
                   items: [],
                 }
@@ -2076,7 +2116,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
             this.data.dualSubclass
               ? {
                   key: 'dualClass',
-                  className: this.data.dualClass?.name ?? 'Dual Class',
+                  className: this.data.dualClass?.name ?? localizeOr('UI.DUAL_CLASS', 'Dual Class'),
                   selected: this.data.dualSubclass,
                   items: [],
                 }
@@ -2108,7 +2148,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
           subclasses = pendingHandler.filterSubclasses(subclasses, pendingData);
           subclassGroups.push({
             key: pendingEntry.key,
-            className: pendingEntry.classEntry?.name ?? 'Class',
+            className: pendingEntry.classEntry?.name ?? localizeOr('UI.CLASS', 'Class'),
             items: subclasses.map((entry) => ({ ...entry, targetKey: pendingEntry.key })),
           });
         }
@@ -2524,7 +2564,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
-    buildRow('free', 'Level 1', 'Free', [], [], 4, [...ATTRIBUTES], this.data.boosts.free ?? []);
+    const freeBoostTotal = 4;
+    buildRow('free', 'Level 1', 'Free', [], [], freeBoostTotal, [...ATTRIBUTES], this.data.boosts.free ?? []);
 
     const allBoosts = [...boostRows.flatMap((r) => r.fixed), ...boostRows.flatMap((r) => r.selected)];
     const allFlaws = boostRows.flatMap((r) => r.flaws);
@@ -2552,10 +2593,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const summary = ATTRIBUTES.map((key) => ({ key, label: key.toUpperCase(), mod: totals[key] }));
+    const freeBoostSelected = Math.min(this.data.boosts.free?.length ?? 0, freeBoostTotal);
     this._cachedBoostStepComplete = boostRows.every((row) => row.complete);
     return {
       boostRows,
       summary,
+      freeBoostTotal,
+      freeBoostRemaining: Math.max(0, freeBoostTotal - freeBoostSelected),
       alternateAncestryBoosts: this.data.alternateAncestryBoosts,
       hasAncestry: !!this.data.ancestry,
     };
@@ -2729,18 +2773,18 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!dialogClass?.prompt) return;
 
     const result = await dialogClass.prompt({
-      window: { title: 'Configure Grant Choice' },
+      window: { title: localizeOr('UI.CONFIGURE_GRANT_CHOICE', 'Configure Grant Choice') },
       content: `
         <div class="form-group">
-          <label>Kind</label>
+          <label>${localizeOr('UI.KIND', 'Kind')}</label>
           <select name="kind">
-            <option value="formula" ${requirement.kind === 'formula' ? 'selected' : ''}>Formula</option>
-            <option value="item" ${requirement.kind === 'item' ? 'selected' : ''}>Item</option>
-            <option value="spell" ${requirement.kind === 'spell' ? 'selected' : ''}>Spell</option>
+            <option value="formula" ${requirement.kind === 'formula' ? 'selected' : ''}>${localizeOr('UI.FORMULA', 'Formula')}</option>
+            <option value="item" ${requirement.kind === 'item' ? 'selected' : ''}>${localizeOr('UI.ITEM', 'Item')}</option>
+            <option value="spell" ${requirement.kind === 'spell' ? 'selected' : ''}>${localizeOr('UI.SPELL', 'Spell')}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Count</label>
+          <label>${localizeOr('UI.COUNT', 'Count')}</label>
           <input type="number" name="count" min="1" value="1" />
         </div>
       `,
@@ -3582,14 +3626,16 @@ function buildBrowserStepContext(stepId, data, stepContext) {
       .filter((group) => group.selected)
       .map((group) => ({
         key: group.key,
-        label: stepId === 'subclass' ? (group.className ?? group.slotLabel ?? 'Subclass') : (group.slotLabel ?? group.className ?? 'Selection'),
+        label: stepId === 'subclass'
+          ? (group.className ?? group.slotLabel ?? localizeOr('UI.SUBCLASS', 'Subclass'))
+          : (group.slotLabel ?? group.className ?? localizeOr('UI.SELECTION', 'Selection')),
         selected: group.selected,
         target: group.key,
         clearAction: stepId === 'class' ? 'clearClass' : stepId === 'subclass' ? 'clearSubclass' : null,
       }));
     if (selectedGroups.length > 0) context.selectedGroups = selectedGroups;
     context.groups = browserGroups.map((group) => ({
-      label: group.className ?? group.slotLabel ?? 'Group',
+      label: group.className ?? group.slotLabel ?? localizeOr('UI.GROUP', 'Group'),
       slotLabel: group.slotLabel,
       selected: group.selected ?? null,
       items: sortByGuidancePriority(

@@ -13,12 +13,14 @@ import { isFreeArchetypeEnabled, isMythicEnabled, isABPEnabled, isGradualBoostsE
 import { getDedicationAliasesFromDescription } from '../../utils/feat-aliases.js';
 import { extractFeatSpellcastingMetadata, FEAT_SPELLCASTING_METADATA_VERSION } from '../../utils/spellcasting-support.js';
 import { localize } from '../../utils/i18n.js';
+import { formatOr, localizeOr } from '../../utils/i18n-fallback.js';
 import { getActiveSkillConfigEntry, getActiveSkillSlugs, isActiveSkillSlug, normalizeSkillSlug, SKILL_ALIASES } from '../../utils/skill-slugs.js';
 import { getReplacementRankAfterSkillRetrain } from '../../utils/skill-retrains.js';
 import { promptReviewRequest, isReviewFeatureActive, isApplyBlockedForActor } from '../../access/review-requests.js';
 import { FeatPicker } from '../feat-picker.js';
 import { captureScrollState, restoreScrollState } from '../shared/scroll-state.js';
 import { scheduleBringApplicationToFront } from '../shared/window-focus.js';
+import { getActiveSearchQuery, scheduleSearch } from '../shared/search-utils.js';
 import { loadFeats } from '../../feats/feat-cache.js';
 import { getCreationData } from '../../creation/creation-store.js';
 import { doesFeatMatchRequiredSecondLevelClassFeat, getRequiredSecondLevelClassFeatForActor } from '../../classes/class-archetype-requirements.js';
@@ -1753,16 +1755,16 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
   async _openFeatRetrainPicker() {
     const sources = this._getFeatRetrainSources();
     if (sources.length === 0) {
-      ui.notifications?.warn?.('No owned feats available to retrain.');
+      ui.notifications?.warn?.(localizeOr('RETRAINING.NO_OWNED_FEATS', 'No owned feats available to retrain.'));
       return;
     }
 
     const source = await this._promptRetrainSource({
-      title: 'Downtime Retraining: Feat',
+      title: localizeOr('RETRAINING.FEAT_TITLE', 'Downtime Retraining: Feat'),
       name: 'feat',
       sources,
       getLabel: (entry) => entry.original.name,
-      getMeta: (entry) => `${formatFeatCategoryLabel(entry.category)} - Original Level ${entry.fromLevel} - 1 week`,
+      getMeta: (entry) => `${formatFeatCategoryLabel(entry.category)} - ${formatOr('RETRAINING.SOURCE_META', { level: entry.fromLevel }, 'Original Level {level} - 1 week')}`,
       getIcon: (entry) => entry.original.img,
       getGroupLabel: (entry) => formatFeatCategoryLabel(entry.category),
     });
@@ -1892,16 +1894,16 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
   async _openSkillRetrainPicker() {
     const sources = this._getSkillRetrainSources();
     if (sources.length === 0) {
-      ui.notifications?.warn?.('No skill increases available to retrain.');
+      ui.notifications?.warn?.(localizeOr('RETRAINING.NO_SKILL_INCREASES', 'No skill increases available to retrain.'));
       return;
     }
 
     const source = await this._promptRetrainSource({
-      title: 'Downtime Retraining: Skill Increase',
+      title: localizeOr('RETRAINING.SKILL_TITLE', 'Downtime Retraining: Skill Increase'),
       name: 'skillSource',
       sources,
       getLabel: (entry) => humanizeSkillSlug(entry.skill),
-      getMeta: (entry) => `${titleCase(PROFICIENCY_RANK_NAMES[entry.toRank] ?? entry.toRank)} - Original Level ${entry.fromLevel} - 1 week`,
+      getMeta: (entry) => `${titleCase(PROFICIENCY_RANK_NAMES[entry.toRank] ?? entry.toRank)} - ${formatOr('RETRAINING.SOURCE_META', { level: entry.fromLevel }, 'Original Level {level} - 1 week')}`,
       getGroupLabel: (entry) => titleCase(PROFICIENCY_RANK_NAMES[entry.toRank] ?? entry.toRank),
     });
     if (!source) return;
@@ -1950,7 +1952,7 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     const { choiceSets, fallbacks } = await buildInitialSkillChoiceSetsAndFallbacks(this);
 
     const result = await dialogClass.prompt({
-      window: { title: 'Starting Skill Training' },
+      window: { title: localizeOr('RETRAINING.STARTING_SKILL_TRAINING', 'Starting Skill Training') },
       content: buildImportedInitialSkillDialogContent({
         choices: buildImportedInitialSkillContext(this),
         count: summary.importedInitialSkillCount,
@@ -2035,15 +2037,15 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
       })
       .filter((choice) => choice.toRank > choice.fromRank);
     if (choices.length === 0) {
-      ui.notifications?.warn?.('No eligible replacement skills available.');
+      ui.notifications?.warn?.(localizeOr('RETRAINING.NO_ELIGIBLE_SKILLS', 'No eligible replacement skills available.'));
       return null;
     }
 
     return dialogClass.prompt({
-      window: { title: 'Choose Replacement Skill' },
+      window: { title: localizeOr('RETRAINING.CHOOSE_REPLACEMENT_SKILL', 'Choose Replacement Skill') },
       content: buildRetrainChoiceContent({
         name: 'skill',
-        searchPlaceholder: 'Search replacement skills',
+        searchPlaceholder: localizeOr('RETRAINING.SEARCH_REPLACEMENT_SKILLS', 'Search replacement skills'),
         choices,
       }),
       ok: {
@@ -2760,18 +2762,18 @@ export class LevelPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!dialogClass?.prompt) return;
 
     const result = await dialogClass.prompt({
-      window: { title: 'Configure Grant Choice' },
+      window: { title: localizeOr('UI.CONFIGURE_GRANT_CHOICE', 'Configure Grant Choice') },
       content: `
         <div class="form-group">
-          <label>Kind</label>
+          <label>${localizeOr('UI.KIND', 'Kind')}</label>
           <select name="kind">
-            <option value="formula" ${requirement.kind === 'formula' ? 'selected' : ''}>Formula</option>
-            <option value="item" ${requirement.kind === 'item' ? 'selected' : ''}>Item</option>
-            <option value="spell" ${requirement.kind === 'spell' ? 'selected' : ''}>Spell</option>
+            <option value="formula" ${requirement.kind === 'formula' ? 'selected' : ''}>${localizeOr('UI.FORMULA', 'Formula')}</option>
+            <option value="item" ${requirement.kind === 'item' ? 'selected' : ''}>${localizeOr('UI.ITEM', 'Item')}</option>
+            <option value="spell" ${requirement.kind === 'spell' ? 'selected' : ''}>${localizeOr('UI.SPELL', 'Spell')}</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Count</label>
+          <label>${localizeOr('UI.COUNT', 'Count')}</label>
           <input type="number" name="count" min="1" value="1" />
         </div>
       `,
@@ -3179,7 +3181,7 @@ function buildImportedInitialSkillDialogContent({ choices, count, limit, choiceS
       <div class="imported-initial-skills-dialog__header">
         <div class="imported-initial-skills-dialog__title">
           <i class="section-header__icon fa-solid fa-graduation-cap"></i>
-          Starting Skill Training
+          ${localizeOr('RETRAINING.STARTING_SKILL_TRAINING', 'Starting Skill Training')}
         </div>
         <div class="imported-initial-skills-dialog__count">
           <span data-imported-initial-skill-count>${escapeHtml(count)}</span>${limit > 0 ? `/${escapeHtml(limit)}` : ''}
@@ -3309,7 +3311,7 @@ function installRetrainChoicePickerListeners() {
   doc.addEventListener('input', (event) => {
     const input = event.target?.closest?.('[data-retrain-search]');
     if (!input) return;
-    filterRetrainChoicePicker(input);
+    scheduleSearch(input, () => filterRetrainChoicePicker(input));
   });
 
   doc.addEventListener('click', (event) => {
@@ -3430,9 +3432,7 @@ function getManuallySelectedInitialSkills(root) {
 }
 
 function filterRetrainChoicePicker(input) {
-  const query = String(input.value ?? '')
-    .trim()
-    .toLowerCase();
+  const query = getActiveSearchQuery(input.value);
   const root = input.closest('[data-retrain-picker]');
   if (!root) return;
 

@@ -15,6 +15,13 @@ import {
   normalizeSpellCategory,
   toggleSelectableChip,
 } from './shared/picker-utils.js';
+import {
+  getActiveSearchQuery,
+  limitSearchResults,
+  normalizeSearchQuery,
+  SEARCH_DEBOUNCE_MS,
+} from './shared/search-utils.js';
+import { formatOr } from '../utils/i18n-fallback.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const RARITY_VALUES = ['common', 'uncommon', 'rare', 'unique'];
@@ -84,6 +91,8 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this.searchText = '';
     this.sortMode = options.sortMode ?? this._getDefaultSortMode();
     this._updateListTimer = null;
+    this._listUpdateVersion = 0;
+    this._appliedSearchQuery = '';
     this._domListeners = null;
     this.preset = options.preset ?? null;
     this.customTitle = typeof options.title === 'string' && options.title.trim().length > 0
@@ -109,10 +118,22 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
 
   get title() {
     if (this.customTitle) return this.customTitle;
-    if (this.isCantrip) return `${this.actor.name} - Cantrips`;
-    if (this.rank === -1) return `${this.actor.name} - ${this._capitalize(this.tradition)} Spellbook`;
-    const ordinal = this._ordinal(this.rank);
-    return `${this.actor.name} - ${ordinal}-Rank ${this._capitalize(this.tradition)} Spells`;
+    const tradition = getTraditionLabel(this.tradition);
+    if (this.isCantrip) {
+      return formatOr('SPELLS.WINDOW_CANTRIPS', { actorName: this.actor.name }, '{actorName} - Cantrips');
+    }
+    if (this.rank === -1) {
+      return formatOr(
+        'SPELLS.WINDOW_SPELLBOOK',
+        { actorName: this.actor.name, tradition },
+        '{actorName} - {tradition} Spellbook',
+      );
+    }
+    return formatOr(
+      'SPELLS.WINDOW_RANK',
+      { actorName: this.actor.name, rank: this.rank, tradition },
+      '{actorName} - Rank {rank} {tradition} Spells',
+    );
   }
 
   async _prepareContext() {
@@ -172,18 +193,22 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this._normalizeSelectedRarities();
     this.filteredSpells = this._filterSpells();
     this._sortSpells(this.filteredSpells);
+    this._appliedSearchQuery = getActiveSearchQuery(this.searchText);
+    const { items: renderedSpells, capped } = limitSearchResults(this.filteredSpells);
 
     return {
-      spells: this.filteredSpells.map((spell) => this._toTemplateSpell(spell)),
+      spells: renderedSpells.map((spell) => this._toTemplateSpell(spell)),
       filterSections: this._getFilterSections(),
       publicationOptions,
       publicationGroupChips,
       rankOptions,
       traditionOptions,
       categoryOptions,
-      allVisibleSelected: this.filteredSpells.length > 0
-        && this.filteredSpells.every((spell) => this.selectedSpellUuids.has(spell.uuid)),
+      allVisibleSelected: renderedSpells.length > 0
+        && renderedSpells.every((spell) => this.selectedSpellUuids.has(spell.uuid)),
       filteredCount: this.filteredSpells.length,
+      renderedCount: renderedSpells.length,
+      capped,
       traitOptions: buildChipOptions(this._allTraitOptions, this.selectedTraits),
       selectedTraitChips: buildTraitFilterChips(this._allTraitOptions, this.selectedTraits, this.excludedTraits),
       rarityOptions: buildChipOptions(this._getVisibleRarityValues(), this.selectedRarities, {
@@ -224,7 +249,7 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       const searchInput = e.target.closest?.('[data-action="searchSpells"]');
       if (searchInput) {
         this.searchText = e.target.value.toLowerCase();
-        this._scheduleListUpdate(100);
+        this._scheduleSearchUpdate();
         return;
       }
 
@@ -523,10 +548,13 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _updateList() {
+    this._appliedSearchQuery = getActiveSearchQuery(this.searchText);
+    const updateVersion = ++this._listUpdateVersion;
     this._availableRarityValues = this._getAvailableRarityValues();
     this._normalizeSelectedRarities();
     this.filteredSpells = this._filterSpells();
     this._sortSpells(this.filteredSpells);
+    const { items: renderedSpells, capped } = limitSearchResults(this.filteredSpells);
 
     const root = this._getRootElement();
     const listContainer = root?.querySelector('.spell-picker__list');
@@ -534,16 +562,18 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const publicationOptions = this._getPublicationOptions();
     const html = await resolveRenderHandlebarsTemplate()(`modules/${MODULE_ID}/templates/spell-picker.hbs`, {
-      spells: this.filteredSpells.map((spell) => this._toTemplateSpell(spell)),
+      spells: renderedSpells.map((spell) => this._toTemplateSpell(spell)),
       filterSections: this._getFilterSections(),
       publicationOptions,
       publicationGroupChips: buildPublicationGroupChips(this._publicationTitles, this.selectedPublications),
       rankOptions: this._getRankOptions(),
       traditionOptions: this._getTraditionOptions(),
       categoryOptions: this._getCategoryOptions(),
-      allVisibleSelected: this.filteredSpells.length > 0
-        && this.filteredSpells.every((spell) => this.selectedSpellUuids.has(spell.uuid)),
+      allVisibleSelected: renderedSpells.length > 0
+        && renderedSpells.every((spell) => this.selectedSpellUuids.has(spell.uuid)),
       filteredCount: this.filteredSpells.length,
+      renderedCount: renderedSpells.length,
+      capped,
       selectedTraitChips: buildTraitFilterChips(this._allTraitOptions ?? [], this.selectedTraits, this.excludedTraits),
       rarityOptions: buildChipOptions(this._getVisibleRarityValues(), this.selectedRarities, {
         labels: this._getRarityLabels(),
@@ -569,6 +599,7 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       remasterOnly: this.remasterOnly,
       hideGunsTech: this.hideGunsTech,
     });
+    if (updateVersion !== this._listUpdateVersion) return;
 
     const temp = document.createElement('div');
     temp.innerHTML = html;
@@ -624,7 +655,11 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     if (this.remasterOnly) spells = spells.filter((spell) => isRemasterItem(spell));
     if (this.hideGunsTech) spells = spells.filter((spell) => !itemHasExcludedTechTrait(spell));
-    if (this.searchText) spells = spells.filter((s) => (s._levelerSearchName ?? s.name.toLowerCase()).includes(this.searchText));
+    const searchQuery = getActiveSearchQuery(this.searchText);
+    if (searchQuery) {
+      spells = spells.filter((spell) =>
+        (spell._levelerSearchName ?? spell.name.toLowerCase()).includes(searchQuery));
+    }
     if (this.multiSelect) {
       const preSelectedUuids = new Set(this.selectedSpells.map((s) => s.uuid));
       spells = spells.filter((spell) => !this.selectedSpellUuids.has(spell.uuid) && !preSelectedUuids.has(spell.uuid));
@@ -671,7 +706,11 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!el) return;
     const visibleCount = this._getVisibleSpellOptions().length;
     const resultCount = el.querySelector('.picker__results-count');
-    if (resultCount) resultCount.textContent = String(visibleCount);
+    if (resultCount) {
+      resultCount.textContent = visibleCount < this.filteredSpells.length
+        ? `${visibleCount}/${this.filteredSpells.length}`
+        : String(this.filteredSpells.length);
+    }
   }
 
   _getVisibleSpellOptions() {
@@ -862,13 +901,17 @@ export class SpellPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }, delay);
   }
 
-  _ordinal(n) {
-    const suffixes = { 1: 'st', 2: 'nd', 3: 'rd' };
-    return `${n}${suffixes[n] || 'th'}`;
-  }
-
-  _capitalize(s) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
+  _scheduleSearchUpdate() {
+    if (this._updateListTimer) clearTimeout(this._updateListTimer);
+    this._updateListTimer = null;
+    const nextQuery = getActiveSearchQuery(this.searchText);
+    if (nextQuery === this._appliedSearchQuery) return;
+    this._listUpdateVersion += 1;
+    this._updateListTimer = setTimeout(() => {
+      this._updateListTimer = null;
+      this._appliedSearchQuery = nextQuery;
+      this._updateList();
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   _getDefaultSortMode() {
@@ -1226,14 +1269,13 @@ export async function loadSpells() {
   const signature = `${keys.join('|')}::${worldSignature}`;
   if (cachedSpells && cachedSpellSourceSignature === signature) return cachedSpells;
 
-  const allDocs = [];
-  for (const key of keys) {
+  const compendiumDocuments = await Promise.all(keys.map(async (key) => {
     const compendium = game.packs.get(key);
-    if (!compendium) continue;
+    if (!compendium) return [];
     const docs = await compendium.getDocuments().catch(() => []);
     const sourcePackage = compendium.metadata?.packageName ?? compendium.metadata?.package ?? '';
     const sourcePackageLabel = getSourceOwnerLabel(sourcePackage);
-    allDocs.push(...docs
+    return docs
       .filter((doc) => doc.type === 'spell')
       .filter((spell) => isRarityAllowedForCurrentUser(spell.system?.traits?.rarity ?? 'common'))
       .map((spell) => {
@@ -1242,8 +1284,9 @@ export async function loadSpells() {
         spell.sourcePackageLabel = sourcePackageLabel || key;
         spell.publicationTitle = spell.publicationTitle ?? spell.system?.publication?.title ?? null;
         return spell;
-      }));
-  }
+      });
+  }));
+  const allDocs = compendiumDocuments.flat();
 
   const worldSourcePackage = 'world';
   const worldSourcePackageLabel = getWorldSourceLabel();
@@ -1262,7 +1305,7 @@ export async function loadSpells() {
   cachedSpellSourceSignature = signature;
   annotateGuidance(cachedSpells);
   for (const spell of cachedSpells) {
-    spell._levelerSearchName = spell.name.toLowerCase();
+    spell._levelerSearchName = normalizeSearchQuery(spell.name);
   }
   return cachedSpells;
 }

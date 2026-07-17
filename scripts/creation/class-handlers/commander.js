@@ -3,7 +3,7 @@ import { BaseClassHandler } from './base.js';
 export class CommanderHandler extends BaseClassHandler {
   getExtraSteps() {
     return [
-      { id: 'tactics', label: 'Tactics', visible: () => true },
+      { id: 'tactics', label: this.localize('CREATION.WIZARD.TACTICS', 'Tactics'), visible: () => true },
     ];
   }
 

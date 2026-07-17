@@ -67,14 +67,14 @@
             {{localize "PF2E_LEVELER.UI.APPLY"}}
           </button>
           {{#if showImportedInitialSkillButton}}
-          <button type="button" class="sidebar-action-btn planner-content__action" data-action="openImportedInitialSkillDialog" data-tooltip="Starting Skill Training">
+          <button type="button" class="sidebar-action-btn planner-content__action" data-action="openImportedInitialSkillDialog" data-tooltip="{{localize 'PF2E_LEVELER.RETRAINING.STARTING_SKILL_TRAINING'}}">
             <i class="fa-solid fa-graduation-cap"></i>
-            Starting Skills {{importedInitialSkillCount}}{{#if importedInitialSkillLimit}}/{{importedInitialSkillLimit}}{{/if}}
+            {{localize "PF2E_LEVELER.RETRAINING.STARTING_SKILLS"}} {{importedInitialSkillCount}}{{#if importedInitialSkillLimit}}/{{importedInitialSkillLimit}}{{/if}}
           </button>
           {{/if}}
-          <button type="button" class="sidebar-action-btn planner-content__action" data-action="applySelectedRetraining" data-tooltip="Apply Downtime Retraining" aria-disabled="{{#if hasRetraining}}false{{else}}true{{/if}}" {{#unless hasRetraining}}disabled{{/unless}}>
+          <button type="button" class="sidebar-action-btn planner-content__action" data-action="applySelectedRetraining" data-tooltip="{{localize 'PF2E_LEVELER.RETRAINING.APPLY_TITLE'}}" aria-disabled="{{#if hasRetraining}}false{{else}}true{{/if}}" {{#unless hasRetraining}}disabled{{/unless}}>
             <i class="fa-solid fa-rotate"></i>
-            Apply Downtime
+            {{localize "PF2E_LEVELER.RETRAINING.APPLY_BUTTON"}}
           </button>
           <button type="button" class="sidebar-action-btn sidebar-action-btn--danger planner-content__action" data-action="clearLevel" data-tooltip="{{localize 'PF2E_LEVELER.UI.CLEAR_LEVEL'}}">
             <i class="fa-solid fa-eraser"></i>
@@ -142,12 +142,12 @@
         <div class="level-section" data-comment-part="level:{{selectedLevel}}:retraining">
           <div class="section-header">
             <i class="section-header__icon fa-solid fa-retweet"></i>
-            Downtime Retraining
+            {{localize "PF2E_LEVELER.RETRAINING.TITLE"}}
           </div>
           <div class="level-section__body">
             <div class="feat-slot__note" style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" class="spell-add-btn" data-action="openFeatRetrainPicker" style="padding: 3px 10px;">Retrain Feat</button>
-              <button type="button" class="spell-add-btn" data-action="openSkillRetrainPicker" style="padding: 3px 10px;" {{#unless hasSkillRetrainSources}}disabled{{/unless}}>Retrain Skill Increase</button>
+              <button type="button" class="spell-add-btn" data-action="openFeatRetrainPicker" style="padding: 3px 10px;">{{localize "PF2E_LEVELER.RETRAINING.FEAT"}}</button>
+              <button type="button" class="spell-add-btn" data-action="openSkillRetrainPicker" style="padding: 3px 10px;" {{#unless hasSkillRetrainSources}}disabled{{/unless}}>{{localize "PF2E_LEVELER.RETRAINING.SKILL_INCREASE"}}</button>
             </div>
             {{#if hasRetraining}}
             <div class="planned-spells" style="margin-top: var(--leveler-spacing-md);">
@@ -159,13 +159,13 @@
               {{/each}}
               {{#each retrainedSkillIncreases}}
               <div class="wizard-spell-chip">
-                <span>{{this.downtimeLabel}} - Skill Increase - {{this.sourceLabel}}: {{this.originalName}} -> {{this.replacementName}} ({{this.rankName}})</span>
+                <span>{{this.downtimeLabel}} - {{localize "PF2E_LEVELER.SECTIONS.SKILL_INCREASE"}} - {{this.sourceLabel}}: {{this.originalName}} -> {{this.replacementName}} ({{this.rankName}})</span>
                 <i class="fa-solid fa-xmark wizard-spell-chip__remove" data-action="removeSkillRetrain" data-index="{{this.index}}" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}"></i>
               </div>
               {{/each}}
             </div>
             {{else}}
-            <div class="feat-slot__note" style="margin-top: var(--leveler-spacing-sm);">No retraining planned.</div>
+            <div class="feat-slot__note" style="margin-top: var(--leveler-spacing-sm);">{{localize "PF2E_LEVELER.RETRAINING.NONE_PLANNED"}}</div>
             {{/if}}
           </div>
         </div>
@@ -174,7 +174,7 @@
         <div class="level-section" data-comment-part="level:{{selectedLevel}}:grantedChoices">
           <div class="section-header">
             <i class="section-header__icon fa-solid fa-wand-magic-sparkles"></i>
-            Granted Choices
+            {{localize "PF2E_LEVELER.UI.GRANTED_CHOICES"}}
           </div>
           <div class="level-section__body">
             {{#each grantRequirements}}
@@ -182,7 +182,7 @@
               <strong>{{this.sourceFeatName}}: {{titleCase this.kind}}</strong>
               <span style="margin-left: 8px;">{{this.selectedCount}}/{{this.requiredCount}}</span>
               <button type="button" class="spell-add-btn" data-action="openFeatGrantPicker" data-requirement-id="{{this.id}}" style="margin-left: 8px; padding: 2px 8px;">
-                {{#if (eq this.confidence "manual-required")}}Configure{{else}}Choose{{/if}}
+                {{#if (eq this.confidence "manual-required")}}{{localize "PF2E_LEVELER.UI.CONFIGURE"}}{{else}}{{localize "PF2E_LEVELER.UI.CHOOSE"}}{{/if}}
               </button>
               {{#if this.selections.length}}
               <span style="display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 8px;">
@@ -847,13 +847,13 @@
               {{#if this.feat.grantRequirements.length}}
               <div class='feat-slot__note'>
                 <i class='fa-solid fa-gift'></i>
-                Granted choices
+                {{localize "PF2E_LEVELER.UI.GRANTED_CHOICES"}}
               </div>
               {{#each this.feat.grantRequirements}}
               <div class="feat-slot__note" style="margin-top: var(--leveler-spacing-sm);">
                 <span>{{this.kind}} {{this.selectedCount}}/{{this.requiredCount}}</span>
                 <button type="button" class="spell-add-btn" data-action="openFeatGrantPicker" data-requirement-id="{{this.id}}" style="margin-left: 8px; padding: 2px 8px;">
-                  {{#if (eq this.confidence "manual-required")}}Configure{{else}}Choose{{/if}}
+                  {{#if (eq this.confidence "manual-required")}}{{localize "PF2E_LEVELER.UI.CONFIGURE"}}{{else}}{{localize "PF2E_LEVELER.UI.CHOOSE"}}{{/if}}
                 </button>
                 {{#if this.selections.length}}
                 <span style="display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 8px;">
@@ -1241,7 +1241,7 @@
                 <div class="feat-slot feat-slot--filled" style="border-color: var(--leveler-success);">
                   <img class="feat-slot__icon" src="{{this.img}}" alt="" data-action="viewFeat" data-uuid="{{this.uuid}}">
                   <span class="feat-slot__name" data-action="viewFeat" data-uuid="{{this.uuid}}">{{this.name}}</span>
-                  <span class="feat-slot__level">Rank {{this.rank}}</span>
+                  <span class="feat-slot__level">{{format "PF2E_LEVELER.SPELLS.RANK_NUMBER" rank=this.rank}}</span>
                 </div>
                 {{/each}}
               </div>
@@ -1258,7 +1258,7 @@
                   <span class="wizard-spell-chip">
                     <img src="{{this.img}}" alt="" class="wizard-spell-chip__img">
                     <span class="wizard-spell-chip__name" data-action="viewFeat" data-uuid="{{this.uuid}}">{{this.name}}</span>
-                    <span class="tag tag--muted tag--tiny">Rank {{this.displayRank}}</span>
+                    <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.SPELLS.RANK_NUMBER" rank=this.displayRank}}</span>
                     <i class="fa-solid fa-xmark wizard-spell-chip__remove" data-action="removeSpell" data-uuid="{{this.uuid}}" data-entry-type="{{this.entryType}}" data-rank="{{this.displayRank}}" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}"></i>
                   </span>
                   {{/each}}
@@ -1304,7 +1304,7 @@
                   <span class="wizard-spell-chip">
                     <img src="{{this.img}}" alt="" class="wizard-spell-chip__img">
                     <span class="wizard-spell-chip__name" data-action="viewFeat" data-uuid="{{this.uuid}}">{{this.name}}</span>
-                    <span class="tag tag--muted tag--tiny">Rank {{this.rank}}</span>
+                    <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.SPELLS.RANK_NUMBER" rank=this.rank}}</span>
                     <i class="fa-solid fa-xmark wizard-spell-chip__remove" data-action="removeSpell" data-uuid="{{this.uuid}}" data-entry-type="{{this.entryType}}" data-rank="{{this.rank}}" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}"></i>
                   </span>
                   {{/each}}
@@ -1326,7 +1326,7 @@
                 <span class="wizard-spell-chip">
                   <img src="{{this.img}}" alt="" class="wizard-spell-chip__img">
                   <span class="wizard-spell-chip__name" data-action="viewFeat" data-uuid="{{this.uuid}}">{{this.name}}</span>
-                  <span class="tag tag--muted tag--tiny">Rank {{this.displayRank}}</span>
+                  <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.SPELLS.RANK_NUMBER" rank=this.displayRank}}</span>
                   <i class="fa-solid fa-xmark wizard-spell-chip__remove" data-action="removeSpell" data-uuid="{{this.uuid}}" data-entry-type="{{this.entryType}}" data-rank="{{this.displayRank}}" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}"></i>
                 </span>
                 {{/each}}
@@ -1335,7 +1335,7 @@
               {{#if (or this.cantripSelectionCount this.plannedCantripCount)}}
               <div class="section-header" style="font-size: var(--leveler-font-sm); margin-top: var(--leveler-spacing-sm);">
                 <i class="section-header__icon fa-solid fa-wand-sparkles"></i>
-                {{this.tradition}} cantrips ({{this.plannedCantripCount}}/{{this.cantripSelectionCount}})
+                {{format "PF2E_LEVELER.SPELLS.CANTRIPS_WITH_TRADITION" tradition=this.tradition selected=this.plannedCantripCount count=this.cantripSelectionCount}}
               </div>
               <div class="wizard-spell-chips">
                 {{#each this.plannedCantripSpells}}
@@ -1348,7 +1348,7 @@
               </div>
               {{#if this.remainingCantripSelections}}
               <button type="button" class="spell-add-btn" data-action="openSpellPicker" data-entry-type="{{this.entryType}}" data-rank="0" style="margin-top: 4px; padding: 4px 12px;">
-                <i class="fa-solid fa-plus"></i> Add Cantrips
+                <i class="fa-solid fa-plus"></i> {{localize "PF2E_LEVELER.SPELLS.ADD_CANTRIPS"}}
               </button>
               {{/if}}
               {{/if}}
@@ -1356,11 +1356,11 @@
               {{#each this.rankRows}}
               <div class="section-header" style="font-size: var(--leveler-font-sm); margin-top: var(--leveler-spacing-sm);">
                 <i class="section-header__icon fa-solid fa-sparkles"></i>
-                {{this.label}} spells ({{this.planned}}/{{this.count}})
+                {{format "PF2E_LEVELER.SPELLS.SPELLS_WITH_COUNT" label=this.label selected=this.planned count=this.count}}
               </div>
               {{#unless this.isFull}}
               <button type="button" class="spell-add-btn" data-action="openSpellPicker" data-entry-type="{{../entryType}}" data-rank="{{this.rank}}" style="margin-top: 4px; padding: 4px 12px;">
-                <i class="fa-solid fa-plus"></i> Add {{this.label}} Spell
+                <i class="fa-solid fa-plus"></i> {{format "PF2E_LEVELER.SPELLS.ADD_RANK_SPELL" label=this.label}}
               </button>
               {{/unless}}
               {{/each}}
@@ -1379,7 +1379,7 @@
                 <span class="wizard-spell-chip">
                   <img src="{{this.img}}" alt="" class="wizard-spell-chip__img">
                   <span class="wizard-spell-chip__name" data-action="viewFeat" data-uuid="{{this.uuid}}">{{this.name}}</span>
-                  <span class="tag tag--muted tag--tiny">Rank {{this.rank}}</span>
+                  <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.SPELLS.RANK_NUMBER" rank=this.rank}}</span>
                   <i class="fa-solid fa-xmark wizard-spell-chip__remove" data-action="removeSpell" data-uuid="{{this.uuid}}" data-entry-type="{{this.entryType}}" data-rank="{{this.rank}}" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}"></i>
                 </span>
                 {{/each}}

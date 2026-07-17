@@ -4,7 +4,7 @@ import { resolvePsychicLevelOneSpells } from '../../data/subclass-spells.js';
 export class PsychicHandler extends CasterBaseHandler {
   getExtraSteps() {
     return [
-      { id: 'subconsciousMind', label: 'Subconscious Mind', visible: () => true },
+      { id: 'subconsciousMind', label: this.localize('CREATION.WIZARD.SUBCONSCIOUS_MIND', 'Subconscious Mind'), visible: () => true },
     ];
   }
 

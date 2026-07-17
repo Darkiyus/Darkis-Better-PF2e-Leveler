@@ -19,7 +19,11 @@ export class ChampionHandler extends BaseClassHandler {
   getExtraSteps() {
     return [
       { id: 'deity', visible: () => true },
-      { id: 'sanctification', visible: (data) => (data.deity?.sanctification?.what?.length ?? 0) > 0 },
+      {
+        id: 'sanctification',
+        label: this.localize('CREATION.WIZARD.SANCTIFICATION', 'Sanctification'),
+        visible: (data) => (data.deity?.sanctification?.what?.length ?? 0) > 0,
+      },
     ];
   }
 
@@ -45,12 +49,12 @@ export class ChampionHandler extends BaseClassHandler {
         sanctificationOptions: [
           ...what.map((v) => ({
             value: v,
-            label: v.charAt(0).toUpperCase() + v.slice(1),
+            label: this.localize(`CREATION.WIZARD.SANCTIFICATION_${v.toUpperCase()}`, v.charAt(0).toUpperCase() + v.slice(1)),
             selected: data.sanctification === v,
           })),
           ...(modal === 'must' ? [] : [{
             value: 'none',
-            label: 'None',
+            label: this.localize('CREATION.CHAT.NONE', 'None'),
             selected: data.sanctification === 'none',
           }]),
         ],

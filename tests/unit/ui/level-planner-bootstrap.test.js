@@ -5985,12 +5985,15 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     container.innerHTML = content;
     document.body.append(container);
     const search = container.querySelector('[data-retrain-search]');
+    jest.useFakeTimers();
     search.value = 'occultism';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    jest.runOnlyPendingTimers();
     const rows = Array.from(container.querySelectorAll('[data-retrain-choice]'));
     const occultismRow = rows.find((row) => row.textContent.includes('Occultism'));
     expect(occultismRow.hidden).toBe(false);
     expect(rows.some((row) => !row.textContent.includes('Occultism') && row.hidden)).toBe(true);
+    jest.useRealTimers();
     container.remove();
   });
 

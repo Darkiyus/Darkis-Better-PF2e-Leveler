@@ -99,4 +99,28 @@ describe('registerSettings', () => {
     expect(featRender).toHaveBeenCalledWith(false);
     expect(unrelatedRender).not.toHaveBeenCalled();
   });
+
+  test('registers quick equipment packages as a hidden world setting with a restricted manager', () => {
+    registerSettings();
+
+    const settingRegistration = game.settings.register.mock.calls.find(
+      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'quickEquipmentPackages',
+    );
+    const menuRegistration = game.settings.registerMenu.mock.calls.find(
+      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'quickEquipmentPackagesMenu',
+    );
+
+    expect(settingRegistration).toBeTruthy();
+    expect(settingRegistration[2]).toEqual(expect.objectContaining({
+      scope: 'world',
+      config: false,
+      type: Array,
+      default: [],
+    }));
+    expect(menuRegistration).toBeTruthy();
+    expect(menuRegistration[2]).toEqual(expect.objectContaining({
+      restricted: true,
+      icon: 'fas fa-box-open',
+    }));
+  });
 });

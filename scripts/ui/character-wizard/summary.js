@@ -1,3 +1,5 @@
+import { formatOr, localizeOr } from '../../utils/i18n-fallback.js';
+
 export async function buildSummaryContext(wizard) {
   const classSummaryLabel = [wizard.data.class?.name, wizard.data.dualClass?.name].filter(Boolean).join(' + ') || null;
   const choiceLabels = await wizard._getSelectedSubclassChoiceLabels();
@@ -33,8 +35,8 @@ export async function buildSummaryContext(wizard) {
   const subclassSummaryLabel = subclassParts.join(' + ') || null;
   const sanctStep = wizard.classHandler.getExtraSteps().find((s) => s.id === 'sanctification');
   const fontStep = wizard.classHandler.getExtraSteps().find((s) => s.id === 'divineFont');
-  const sanctLabel = sanctStep?.label ?? 'Sanctification';
-  const fontLabel = fontStep?.label ?? 'Divine Font';
+  const sanctLabel = sanctStep?.label ?? localizeOr('CREATION.WIZARD.SANCTIFICATION', 'Sanctification');
+  const fontLabel = fontStep?.label ?? localizeOr('CREATION.WIZARD.DIVINE_FONT', 'Divine Font');
   const sanctValue = formatSanctificationValue(wizard.data.sanctification);
   const fontValue = formatCapitalizedValue(wizard.data.divineFont);
 
@@ -57,7 +59,11 @@ export async function buildSummaryContext(wizard) {
     ikonsSummary: wizard.data.ikons ?? [],
     innovationItemLabel: wizard.data.innovationItem?.name ?? null,
     innovationModificationLabel: wizard.data.innovationModification?.name ?? null,
-    kineticGateModeLabel: wizard.data.kineticGateMode === 'dual-gate' ? 'Dual Gate' : wizard.data.kineticGateMode === 'single-gate' ? 'Single Gate' : null,
+    kineticGateModeLabel: wizard.data.kineticGateMode === 'dual-gate'
+      ? localizeOr('CREATION.CHAT.DUAL_GATE', 'Dual Gate')
+      : wizard.data.kineticGateMode === 'single-gate'
+        ? localizeOr('CREATION.CHAT.SINGLE_GATE', 'Single Gate')
+        : null,
     secondElementLabel: wizard.data.secondElement?.name ?? null,
     kineticImpulsesSummary: wizard.data.kineticImpulses ?? [],
     subconsciousMindLabel: wizard.data.subconsciousMind?.name ?? null,
@@ -71,20 +77,22 @@ export async function buildSummaryContext(wizard) {
     divineFontLabel: fontLabel,
     divineFontValue: fontValue,
     dualClassFeatLabel: wizard.data.dualClass?.name
-      ? `${wizard.data.dualClass.name} Class Feat`
-      : 'Dual Class Feat',
+      ? formatOr('CREATION.DUAL_CLASS_FEAT_LABEL', { className: wizard.data.dualClass.name }, '{className} Class Feat')
+      : localizeOr('SECTIONS.DUAL_CLASS_FEAT', 'Dual Class Feat'),
   };
 }
 
 function formatSanctificationValue(value) {
   if (!value) return null;
-  if (value === 'none') return 'None';
+  if (value === 'none') return localizeOr('CREATION.CHAT.NONE', 'None');
+  if (value === 'holy') return localizeOr('CREATION.WIZARD.SANCTIFICATION_HOLY', 'Holy');
+  if (value === 'unholy') return localizeOr('CREATION.WIZARD.SANCTIFICATION_UNHOLY', 'Unholy');
   return formatCapitalizedValue(value);
 }
 
 function formatCapitalizedValue(value) {
   if (!value) return null;
-  if (value === 'healing') return 'Healing';
-  if (value === 'harmful') return 'Harmful';
+  if (value === 'healing') return localizeOr('CREATION.DIVINE_FONT_HEAL', 'Healing');
+  if (value === 'harmful') return localizeOr('CREATION.DIVINE_FONT_HARM', 'Harmful');
   return value.charAt(0).toUpperCase() + value.slice(1);
 }

@@ -1,0 +1,118 @@
+<div class="quick-equipment-packages">
+  <aside class="quick-equipment-packages__sidebar">
+    <button type="button" class="quick-equipment-packages__new" data-action="newQuickEquipmentPackage">
+      <i class="fa-solid fa-plus"></i>
+      {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.NEW"}}
+    </button>
+    <div class="quick-equipment-packages__list">
+      {{#each packages}}
+      <button type="button" class="quick-equipment-packages__entry {{#if this.active}}is-active{{/if}}" data-action="selectQuickEquipmentPackage" data-package-id="{{this.id}}">
+        <img src="{{this.img}}" alt="">
+        <span>
+          <strong>{{this.displayName}}</strong>
+          <small>{{this.priceLabel}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}}</small>
+        </span>
+      </button>
+      {{/each}}
+    </div>
+  </aside>
+
+  <main class="quick-equipment-packages__editor">
+    {{#if activePackage}}
+    <div class="quick-equipment-packages__heading">
+      <img src="{{activePackage.img}}" alt="" class="quick-equipment-packages__image">
+      <div class="quick-equipment-packages__heading-fields">
+        <label>
+          <span>{{localize "PF2E_LEVELER.UI.NAME"}}</span>
+          <input type="text" value="{{activePackage.name}}" data-package-field="name">
+        </label>
+        <label>
+          <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.IMAGE"}}</span>
+          <input type="text" value="{{activePackage.img}}" data-package-field="img">
+        </label>
+      </div>
+      <button type="button" class="quick-equipment-packages__delete" data-action="deleteQuickEquipmentPackage" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+
+    <label class="quick-equipment-packages__field">
+      <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.DESCRIPTION"}}</span>
+      <textarea rows="4" data-package-field="description">{{activePackage.description}}</textarea>
+    </label>
+
+    <div class="quick-equipment-packages__fields">
+      <label>
+        <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.CLASSES"}}</span>
+        <input type="text" value="{{activePackage.classSlugsValue}}" data-package-field="classSlugs" placeholder="rogue, ranger">
+      </label>
+      <label>
+        <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.LEVEL"}}</span>
+        <input type="number" min="0" step="1" value="{{activePackage.level}}" data-package-field="level">
+      </label>
+      <label>
+        <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.RARITY"}}</span>
+        <select data-package-field="rarity">
+          <option value="common" {{#if activePackage.rarityCommon}}selected{{/if}}>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.RARITY_COMMON"}}</option>
+          <option value="uncommon" {{#if activePackage.rarityUncommon}}selected{{/if}}>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.RARITY_UNCOMMON"}}</option>
+          <option value="rare" {{#if activePackage.rarityRare}}selected{{/if}}>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.RARITY_RARE"}}</option>
+          <option value="unique" {{#if activePackage.rarityUnique}}selected{{/if}}>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.RARITY_UNIQUE"}}</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="quick-equipment-packages__field">
+      <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.TRAITS"}}</span>
+      <input type="text" value="{{activePackage.traitsValue}}" data-package-field="traits" placeholder="kit">
+    </label>
+
+    <div class="quick-equipment-packages__totals">
+      <span><strong>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.PRICE"}}:</strong> {{activePackage.priceLabel}}</span>
+      <span><strong>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}}:</strong> {{activePackage.bulkLabel}}</span>
+      <small>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.AUTO_CALCULATED"}}</small>
+    </div>
+
+    <div class="quick-equipment-packages__items-heading">
+      <h3>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.CONTENTS"}}</h3>
+      <button type="button" data-action="addQuickEquipmentItems">
+        <i class="fa-solid fa-plus"></i>
+        {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.ADD_ITEMS"}}
+      </button>
+    </div>
+    <div class="quick-equipment-packages__items">
+      {{#each activePackage.items}}
+      <div class="quick-equipment-packages__item">
+        <img src="{{this.img}}" alt="">
+        <div class="quick-equipment-packages__item-name">
+          <strong>{{this.name}}</strong>
+          <small>{{this.priceLabel}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}}</small>
+        </div>
+        <div class="wizard-equipment-row__qty">
+          <button type="button" class="wizard-equipment-row__qty-btn" data-action="decrementQuickEquipmentItem" data-uuid="{{this.uuid}}">−</button>
+          <span>{{this.quantity}}</span>
+          <button type="button" class="wizard-equipment-row__qty-btn" data-action="incrementQuickEquipmentItem" data-uuid="{{this.uuid}}">+</button>
+        </div>
+        <button type="button" class="quick-equipment-packages__item-remove" data-action="removeQuickEquipmentItem" data-uuid="{{this.uuid}}">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      {{else}}
+      <p class="quick-equipment-packages__empty">{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.NO_ITEMS"}}</p>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="quick-equipment-packages__welcome">
+      <i class="fa-solid fa-box-open"></i>
+      <p>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.NO_PACKAGES"}}</p>
+    </div>
+    {{/if}}
+  </main>
+
+  <footer class="quick-equipment-packages__footer">
+    <button type="button" data-action="closeQuickEquipmentPackages">{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.CANCEL"}}</button>
+    <button type="button" class="quick-equipment-packages__save" data-action="saveQuickEquipmentPackages" {{#if isSaving}}disabled{{/if}}>
+      <i class="fa-solid fa-floppy-disk"></i>
+      {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.SAVE"}}
+    </button>
+  </footer>
+</div>

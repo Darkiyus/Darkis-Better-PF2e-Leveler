@@ -10,6 +10,7 @@
         <input type="text" class="picker__search"
                placeholder="{{localize 'PF2E_LEVELER.ITEM_PICKER.SEARCH'}}"
                data-action="searchItems"
+               minlength="3"
                value="{{searchText}}">
         {{#if isGM}}
         <button type="button" class="picker__settings-gear" data-action="openContentGuidance"
@@ -98,7 +99,7 @@
                   data-action="toggleFilterSection"
                   data-section="armor"
                   aria-expanded="{{#if filterSections.armor.collapsed}}false{{else}}true{{/if}}">
-            <span>Armor Filters</span>
+            <span>{{localize "PF2E_LEVELER.ITEM_PICKER.ARMOR_FILTERS"}}</span>
           </button>
           <button type="button" class="picker__prereq-toggle picker__prereq-toggle--section" data-action="toggleArmorFilterLogic">{{#if (eq armorFilterLogic "and")}}AND{{else}}OR{{/if}}</button>
           <span class="picker__section-meta">
@@ -139,7 +140,7 @@
                   data-action="toggleFilterSection"
                   data-section="weapon"
                   aria-expanded="{{#if filterSections.weapon.collapsed}}false{{else}}true{{/if}}">
-            <span>Weapon Filters</span>
+            <span>{{localize "PF2E_LEVELER.ITEM_PICKER.WEAPON_FILTERS"}}</span>
           </button>
           <button type="button" class="picker__prereq-toggle picker__prereq-toggle--section" data-action="toggleWeaponFilterLogic">{{#if (eq weaponFilterLogic "and")}}AND{{else}}OR{{/if}}</button>
           <span class="picker__section-meta">
@@ -277,7 +278,7 @@
             <div class="item-option__header">
               <span class="item-option__name" data-action="viewItem" data-uuid="{{this.uuid}}">{{this.name}}</span>
               {{#if this.alreadyTaken}}<span class="tag tag--muted tag--tiny"><i class="fa-solid fa-check"></i> {{localize "PF2E_LEVELER.ITEM_PICKER.TAKEN"}}</span>{{/if}}
-              <span class="item-option__level">Lv {{this.itemLevel}}</span>
+              <span class="item-option__level">{{format "PF2E_LEVELER.FEAT_PICKER.LEVEL" level=this.itemLevel}}</span>
               {{#if this.priceLabel}}<span class="item-option__level">{{this.priceLabel}}</span>{{/if}}
             </div>
             <div class="item-option__traits">

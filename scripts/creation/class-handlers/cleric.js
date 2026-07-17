@@ -14,11 +14,11 @@ export class ClericHandler extends CasterBaseHandler {
   getExtraSteps() {
     return [
       { id: 'deity', visible: () => true },
-      { id: 'sanctification', label: 'Sanctification', visible: (data) => {
+      { id: 'sanctification', label: this.localize('CREATION.WIZARD.SANCTIFICATION', 'Sanctification'), visible: (data) => {
         const what = data.deity?.sanctification?.what ?? [];
         return what.length > 0;
       }},
-      { id: 'divineFont', label: 'Divine Font', visible: (data) => {
+      { id: 'divineFont', label: this.localize('CREATION.WIZARD.DIVINE_FONT', 'Divine Font'), visible: (data) => {
         const font = data.deity?.font ?? [];
         return font.length > 1;
       }},
@@ -51,18 +51,18 @@ export class ClericHandler extends CasterBaseHandler {
         sanctificationOptions: [
           ...what.map((v) => ({
             value: v,
-            label: v.charAt(0).toUpperCase() + v.slice(1),
+            label: this.localize(`CREATION.WIZARD.SANCTIFICATION_${v.toUpperCase()}`, v.charAt(0).toUpperCase() + v.slice(1)),
             selected: data.sanctification === v,
           })),
           ...(modal === 'must' ? [] : [{
             value: 'none',
-            label: 'None',
+            label: this.localize('CREATION.CHAT.NONE', 'None'),
             selected: data.sanctification === 'none',
           }]),
         ],
         modal,
         deityName: data.deity?.name,
-        stepTitle: 'Sanctification',
+        stepTitle: this.localize('CREATION.WIZARD.SANCTIFICATION', 'Sanctification'),
       };
     }
     if (stepId === 'divineFont') {
@@ -70,11 +70,17 @@ export class ClericHandler extends CasterBaseHandler {
       return {
         divineFontOptions: font.map((v) => ({
           value: v,
-          label: formatDivineFontLabel(v),
+          label: this.localize(
+            v === 'healing' ? 'CREATION.DIVINE_FONT_HEAL' : 'CREATION.DIVINE_FONT_HARM',
+            formatDivineFontLabel(v),
+          ),
           selected: data.divineFont === v,
         })),
-        stepTitle: 'Divine Font',
-        stepHint: 'Choose your divine font. This determines whether you channel heal or harm spells.',
+        stepTitle: this.localize('CREATION.WIZARD.DIVINE_FONT', 'Divine Font'),
+        stepHint: this.localize(
+          'CREATION.WIZARD.DIVINE_FONT_HINT',
+          'Choose your divine font. This determines whether you channel heal or harm spells.',
+        ),
       };
     }
     return null;

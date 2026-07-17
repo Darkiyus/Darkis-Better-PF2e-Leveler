@@ -2,6 +2,7 @@ import { MODULE_ID } from './constants.js';
 import { CompendiumSettingsMenu, PlayerCompendiumAccessMenu } from './ui/compendium-settings-menu.js';
 import { ContentGuidanceMenu } from './ui/content-guidance-menu.js';
 import { ReviewRequestsMenu } from './ui/review-requests-menu.js';
+import { QuickEquipmentPackagesMenu } from './ui/quick-equipment-packages-menu.js';
 import { invalidateCache } from './feats/feat-cache.js';
 import { invalidateGuidanceCache, PLAYER_DISALLOWED_CONTENT_MODES } from './access/content-guidance.js';
 import { invalidateItemCache } from './ui/item-picker.js';
@@ -77,8 +78,8 @@ export function registerSettings() {
   });
 
   game.settings.register(MODULE_ID, 'enforcePrerequisites', {
-    name: 'Enforce Feat Prerequisites',
-    hint: 'Block selecting feats with unmet prerequisites in planner feat pickers. When disabled, prerequisite results are still shown but selection is allowed.',
+    name: game.i18n.localize('PF2E_LEVELER.SETTINGS.ENFORCE_PREREQUISITES.NAME'),
+    hint: game.i18n.localize('PF2E_LEVELER.SETTINGS.ENFORCE_PREREQUISITES.HINT'),
     scope: 'world',
     config: true,
     type: Boolean,
@@ -232,6 +233,25 @@ export function registerSettings() {
     config: true,
     type: Number,
     default: 0,
+  });
+
+  game.settings.registerMenu(MODULE_ID, 'quickEquipmentPackagesMenu', {
+    name: game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.SETTINGS_NAME'),
+    label: game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.SETTINGS_LABEL'),
+    hint: game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.SETTINGS_HINT'),
+    icon: 'fas fa-box-open',
+    type: QuickEquipmentPackagesMenu,
+    restricted: true,
+  });
+
+  game.settings.register(MODULE_ID, 'quickEquipmentPackages', {
+    name: game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.SETTINGS_NAME'),
+    hint: game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.SETTINGS_HINT'),
+    scope: 'world',
+    config: false,
+    type: Array,
+    default: [],
+    onChange: () => refreshOpenLevelerWindows(),
   });
 
   game.settings.register(MODULE_ID, 'ancestralParagon', {

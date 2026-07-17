@@ -478,6 +478,92 @@ describe('CharacterWizard feat step ancestry filtering', () => {
     ]));
   });
 
+  it('sorts recommended heritages first and blocks directly banned heritages for players', async () => {
+    const originalSettings = global._testSettings;
+    const originalSettingsGet = game.settings.get;
+    const originalPacksGet = game.packs.get;
+    const originalIsGM = game.user.isGM;
+    global._testSettings = {
+      'pf2e-leveler': {
+        gmContentGuidance: {
+          'Compendium.pf2e.heritages.Item.ancient-elf': 'recommended',
+          'Compendium.pf2e.heritages.Item.woodland-elf': 'disallowed',
+        },
+        playerDisallowedContentMode: 'unselectable',
+      },
+    };
+    invalidateGuidanceCache();
+    game.settings.get = jest.fn((moduleId, settingId) => global._testSettings?.[moduleId]?.[settingId] ?? false);
+    game.user.isGM = false;
+    game.packs.get = jest.fn((key) => {
+      if (key !== 'pf2e.heritages') return null;
+      return {
+        metadata: { label: 'PF2E Heritages', packageName: 'pf2e' },
+        collection: 'pf2e.heritages',
+        getDocuments: jest.fn(async () => [
+          {
+            uuid: 'Compendium.pf2e.heritages.Item.woodland-elf',
+            name: 'Woodland Elf',
+            img: 'woodland-elf.png',
+            type: 'heritage',
+            slug: 'woodland-elf',
+            system: {
+              traits: { value: ['elf'], rarity: 'common' },
+              ancestry: { slug: 'elf' },
+            },
+          },
+          {
+            uuid: 'Compendium.pf2e.heritages.Item.ancient-elf',
+            name: 'Ancient Elf',
+            img: 'ancient-elf.png',
+            type: 'heritage',
+            slug: 'ancient-elf',
+            system: {
+              traits: { value: ['elf'], rarity: 'common' },
+              ancestry: { slug: 'elf' },
+            },
+          },
+        ]),
+      };
+    });
+
+    try {
+      const wizard = new CharacterWizard(createMockActor());
+      wizard._isBooting = false;
+      wizard.currentStep = 1;
+      wizard.data.ancestry = {
+        uuid: 'Compendium.pf2e.ancestries.Item.elf',
+        slug: 'elf',
+        name: 'Elf',
+        img: 'elf.png',
+      };
+
+      const context = await wizard._prepareContext();
+      const ancestryGroup = context.browserStep.groups.find((group) =>
+        group.items.some((item) => item.uuid === 'Compendium.pf2e.heritages.Item.ancient-elf'),
+      );
+
+      expect(ancestryGroup.items.map((item) => item.uuid)).toEqual([
+        'Compendium.pf2e.heritages.Item.ancient-elf',
+        'Compendium.pf2e.heritages.Item.woodland-elf',
+      ]);
+      expect(ancestryGroup.items[0]).toEqual(expect.objectContaining({
+        isRecommended: true,
+        guidanceSelectionBlocked: false,
+      }));
+      expect(ancestryGroup.items[1]).toEqual(expect.objectContaining({
+        isDisallowed: true,
+        guidanceSelectionBlocked: true,
+      }));
+    } finally {
+      game.settings.get = originalSettingsGet;
+      game.packs.get = originalPacksGet;
+      game.user.isGM = originalIsGM;
+      global._testSettings = originalSettings;
+      invalidateGuidanceCache();
+    }
+  });
+
   it('registers selected custom world classes into the class registry', async () => {
     const actor = createMockActor();
     const wizard = new CharacterWizard(actor);

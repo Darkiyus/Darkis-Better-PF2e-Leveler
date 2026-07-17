@@ -69,6 +69,32 @@ describe('ItemPicker', () => {
     ]));
   });
 
+  test('loads equipment once and does not rerender a picker that was closed while loading', async () => {
+    let resolveDocuments;
+    const getDocuments = jest.fn(() => new Promise((resolve) => {
+      resolveDocuments = resolve;
+    }));
+    game.packs.get = jest.fn((key) => (
+      key === 'pf2e.equipment-srd'
+        ? { metadata: { packageName: 'pf2e' }, getDocuments }
+        : null
+    ));
+
+    const picker = new ItemPicker({ name: 'Actor' }, jest.fn());
+    picker.element = document.createElement('div');
+    picker.element.className = 'pf2e-leveler item-picker';
+    picker.render = jest.fn();
+
+    picker._onRender();
+    const pendingLoad = picker._loadItemsPromise;
+    picker._onRender();
+
+    expect(getDocuments).toHaveBeenCalledTimes(1);
+    resolveDocuments([]);
+    await pendingLoad;
+    expect(picker.render).not.toHaveBeenCalled();
+  });
+
   test('filters formula items by player rarity permissions when loading items', async () => {
     game.user = { isGM: false };
     game.settings.get = jest.fn((scope, key) => {
@@ -1057,6 +1083,77 @@ describe('ItemPicker', () => {
       },
     }));
     const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), { items });
+
+    const context = await picker._prepareContext();
+
+    expect(context.filteredCount).toBe(250);
+    expect(context.renderedCount).toBe(200);
+    expect(context.items).toHaveLength(200);
+    expect(context.capped).toBe(true);
+  });
+
+  test('starts item searches at three characters', () => {
+    const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), {
+      items: [
+        {
+          uuid: 'rapier',
+          name: 'Rapier',
+          type: 'weapon',
+          system: { traits: { rarity: 'common', value: [] }, level: { value: 0 } },
+        },
+        {
+          uuid: 'dagger',
+          name: 'Dagger',
+          type: 'weapon',
+          system: { traits: { rarity: 'common', value: [] }, level: { value: 0 } },
+        },
+      ],
+    });
+
+    picker.searchText = 'ra';
+    expect(picker._filterItems().map((item) => item.uuid)).toEqual(['rapier', 'dagger']);
+
+    picker.searchText = 'rap';
+    expect(picker._filterItems().map((item) => item.uuid)).toEqual(['rapier']);
+  });
+
+  test('does not rebuild the item list for one or two search characters', () => {
+    jest.useFakeTimers();
+    const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), { items: [] });
+    picker._updateList = jest.fn();
+
+    picker.searchText = 'r';
+    picker._scheduleUpdate();
+    jest.advanceTimersByTime(250);
+    picker.searchText = 'ra';
+    picker._scheduleUpdate();
+    jest.advanceTimersByTime(250);
+    expect(picker._updateList).not.toHaveBeenCalled();
+
+    picker.searchText = 'rap';
+    picker._scheduleUpdate();
+    jest.advanceTimersByTime(250);
+    expect(picker._updateList).toHaveBeenCalledTimes(1);
+
+    picker.searchText = 'ra';
+    picker._scheduleUpdate();
+    jest.advanceTimersByTime(250);
+    expect(picker._updateList).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
+
+  test('keeps broad active searches capped at 200 rendered equipment rows', async () => {
+    const items = Array.from({ length: 250 }, (_, i) => ({
+      uuid: `item-${i}`,
+      name: `Common Item ${String(i).padStart(3, '0')}`,
+      type: 'equipment',
+      system: {
+        traits: { rarity: 'common', value: [] },
+        level: { value: 1 },
+      },
+    }));
+    const picker = new ItemPicker({ name: 'Actor' }, jest.fn(), { items });
+    picker.searchText = 'item';
 
     const context = await picker._prepareContext();
 

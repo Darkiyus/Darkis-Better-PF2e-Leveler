@@ -12,7 +12,7 @@
       data-action='viewFeat'
       data-uuid='{{feat.uuid}}'
     >{{feat.name}}</span>
-    <span class='feat-slot__level'>Lvl {{feat.level}}</span>
+  <span class='feat-slot__level'>{{format 'PF2E_LEVELER.FEAT_PICKER.LEVEL' level=feat.level}}</span>
     {{#unless feat.readOnly}}
       <i
         class='feat-slot__change fa-solid fa-pen-to-square'
@@ -48,13 +48,13 @@
   {{#if feat.grantRequirements.length}}
   <div class='feat-slot__note'>
     <i class='fa-solid fa-gift'></i>
-    Granted choices
+    {{localize 'PF2E_LEVELER.UI.GRANTED_CHOICES'}}
   </div>
   {{#each feat.grantRequirements}}
   <div class="feat-slot__note" style="margin-top: var(--leveler-spacing-sm);">
     <span>{{this.kind}} {{this.selectedCount}}/{{this.requiredCount}}</span>
     <button type="button" class="spell-add-btn" data-action="openFeatGrantPicker" data-requirement-id="{{this.id}}" style="margin-left: 8px; padding: 2px 8px;">
-      {{#if (eq this.confidence "manual-required")}}Configure{{else}}Choose{{/if}}
+      {{#if (eq this.confidence "manual-required")}}{{localize 'PF2E_LEVELER.UI.CONFIGURE'}}{{else}}{{localize 'PF2E_LEVELER.UI.CHOOSE'}}{{/if}}
     </button>
     {{#if this.selections.length}}
     <span style="display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 8px;">

@@ -11,8 +11,15 @@ import { applySpells } from './apply-spells.js';
 import { applyClassSpecific } from './apply-class-specific.js';
 import { info, error as logError, notify } from '../utils/logger.js';
 import { format } from '../utils/i18n.js';
+import { formatOr, localizeOr } from '../utils/i18n-fallback.js';
 
-const RANK_LABELS = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'];
+const RANK_LABELS = [
+  ['SKILLS.UNTRAINED', 'Untrained'],
+  ['SKILLS.TRAINED', 'Trained'],
+  ['SKILLS.EXPERT', 'Expert'],
+  ['SKILLS.MASTER', 'Master'],
+  ['SKILLS.LEGENDARY', 'Legendary'],
+];
 const FEAT_KEYS = ['classFeats', 'skillFeats', 'generalFeats', 'ancestryFeats', 'archetypeFeats', 'mythicFeats', 'dualClassFeats', 'customFeats'];
 
 export async function promptApplyPlan(actor, plan, level, previousLevel = level - 1) {
@@ -31,7 +38,11 @@ export async function promptApplyPlan(actor, plan, level, previousLevel = level 
       title: game.i18n.localize('PF2E_LEVELER.UI.CONFIRM_APPLY_TITLE'),
     },
     content: `<p>${isMultiLevel
-      ? `Apply all planned levels from ${startLevel} to ${endLevel}?`
+      ? formatOr(
+        'UI.CONFIRM_APPLY_RANGE',
+        { startLevel, endLevel },
+        'Apply all planned levels from {startLevel} to {endLevel}?',
+      )
       : format('UI.CONFIRM_APPLY', { level })}</p>`,
     modal: true,
   });
@@ -45,13 +56,13 @@ export async function promptApplyRetraining(actor, plan, level) {
   const levelData = getLevelData(plan, level);
   const retrainCount = (levelData?.retrainedFeats?.length ?? 0) + (levelData?.retrainedSkillIncreases?.length ?? 0);
   if (retrainCount === 0) {
-    notify('No retraining planned for this level.', 'warn');
+    notify(localizeOr('RETRAINING.NONE_PLANNED', 'No retraining planned for this level.'), 'warn');
     return false;
   }
 
   const confirmed = await foundry.applications.api.DialogV2.confirm({
-    window: { title: 'Apply Downtime Retraining' },
-    content: `<p>Apply downtime retraining for level ${level}?</p>`,
+    window: { title: localizeOr('RETRAINING.APPLY_TITLE', 'Apply Downtime Retraining') },
+    content: `<p>${formatOr('RETRAINING.APPLY_CONFIRM', { level }, 'Apply downtime retraining for level {level}?')}</p>`,
     modal: true,
   });
 
@@ -102,7 +113,7 @@ export async function applyRetraining(actor, plan, level) {
     const levelData = getLevelData(plan, level);
     const retrainCount = (levelData?.retrainedFeats?.length ?? 0) + (levelData?.retrainedSkillIncreases?.length ?? 0);
     if (retrainCount === 0) {
-      notify('No retraining planned for this level.', 'warn');
+      notify(localizeOr('RETRAINING.NONE_PLANNED', 'No retraining planned for this level.'), 'warn');
       return false;
     }
 
@@ -112,11 +123,11 @@ export async function applyRetraining(actor, plan, level) {
     const featRetrains = await applyFeatRetrains(actor, plan, level);
     await createRetrainingMessage(actor, level, { skillRetrains, featRetrains });
 
-    notify(`Applied retraining for ${actor.name}.`);
+    notify(formatOr('RETRAINING.APPLIED', { actorName: actor.name }, 'Applied retraining for {actorName}.'));
     return true;
   } catch (err) {
     logError(`Failed to apply retraining: ${err.message}`);
-    notify(`Retraining failed: ${err.message}`, 'error');
+    notify(formatOr('RETRAINING.FAILED', { error: err.message }, 'Retraining failed: {error}'), 'error');
     return false;
   }
 }
@@ -129,22 +140,27 @@ function getPlannedLevelsInRange(plan, startLevel, endLevel) {
   return levels;
 }
 
+function getRankLabel(rank) {
+  const entry = RANK_LABELS[Number(rank)];
+  return entry ? localizeOr(entry[0], entry[1]) : rank;
+}
+
 async function createRetrainingMessage(actor, level, applied) {
   const sections = [];
 
   const featRetrains = applied.featRetrains
-    ?.map((entry) => `${entry.original?.name ?? 'Old Feat'} -> ${formatChatLink(entry.replacement)}`)
+    ?.map((entry) => `${entry.original?.name ?? localizeOr('RETRAINING.OLD_FEAT', 'Old Feat')} -> ${formatChatLink(entry.replacement)}`)
     .filter(Boolean) ?? [];
-  if (featRetrains.length) sections.push(buildChatSection('Retrained Feats', featRetrains));
+  if (featRetrains.length) sections.push(buildChatSection(localizeOr('RETRAINING.RETRAINED_FEATS', 'Retrained Feats'), featRetrains));
 
   const skillRetrains = applied.skillRetrains
-    ?.map((entry) => `${formatSkillSlug(entry.original?.skill)} -> ${formatSkillSlug(entry.replacement?.skill)} (${RANK_LABELS[entry.replacement?.rank] ?? entry.replacement?.rank})`)
+    ?.map((entry) => `${formatSkillSlug(entry.original?.skill)} -> ${formatSkillSlug(entry.replacement?.skill)} (${getRankLabel(entry.replacement?.rank)})`)
     .filter(Boolean) ?? [];
-  if (skillRetrains.length) sections.push(buildChatSection('Retrained Skills', skillRetrains));
+  if (skillRetrains.length) sections.push(buildChatSection(localizeOr('RETRAINING.RETRAINED_SKILLS', 'Retrained Skills'), skillRetrains));
 
   const content = buildChatCard({
-    eyebrow: `Level ${level}`,
-    title: 'Downtime Retraining',
+    eyebrow: formatOr('UI.LEVEL', { level }, 'Level {level}'),
+    title: localizeOr('RETRAINING.TITLE', 'Downtime Retraining'),
     accent: '#9f7aea',
     sections,
   });
@@ -165,24 +181,24 @@ async function createLevelUpMessage(actor, plan, level, applied) {
   }
 
   const featRetrains = applied.featRetrains
-    ?.map((entry) => `${entry.original?.name ?? 'Old Feat'} -> ${formatChatLink(entry.replacement)}`)
+    ?.map((entry) => `${entry.original?.name ?? localizeOr('RETRAINING.OLD_FEAT', 'Old Feat')} -> ${formatChatLink(entry.replacement)}`)
     .filter(Boolean) ?? [];
   if (featRetrains.length) {
-    sections.push(buildChatSection('Retrained Feats', featRetrains));
+    sections.push(buildChatSection(localizeOr('RETRAINING.RETRAINED_FEATS', 'Retrained Feats'), featRetrains));
   }
 
   const skillChanges = applied.skills
-    .map((s) => `${formatSkillSlug(s.skill)} -> ${RANK_LABELS[s.toRank] ?? s.toRank}${s.intBonus ? ' (INT)' : ''}`)
+    .map((s) => `${formatSkillSlug(s.skill)} -> ${getRankLabel(s.toRank)}${s.intBonus ? ' (INT)' : ''}`)
     .filter(Boolean);
   if (skillChanges.length) {
     sections.push(buildChatSection(game.i18n.localize('PF2E_LEVELER.MESSAGES.SKILL_INCREASE'), skillChanges));
   }
 
   const skillRetrains = applied.skillRetrains
-    ?.map((entry) => `${formatSkillSlug(entry.original?.skill)} -> ${formatSkillSlug(entry.replacement?.skill)} (${RANK_LABELS[entry.replacement?.rank] ?? entry.replacement?.rank})`)
+    ?.map((entry) => `${formatSkillSlug(entry.original?.skill)} -> ${formatSkillSlug(entry.replacement?.skill)} (${getRankLabel(entry.replacement?.rank)})`)
     .filter(Boolean) ?? [];
   if (skillRetrains.length) {
-    sections.push(buildChatSection('Retrained Skills', skillRetrains));
+    sections.push(buildChatSection(localizeOr('RETRAINING.RETRAINED_SKILLS', 'Retrained Skills'), skillRetrains));
   }
 
   const languages = applied.languages.map((slug) => localizeLanguageSlug(slug)).filter(Boolean);

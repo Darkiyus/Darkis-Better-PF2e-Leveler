@@ -10,7 +10,7 @@ import { ClassRegistry } from '../../classes/registry.js';
 export class AnimistHandler extends CasterBaseHandler {
   getExtraSteps() {
     return [
-      { id: 'apparitions', label: 'Apparitions', visible: () => true },
+      { id: 'apparitions', label: this.localize('CREATION.WIZARD.APPARITIONS', 'Apparitions'), visible: () => true },
     ];
   }
 

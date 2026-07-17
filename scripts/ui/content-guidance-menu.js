@@ -11,6 +11,8 @@ import {
 } from '../access/content-guidance.js';
 import { getLanguageMap, getLanguageRarityMap } from './character-wizard/skills-languages.js';
 import { PUBLICATION_GROUPS, getPublicationGroupMembers } from '../access/source-classification.js';
+import { getActiveSearchQuery, scheduleSearch } from './shared/search-utils.js';
+import { createMixedAncestryHeritage } from '../heritages/mixed-ancestry.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -118,7 +120,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       ancestrySlug: item.ancestrySlug ?? null,
       ancestryLabel: item.ancestryLabel ?? null,
       publicationTitle: item.publicationTitle ?? null,
-      openable: typeof item.uuid === 'string' && item.uuid.startsWith('Compendium.'),
+      openable: isOpenableItemUuid(item.uuid),
       rarity: item.rarity ?? 'common',
       level: item.level ?? null,
       matchedCount: item.matchedCount ?? null,
@@ -217,33 +219,26 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     }
 
     const keys = getCompendiumKeysForCategory(catDef.compendiumCategory ?? catDef.key);
-    const items = [];
+    const documents = [];
     for (const key of keys) {
       const pack = game.packs.get(key);
       if (!pack) continue;
       const docs = await pack.getDocuments().catch(() => []);
-      items.push(...docs
-        .filter((doc) => doc.type === catDef.type && (typeof catDef.matches !== 'function' || catDef.matches(doc)))
-        .map((doc) => ({
-          uuid: doc.uuid,
-          name: doc.name,
-          img: doc.img,
-          rarity: doc.system?.traits?.rarity ?? 'common',
-          level: doc.system?.level?.value ?? null,
-          ancestrySlug: doc.system?.ancestry?.slug ?? null,
-          publicationTitle: doc.system?.publication?.title ?? null,
-          slug: doc.slug ?? doc.system?.slug ?? null,
-          category: doc.system?.category ?? null,
-          traits: getTraitValues(doc),
-          hasPrerequisites: getPrerequisiteValues(doc).length > 0,
-        })),
-      );
+      documents.push(...docs);
     }
+
+    documents.push(...getAllWorldItems());
+    if (categoryKey === 'heritages') documents.push(createMixedAncestryHeritage());
+
+    const items = dedupeGuidanceItems(documents
+      .filter((doc) => doc.type === catDef.type && (typeof catDef.matches !== 'function' || catDef.matches(doc)))
+      .map(toGuidanceItem));
 
     items.sort((a, b) => a.name.localeCompare(b.name));
     if (categoryKey === 'heritages') {
       const ancestryLabels = await this._loadAncestryLabels();
       for (const item of items) {
+        item.ancestrySlug ??= inferHeritageAncestrySlug(item, ancestryLabels);
         item.ancestryLabel = ancestryLabels.get(item.ancestrySlug ?? '') ?? humanizeSlug(item.ancestrySlug) ?? null;
       }
     }
@@ -363,8 +358,9 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     });
 
     root.querySelector('[data-action="search-guidance"]')?.addEventListener('input', (e) => {
-      this.searchText = e.target.value ?? '';
-      this._applySearchFilterToList();
+      const input = e.currentTarget;
+      this.searchText = input.value ?? '';
+      scheduleSearch(input, () => this._applySearchFilterToList());
     });
 
     root.querySelector('[data-action="save-guidance"]')?.addEventListener('click', () => this._save());
@@ -395,7 +391,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
   _applySearchFilterToList() {
     const root = this.element;
     if (!root) return;
-    const query = this.searchText.trim().toLowerCase();
+    const query = getActiveSearchQuery(this.searchText);
     root.querySelectorAll('.guidance-item').forEach((el) => {
       const name = el.querySelector('.guidance-item__name')?.textContent?.toLowerCase() ?? '';
       el.style.display = !query || name.includes(query) ? '' : 'none';
@@ -555,6 +551,13 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
         if (!slug) continue;
         map.set(slug, doc.name);
       }
+    }
+
+    for (const doc of getAllWorldItems()) {
+      if (doc.type !== 'ancestry') continue;
+      const slug = String(doc.slug ?? doc.system?.slug ?? '').toLowerCase();
+      if (!slug) continue;
+      map.set(slug, doc.name);
     }
 
     this._itemCache[cacheKey] = map;
@@ -848,4 +851,44 @@ function getAllWorldItems() {
   if (Array.isArray(game.items.contents)) return [...game.items.contents];
   if (typeof game.items.filter === 'function') return game.items.filter(() => true);
   return Array.from(game.items);
+}
+
+function toGuidanceItem(doc) {
+  return {
+    uuid: doc.uuid,
+    name: doc.name,
+    img: doc.img,
+    type: doc.type,
+    rarity: doc.system?.traits?.rarity ?? doc.rarity ?? 'common',
+    level: doc.system?.level?.value ?? doc.level ?? null,
+    ancestrySlug: doc.system?.ancestry?.slug ?? doc.ancestrySlug ?? null,
+    publicationTitle: doc.system?.publication?.title ?? doc.publicationTitle ?? null,
+    slug: doc.slug ?? doc.system?.slug ?? null,
+    category: doc.system?.category ?? doc.category ?? null,
+    traits: getTraitValues(doc),
+    hasPrerequisites: getPrerequisiteValues(doc).length > 0,
+  };
+}
+
+function dedupeGuidanceItems(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const uuid = String(item?.uuid ?? '').trim();
+    if (!uuid || seen.has(uuid)) return false;
+    seen.add(uuid);
+    return true;
+  });
+}
+
+function inferHeritageAncestrySlug(item, ancestryLabels) {
+  for (const trait of item?.traits ?? []) {
+    const slug = String(trait ?? '').trim().toLowerCase();
+    if (ancestryLabels.has(slug)) return slug;
+  }
+  return null;
+}
+
+function isOpenableItemUuid(uuid) {
+  const normalized = String(uuid ?? '');
+  return normalized.startsWith('Compendium.') || normalized.startsWith('Item.');
 }

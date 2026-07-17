@@ -956,22 +956,50 @@ export function setGrantedFeatSections(data, sections) {
 }
 
 export function addEquipment(data, item, quantity = 1) {
+  return addEquipmentEntry(data, {
+    uuid: item.uuid,
+    name: item.name,
+    img: item.img,
+    type: item.type,
+    quantity,
+    level: item.system?.level?.value ?? 0,
+    rarity: item.system?.traits?.rarity ?? 'common',
+    traits: item.system?.traits?.value ?? [],
+    description: item.system?.description?.value ?? '',
+    price: item.system?.price?.value ?? null,
+    pricePer: Number(item.system?.price?.per ?? 1) || 1,
+    bulk: item.system?.bulk?.value ?? 0,
+    bulkPer: Number(item.system?.bulk?.per ?? 1) || 1,
+  });
+}
+
+export function addEquipmentEntry(data, item) {
   if (!data.equipment) data.equipment = [];
   const existing = data.equipment.find((e) => e.uuid === item.uuid);
   if (existing) {
-    existing.quantity = (existing.quantity ?? 1) + quantity;
+    existing.quantity = (existing.quantity ?? 1) + (item.quantity ?? 1);
   } else {
-    const price = item.system?.price?.value ?? null;
-    const pricePer = Number(item.system?.price?.per ?? 1) || 1;
     data.equipment.push({
       uuid: item.uuid,
       name: item.name,
       img: item.img,
-      quantity,
-      price,
-      pricePer,
+      type: item.type ?? null,
+      quantity: item.quantity ?? 1,
+      level: item.level ?? 0,
+      rarity: item.rarity ?? 'common',
+      traits: item.traits ?? [],
+      description: item.description ?? '',
+      price: item.price ?? null,
+      pricePer: Number(item.pricePer ?? 1) || 1,
+      bulk: item.bulk ?? 0,
+      bulkPer: Number(item.bulkPer ?? 1) || 1,
     });
   }
+  return data;
+}
+
+export function addEquipmentPackage(data, quickPackage) {
+  for (const item of quickPackage?.items ?? []) addEquipmentEntry(data, item);
   return data;
 }
 

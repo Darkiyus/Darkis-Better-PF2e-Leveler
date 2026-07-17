@@ -15,6 +15,7 @@ import { normalizeLoreSkillName, slugifyLoreSkillName } from '../character-wizar
 import { getMaxSkillRank } from '../../utils/pf2e-api.js';
 import { isActiveSkillSlug, normalizeSkillSlug } from '../../utils/skill-slugs.js';
 import { getCreationData } from '../../creation/creation-store.js';
+import { getActiveSearchQuery, scheduleSearch } from '../shared/search-utils.js';
 
 export function activateLevelPlannerListeners(planner, html) {
   const el = html.querySelectorAll ? html : html[0];
@@ -68,12 +69,15 @@ export function activateLevelPlannerListeners(planner, html) {
   });
 
   el.querySelector('[data-action="searchIntBonusLanguages"]')?.addEventListener('input', (event) => {
-    const query = String(event.currentTarget.value ?? '').trim().toLowerCase();
-    const section = event.currentTarget.closest('.level-section') ?? el;
-    section.querySelectorAll('[data-action="toggleIntBonusLanguage"]').forEach((button) => {
-      const label = String(button.dataset.name ?? '').toLowerCase();
-      const slug = String(button.dataset.language ?? '').toLowerCase();
-      button.hidden = !!query && !label.includes(query) && !slug.includes(query);
+    const input = event.currentTarget;
+    scheduleSearch(input, () => {
+      const query = getActiveSearchQuery(input.value);
+      const section = input.closest('.level-section') ?? el;
+      section.querySelectorAll('[data-action="toggleIntBonusLanguage"]').forEach((button) => {
+        const label = String(button.dataset.name ?? '').toLowerCase();
+        const slug = String(button.dataset.language ?? '').toLowerCase();
+        button.hidden = !!query && !label.includes(query) && !slug.includes(query);
+      });
     });
   });
 

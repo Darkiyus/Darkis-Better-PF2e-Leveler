@@ -1,8 +1,8 @@
 {
   "id": "pf2e-leveler",
-  "title": "PF2e Leveler",
-  "description": "<p>Create, Plan and auto-apply character level-ups for Pathfinder 2E. Plan your entire build from level 1 to 20, with prerequisite validation and automatic application on level change.</p>",
-  "version": "3.6.5",
+  "title": "PF2e Leveler – German Edition & Fixes",
+  "description": "<p>A community fork of PF2e Leveler with an optional German interface, faster searches, reusable quick-equipment packages, and expanded heritage content guidance.</p>",
+  "version": "3.7.0",
   "socket": true,
   "compatibility": {
     "minimum": "13",
@@ -12,6 +12,11 @@
     {
       "name": "RoiLeaf",
       "discord": "RoiLeaf",
+      "flags": {}
+    },
+    {
+      "name": "Darkiyus",
+      "url": "https://github.com/Darkiyus/pf2e-leveler",
       "flags": {}
     }
   ],
@@ -31,6 +36,9 @@
     },
     {
       "src": "styles/character-wizard.css"
+    },
+    {
+      "src": "styles/quick-equipment-packages.css"
     }
   ],
   "languages": [
@@ -44,6 +52,12 @@
       "lang": "fr",
       "name": "Fran\u00e7ais",
       "path": "lang/fr.json",
+      "flags": {}
+    },
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "lang/de.json",
       "flags": {}
     },
     {
@@ -73,7 +87,7 @@
         "type": "system",
         "compatibility": {
           "minimum": "7.0.0",
-          "verified": "8.0.1"
+          "verified": "8.3.0"
         }
       },
       {

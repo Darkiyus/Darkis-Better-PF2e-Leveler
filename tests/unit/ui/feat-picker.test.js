@@ -156,6 +156,23 @@ describe('FeatPicker prerequisite enforcement', () => {
     );
   });
 
+  test('caps rendered feat rows while preserving the complete filtered count', async () => {
+    const picker = new FeatPicker(createActor(), 'custom', 2, createBuildState(), jest.fn());
+    picker.allFeats = Array.from({ length: 250 }, (_, index) => createFeat({
+      name: `Feat ${String(index).padStart(3, '0')}`,
+      uuid: `feat-${index}`,
+      slug: `feat-${index}`,
+      prereqText: null,
+    }));
+
+    const context = await picker._prepareContext();
+
+    expect(context.filteredCount).toBe(250);
+    expect(context.renderedCount).toBe(200);
+    expect(context.feats).toHaveLength(200);
+    expect(context.capped).toBe(true);
+  });
+
   test('refreshes the publications section during the fast update path when selections change', async () => {
     const picker = new FeatPicker(createActor(), 'custom', 2, createBuildState(), jest.fn());
     picker.allFeats = [
@@ -2310,6 +2327,12 @@ describe('FeatPicker prerequisite enforcement', () => {
 
     const picker = new FeatPicker(createActor(), 'custom', 2, createBuildState(), jest.fn());
     picker.allFeats = [matchingName, traitOnly];
+    picker.searchText = 'sk';
+
+    expect(picker._applyFilters().map((entry) => entry.name)).toEqual(
+      expect.arrayContaining(['Skill Training', 'Unrelated Feat']),
+    );
+
     picker.searchText = 'skill';
 
     expect(picker._applyFilters().map((entry) => entry.name)).toEqual(['Skill Training']);

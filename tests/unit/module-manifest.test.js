@@ -19,6 +19,17 @@ describe('module manifest', () => {
     expect(systemIds).toEqual(expect.arrayContaining(['pf2e', 'sf2e']));
   });
 
+  test('offers German as an additional language without replacing existing translations', () => {
+    const manifest = readManifest();
+    const languageIds = (manifest.languages ?? []).map((language) => language.lang);
+
+    expect(languageIds).toEqual(expect.arrayContaining(['en', 'fr', 'de', 'cn']));
+    expect(manifest.languages.find((language) => language.lang === 'de')).toEqual(expect.objectContaining({
+      name: 'Deutsch',
+      path: 'lang/de.json',
+    }));
+  });
+
   test('release workflow stamps module manifest version from release tag before packaging', () => {
     const workflow = readReleaseWorkflow();
     const stampStepIndex = workflow.indexOf('Set Module Manifest Version From Release Tag');

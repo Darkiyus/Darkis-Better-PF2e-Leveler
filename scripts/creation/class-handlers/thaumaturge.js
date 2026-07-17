@@ -3,7 +3,7 @@ import { BaseClassHandler } from './base.js';
 export class ThaumaturgeHandler extends BaseClassHandler {
   getExtraSteps() {
     return [
-      { id: 'implement', label: 'Implement', visible: () => true },
+      { id: 'implement', label: this.localize('CREATION.WIZARD.IMPLEMENT', 'Implement'), visible: () => true },
     ];
   }
 

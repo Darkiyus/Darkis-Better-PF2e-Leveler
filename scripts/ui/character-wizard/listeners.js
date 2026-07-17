@@ -41,6 +41,7 @@ import {
 } from '../../creation/creation-model.js';
 import { getClassHandler } from '../../creation/class-handlers/registry.js';
 import { bindRarityToggles } from '../shared/rarity-filters.js';
+import { getActiveSearchQuery, scheduleSearch } from '../shared/search-utils.js';
 
 export function activateCharacterWizardListeners(wizard, el) {
   el.querySelector('[data-action="exportCreationData"]')?.addEventListener('click', () => wizard._exportCreationData());
@@ -400,6 +401,14 @@ export function activateCharacterWizardListeners(wizard, el) {
     wizard._openItemPicker();
   });
 
+  el.querySelector('[data-action="manageQuickEquipmentPackages"]')?.addEventListener('click', () => {
+    wizard._openQuickEquipmentPackagesManager();
+  });
+
+  el.querySelectorAll('[data-action="addQuickEquipmentPackage"]').forEach((btn) => {
+    btn.addEventListener('click', () => wizard._addQuickEquipmentPackage(btn.dataset.packageId));
+  });
+
   el.querySelectorAll('[data-action="removeEquipment"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       removeEquipment(wizard.data, btn.dataset.uuid);
@@ -481,16 +490,22 @@ export function activateCharacterWizardListeners(wizard, el) {
   });
 
   el.querySelector('[data-action="searchCantrips"]')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    el.querySelectorAll('[data-list="cantrips"] .wizard-item').forEach((item) => {
-      item.style.display = (item.dataset.name?.toLowerCase() ?? '').includes(query) ? '' : 'none';
+    const input = e.currentTarget;
+    scheduleSearch(input, () => {
+      const query = getActiveSearchQuery(input.value);
+      el.querySelectorAll('[data-list="cantrips"] .wizard-item').forEach((item) => {
+        item.style.display = (item.dataset.name?.toLowerCase() ?? '').includes(query) ? '' : 'none';
+      });
     });
   });
 
   el.querySelector('[data-action="searchRank1"]')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    el.querySelectorAll('[data-list="rank1"] .wizard-item').forEach((item) => {
-      item.style.display = (item.dataset.name?.toLowerCase() ?? '').includes(query) ? '' : 'none';
+    const input = e.currentTarget;
+    scheduleSearch(input, () => {
+      const query = getActiveSearchQuery(input.value);
+      el.querySelectorAll('[data-list="rank1"] .wizard-item').forEach((item) => {
+        item.style.display = (item.dataset.name?.toLowerCase() ?? '').includes(query) ? '' : 'none';
+      });
     });
   });
 
@@ -607,7 +622,9 @@ export function activateCharacterWizardListeners(wizard, el) {
   });
 
   el.querySelectorAll('[data-action="searchChoiceSetItems"]').forEach((input) => {
-    input.addEventListener('input', () => applyChoiceSetFilters(input.closest('.wizard-choice-block')));
+    input.addEventListener('input', () => {
+      scheduleSearch(input, () => applyChoiceSetFilters(input.closest('.wizard-choice-block')));
+    });
   });
 
   el.querySelectorAll('[data-action="filterWeaponChoice"]').forEach((btn) => {
@@ -621,17 +638,20 @@ export function activateCharacterWizardListeners(wizard, el) {
   });
 
   el.querySelectorAll('[data-action="searchItems"]').forEach((searchInput) => {
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const scope = searchInput.closest('.wizard-browser') ?? el;
-      wizard._filterItems(scope, query);
+    searchInput.addEventListener('input', () => {
+      scheduleSearch(searchInput, () => {
+        const scope = searchInput.closest('.wizard-browser') ?? el;
+        wizard._filterItems(scope, searchInput.value);
+      });
     });
   });
 }
 
 function applyChoiceSetFilters(block) {
   if (!block) return;
-  const query = block.querySelector('[data-action="searchChoiceSetItems"]')?.value?.toLowerCase() ?? '';
+  const query = getActiveSearchQuery(
+    block.querySelector('[data-action="searchChoiceSetItems"]')?.value,
+  );
   const activeFilter = block.querySelector('[data-action="filterWeaponChoice"].selected')?.dataset.filter ?? 'all';
 
   block.querySelectorAll('.wizard-item').forEach((item) => {

@@ -1,7 +1,7 @@
 {
   "name": "pf2e-leveler",
-  "version": "3.6.5",
-  "description": "Plan and auto-apply character level-ups for Pathfinder 2E",
+  "version": "3.7.0",
+  "description": "PF2e Leveler community fork with German localization and performance fixes",
   "main": "scripts/main.js",
   "scripts": {
     "test": "jest --maxWorkers=50%",

@@ -3,7 +3,7 @@ import { BaseClassHandler } from './base.js';
 export class ExemplarHandler extends BaseClassHandler {
   getExtraSteps() {
     return [
-      { id: 'ikons', label: 'Ikons', visible: () => true },
+      { id: 'ikons', label: this.localize('CREATION.WIZARD.IKONS', 'Ikons'), visible: () => true },
     ];
   }
 

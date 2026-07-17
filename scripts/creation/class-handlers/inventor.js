@@ -5,7 +5,7 @@ export class InventorHandler extends BaseClassHandler {
     return [
       {
         id: 'innovationDetails',
-        label: 'Innovation Details',
+        label: this.localize('CREATION.WIZARD.INNOVATION_DETAILS', 'Innovation Details'),
         visible: (data) => ['weapon-innovation', 'armor-innovation'].includes(data.subclass?.slug),
       },
     ];

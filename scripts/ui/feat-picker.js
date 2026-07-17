@@ -29,6 +29,8 @@ import {
   initializeSelectionSet,
   toggleSelectableChip,
 } from './shared/picker-utils.js';
+import { getActiveSearchQuery, limitSearchResults, SEARCH_DEBOUNCE_MS } from './shared/search-utils.js';
+import { formatOr, localizeOr } from '../utils/i18n-fallback.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const renderHandlebarsTemplate =
@@ -86,6 +88,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this._prereqCache = new Map();
     this._buildStateSignature = this._createBuildStateSignature();
     this._updateListTimer = null;
+    this._listUpdateVersion = 0;
+    this._appliedSearchQuery = '';
     this._domListeners = null;
     this.preset = options.preset ?? null;
     this.customTitle = options.title ?? null;
@@ -119,16 +123,24 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       return this.customTitle.trim();
     }
     const typeNames = {
-      class: 'Class Feats',
-      dualClass: 'Dual Class Feats',
-      skill: 'Skill Feats',
-      general: 'General Feats',
-      ancestry: 'Ancestry Feats',
-      archetype: 'Archetype Feats',
-      mythic: 'Mythic Feats',
-      custom: 'All Feats',
+      class: localizeOr('FEAT_PICKER.CATEGORY_CLASS_FEATS', 'Class Feats'),
+      dualClass: localizeOr('FEAT_PICKER.CATEGORY_DUAL_CLASS_FEATS', 'Dual Class Feats'),
+      skill: localizeOr('FEAT_PICKER.CATEGORY_SKILL_FEATS', 'Skill Feats'),
+      general: localizeOr('FEAT_PICKER.CATEGORY_GENERAL_FEATS', 'General Feats'),
+      ancestry: localizeOr('FEAT_PICKER.CATEGORY_ANCESTRY_FEATS', 'Ancestry Feats'),
+      archetype: localizeOr('FEAT_PICKER.CATEGORY_ARCHETYPE_FEATS', 'Archetype Feats'),
+      mythic: localizeOr('FEAT_PICKER.CATEGORY_MYTHIC_FEATS', 'Mythic Feats'),
+      custom: localizeOr('FEAT_PICKER.CATEGORY_ALL_FEATS', 'All Feats'),
     };
-    return `${this.actor.name} - ${typeNames[this.category] ?? 'Feats'} | Level ${this.targetLevel}`;
+    return formatOr(
+      'FEAT_PICKER.WINDOW_TITLE',
+      {
+        actorName: this.actor.name,
+        category: typeNames[this.category] ?? localizeOr('FEAT_PICKER.CATEGORY_FEATS', 'Feats'),
+        level: this.targetLevel,
+      },
+      '{actorName} - {category} | Level {level}',
+    );
   }
 
   async _prepareContext() {
@@ -156,10 +168,15 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     this._availableRarityValues = this._getAvailableRarityValues();
     this._normalizeSelectedRarities();
     this.filteredFeats = this._applyFilters();
+    this._appliedSearchQuery = getActiveSearchQuery(this.searchText);
+    const { items: renderedFeats, capped } = limitSearchResults(this.filteredFeats);
+    const selectableRenderedUuids = this._getSelectableFilteredFeatUuids(renderedFeats);
 
     return {
-      feats: this.filteredFeats.map((feat) => this._toTemplateFeat(feat)),
+      feats: renderedFeats.map((feat) => this._toTemplateFeat(feat)),
       filteredCount: this.filteredFeats.length,
+      renderedCount: renderedFeats.length,
+      capped,
       filterSections: this._getFilterSections(),
       publicationOptions,
       publicationGroupChips,
@@ -200,8 +217,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       traitLogic: this.traitLogic,
       traitOptions,
       allVisibleSelected:
-        this._getSelectableFilteredFeatUuids().length > 0 &&
-        this._getSelectableFilteredFeatUuids().every((uuid) => this.selectedFeatUuids.has(uuid)),
+        selectableRenderedUuids.length > 0 &&
+        selectableRenderedUuids.every((uuid) => this.selectedFeatUuids.has(uuid)),
       isLoading: false,
     };
   }
@@ -367,7 +384,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     if (this.excludedFeatUuids.size > 0) {
       feats = feats.filter((feat) => !this.excludedFeatUuids.has(this._getFeatUuid(feat)));
     }
-    if (this.searchText) feats = filterBySearch(feats, this.searchText);
+    const searchQuery = getActiveSearchQuery(this.searchText);
+    if (searchQuery) feats = filterBySearch(feats, searchQuery);
     if (this.requiredSkills.size > 0)
       feats = filterBySkill(feats, [...this.requiredSkills], this.skillLogic);
     if (this._showSkillFilter && this.selectedSkills.size > 0)
@@ -502,7 +520,7 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
         'input',
         (e) => {
           this.searchText = e.target.value;
-          this._scheduleListUpdate(120);
+          this._scheduleSearchUpdate();
         },
         { signal },
       );
@@ -817,19 +835,38 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }, delay);
   }
 
+  _scheduleSearchUpdate() {
+    if (this._updateListTimer) clearTimeout(this._updateListTimer);
+    this._updateListTimer = null;
+    const nextQuery = getActiveSearchQuery(this.searchText);
+    if (nextQuery === this._appliedSearchQuery) return;
+    this._listUpdateVersion += 1;
+    this._updateListTimer = setTimeout(() => {
+      this._updateListTimer = null;
+      this._appliedSearchQuery = nextQuery;
+      this._updateFeatList();
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
   async _updateFeatList() {
+    this._appliedSearchQuery = getActiveSearchQuery(this.searchText);
+    const updateVersion = ++this._listUpdateVersion;
     const publicationOptions = this._getPublicationOptions();
     this._availableRarityValues = this._getAvailableRarityValues();
     this._normalizeSelectedRarities();
     this.filteredFeats = this._applyFilters();
+    const { items: renderedFeats, capped } = limitSearchResults(this.filteredFeats);
+    const selectableRenderedUuids = this._getSelectableFilteredFeatUuids(renderedFeats);
 
     const root = this._getRootElement();
     const listContainer = root?.querySelector('.feat-list');
     if (!listContainer) return;
 
     const html = await renderHandlebarsTemplate(`modules/${MODULE_ID}/templates/feat-picker.hbs`, {
-      feats: this.filteredFeats.map((feat) => this._toTemplateFeat(feat)),
+      feats: renderedFeats.map((feat) => this._toTemplateFeat(feat)),
       filteredCount: this.filteredFeats.length,
+      renderedCount: renderedFeats.length,
+      capped,
       filterSections: this._getFilterSections(),
       publicationOptions,
       publicationGroupChips: buildPublicationGroupChips(this._publicationTitles, this.selectedPublications),
@@ -851,9 +888,10 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
       multiSelect: this.multiSelect,
       selectedCount: this.selectedFeatUuids.size,
       allVisibleSelected:
-        this._getSelectableFilteredFeatUuids().length > 0 &&
-        this._getSelectableFilteredFeatUuids().every((uuid) => this.selectedFeatUuids.has(uuid)),
+        selectableRenderedUuids.length > 0 &&
+        selectableRenderedUuids.every((uuid) => this.selectedFeatUuids.has(uuid)),
     });
+    if (updateVersion !== this._listUpdateVersion) return;
 
     const temp = document.createElement('div');
     temp.innerHTML = html;
@@ -887,7 +925,11 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     const resultCount = root?.querySelector('.picker__results-count');
-    if (resultCount) resultCount.textContent = String(this.filteredFeats.length);
+    if (resultCount) {
+      resultCount.textContent = capped
+        ? `${renderedFeats.length}/${this.filteredFeats.length}`
+        : String(this.filteredFeats.length);
+    }
     this._updateFilterControlState();
     this._updateSelectionUI();
   }
@@ -986,8 +1028,8 @@ export class FeatPicker extends HandlebarsApplicationMixin(ApplicationV2) {
     return this._getVisibleFeatUuids().filter((uuid) => this._isFeatUuidSelectable(uuid));
   }
 
-  _getSelectableFilteredFeatUuids() {
-    return this.filteredFeats
+  _getSelectableFilteredFeatUuids(feats = this.filteredFeats) {
+    return feats
       .map((feat) => this._getFeatUuid(feat))
       .filter((uuid) => this._isFeatUuidSelectable(uuid));
   }

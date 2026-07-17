@@ -1,4 +1,5 @@
 import { ContentGuidanceMenu } from '../../../scripts/ui/content-guidance-menu.js';
+import { MIXED_ANCESTRY_UUID } from '../../../scripts/constants.js';
 
 jest.mock('../../../scripts/access/content-guidance.js', () => ({
   buildGuidanceEntry: jest.fn((status, exclusive = false, freeArchetypeExclusive = false) => {
@@ -60,6 +61,88 @@ describe('ContentGuidanceMenu', () => {
       isRecommended: false,
       isDisallowed: false,
     }));
+  });
+
+  test('loads compendium, world, and synthetic heritages and infers ancestry from traits', async () => {
+    const originalPacksGet = game.packs.get;
+    const originalItems = game.items;
+    game.items = {
+      contents: [
+        {
+          uuid: 'Item.world-goblin',
+          name: 'Goblin',
+          type: 'ancestry',
+          slug: 'goblin',
+          system: { traits: { value: ['goblin'], rarity: 'common' } },
+        },
+        {
+          uuid: 'Item.world-heritage',
+          name: 'Cave Goblin',
+          type: 'heritage',
+          slug: 'cave-goblin',
+          system: {
+            ancestry: { slug: 'goblin' },
+            traits: { value: ['goblin'], rarity: 'common' },
+          },
+        },
+      ],
+    };
+    game.packs.get = jest.fn((key) => {
+      if (key === 'pf2e.heritages') {
+        return {
+          getDocuments: jest.fn(async () => [{
+            uuid: 'Compendium.pf2e.heritages.Item.ancient-elf',
+            name: 'Ancient Elf',
+            type: 'heritage',
+            slug: 'ancient-elf',
+            system: {
+              traits: { value: ['elf'], rarity: 'common' },
+            },
+          }]),
+        };
+      }
+      if (key === 'pf2e.ancestries') {
+        return {
+          getDocuments: jest.fn(async () => [{
+            uuid: 'Compendium.pf2e.ancestries.Item.elf',
+            name: 'Elf',
+            type: 'ancestry',
+            slug: 'elf',
+            system: { traits: { value: ['elf'], rarity: 'common' } },
+          }]),
+        };
+      }
+      return null;
+    });
+
+    try {
+      const menu = new ContentGuidanceMenu();
+      menu.activeCategory = 'heritages';
+      menu._draft = { [MIXED_ANCESTRY_UUID]: 'recommended' };
+
+      const context = await menu._prepareContext();
+
+      expect(context.items).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          uuid: 'Compendium.pf2e.heritages.Item.ancient-elf',
+          ancestrySlug: 'elf',
+          ancestryLabel: 'Elf',
+        }),
+        expect.objectContaining({
+          uuid: 'Item.world-heritage',
+          ancestrySlug: 'goblin',
+          ancestryLabel: 'Goblin',
+          openable: true,
+        }),
+        expect.objectContaining({
+          uuid: MIXED_ANCESTRY_UUID,
+          isRecommended: true,
+        }),
+      ]));
+    } finally {
+      game.packs.get = originalPacksGet;
+      game.items = originalItems;
+    }
   });
 
   test('exposes rarity bulk groups for rarity-bearing categories', async () => {
@@ -602,6 +685,11 @@ describe('ContentGuidanceMenu', () => {
     menu.element = document.body;
     menu.render = jest.fn();
 
+    menu.searchText = 'pl';
+    menu._onRender();
+    expect([...document.querySelectorAll('.guidance-item')].every((item) => item.style.display === '')).toBe(true);
+
+    menu.searchText = 'player core';
     menu._onRender();
 
     const items = [...document.querySelectorAll('.guidance-item')];

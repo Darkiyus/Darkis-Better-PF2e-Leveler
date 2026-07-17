@@ -6,6 +6,7 @@ import { getCompendiumKeysForCategory } from '../compendiums/catalog.js';
 import { info, warn } from '../utils/logger.js';
 import { capitalize, getCampaignFeatSectionIds, isAncestralParagonEnabled } from '../utils/pf2e-api.js';
 import { format, localize } from '../utils/i18n.js';
+import { formatOr, localizeOr } from '../utils/i18n-fallback.js';
 import { findMatchingChoiceOption } from '../ui/character-wizard/choice-sets.js';
 import { getMixedAncestrySelectedValue } from '../heritages/mixed-ancestry.js';
 import { applyFeatGrantEntries } from '../apply/apply-feat-grants.js';
@@ -179,13 +180,15 @@ async function applyMixedAncestryHeritage(actor, entry, choices = {}) {
   const selectedSlug = selectedAncestry?.slug ?? (typeof choices?.[MIXED_ANCESTRY_CHOICE_FLAG] === 'string' ? choices[MIXED_ANCESTRY_CHOICE_FLAG] : null) ?? null;
   const vision = normalizeMixedAncestryVision(selectedAncestry?.system?.vision ?? null);
   const itemData = {
-    name: entry?.name ?? 'Mixed Ancestry',
+    name: entry?.name ?? localizeOr('CREATION.MIXED_ANCESTRY_NAME', 'Mixed Ancestry'),
     type: 'heritage',
     img: entry?.img ?? actor?.ancestry?.img ?? null,
     system: {
       slug: 'mixed-ancestry',
       description: {
-        value: selectedAncestry?.name ? `<p>Mixed Ancestry tied to ${selectedAncestry.name}.</p>` : '<p>Mixed Ancestry.</p>',
+        value: selectedAncestry?.name
+          ? `<p>${formatOr('CREATION.MIXED_ANCESTRY_ITEM_DESCRIPTION', { ancestryName: selectedAncestry.name }, 'Mixed Ancestry tied to {ancestryName}.')}</p>`
+          : `<p>${localizeOr('CREATION.MIXED_ANCESTRY_ITEM_DESCRIPTION_GENERIC', 'Mixed Ancestry.')}</p>`,
       },
       traits: {
         value: [],
@@ -1276,7 +1279,9 @@ async function createCreationMessage(actor, data) {
       value: formatChatLink(data.thesis),
     });
   if (data.apparitions?.length) {
-    const labels = data.apparitions.map((entry) => (entry.uuid === data.primaryApparition ? `${formatChatLink(entry)} (Primary)` : formatChatLink(entry)));
+    const labels = data.apparitions.map((entry) => (entry.uuid === data.primaryApparition
+      ? `${formatChatLink(entry)} (${localizeOr('UI.PRIMARY', 'Primary')})`
+      : formatChatLink(entry)));
     classChoices.push({ label: localize('CREATION.CHAT.APPARITIONS'), value: labels.join(', ') });
   }
   if (data.deity)
@@ -1287,16 +1292,16 @@ async function createCreationMessage(actor, data) {
   if (data.sanctification) {
     const handler = getClassHandler(data.class?.slug);
     const sanctStep = handler.getExtraSteps().find((s) => s.id === 'sanctification');
-    const sanctLabel = sanctStep?.label ?? 'Sanctification';
+    const sanctLabel = sanctStep?.label ?? localizeOr('CREATION.WIZARD.SANCTIFICATION', 'Sanctification');
     classChoices.push({
       label: sanctLabel,
-      value: data.sanctification === 'none' ? localize('CREATION.CHAT.NONE') : capitalize(data.sanctification),
+      value: formatSanctificationValue(data.sanctification),
     });
   }
   if (data.divineFont) {
     const handler = getClassHandler(data.class?.slug);
     const fontStep = handler.getExtraSteps().find((s) => s.id === 'divineFont');
-    const fontLabel = fontStep?.label ?? 'Divine Font';
+    const fontLabel = fontStep?.label ?? localizeOr('CREATION.WIZARD.DIVINE_FONT', 'Divine Font');
     classChoices.push({ label: fontLabel, value: formatDivineFontValue(data.divineFont) });
   }
   if (classChoices.length) {
@@ -1390,8 +1395,15 @@ async function createCreationMessage(actor, data) {
 }
 
 function formatDivineFontValue(value) {
-  if (value === 'healing') return 'Healing';
-  if (value === 'harmful') return 'Harmful';
+  if (value === 'healing') return localizeOr('CREATION.DIVINE_FONT_HEAL', 'Healing');
+  if (value === 'harmful') return localizeOr('CREATION.DIVINE_FONT_HARM', 'Harmful');
+  return capitalize(value);
+}
+
+function formatSanctificationValue(value) {
+  if (value === 'none') return localizeOr('CREATION.CHAT.NONE', 'None');
+  if (value === 'holy') return localizeOr('CREATION.WIZARD.SANCTIFICATION_HOLY', 'Holy');
+  if (value === 'unholy') return localizeOr('CREATION.WIZARD.SANCTIFICATION_UNHOLY', 'Unholy');
   return capitalize(value);
 }
 

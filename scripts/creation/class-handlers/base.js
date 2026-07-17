@@ -1,3 +1,5 @@
+import { localizeOr } from '../../utils/i18n-fallback.js';
+
 /**
  * Base class handler for the character creation wizard.
  * Contains only universal logic shared by ALL classes:
@@ -7,6 +9,8 @@
  * Classes with spellcasting override these in their own handlers.
  */
 export class BaseClassHandler {
+  localize(key, fallback) { return localizeOr(key, fallback); }
+
   getExtraSteps() { return []; }
 
   isStepComplete(_stepId, _data) { return null; }

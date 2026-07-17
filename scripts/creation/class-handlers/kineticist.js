@@ -5,7 +5,7 @@ export class KineticistHandler extends BaseClassHandler {
     return [
       {
         id: 'kineticGate',
-        label: 'Kinetic Gate',
+        label: this.localize('CREATION.WIZARD.KINETIC_GATE', 'Kinetic Gate'),
         visible: (data) => !!data.subclass,
       },
     ];
@@ -42,8 +42,8 @@ export class KineticistHandler extends BaseClassHandler {
 
     return {
       gateModes: [
-        { value: 'single-gate', label: 'Single Gate', selected: data.kineticGateMode === 'single-gate' },
-        { value: 'dual-gate', label: 'Dual Gate', selected: data.kineticGateMode === 'dual-gate' },
+        { value: 'single-gate', label: this.localize('CREATION.CHAT.SINGLE_GATE', 'Single Gate'), selected: data.kineticGateMode === 'single-gate' },
+        { value: 'dual-gate', label: this.localize('CREATION.CHAT.DUAL_GATE', 'Dual Gate'), selected: data.kineticGateMode === 'dual-gate' },
       ],
       secondElementOptions: elementOptions,
       impulseOptions: impulseOptions.map((entry) => ({

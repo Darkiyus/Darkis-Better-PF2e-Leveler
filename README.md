@@ -1,186 +1,155 @@
-[![Latest Version](https://img.shields.io/github/v/release/roi007leaf/pf2e-leveler?display_name=tag&sort=semver&label=Latest%20Version)](https://github.com/roi007leaf/pf2e-leveler/releases/latest)
+# PF2e Leveler – German Edition & Fixes
 
-[![GitHub all releases](https://img.shields.io/github/downloads/roi007leaf/pf2e-leveler/total)](https://github.com/roi007leaf/pf2e-leveler/releases)
+Community-Fork von [PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler) mit optionaler deutscher Oberfläche, Fehlerbehebungen und Performance-Verbesserungen. Die ursprüngliche Erweiterung und ihre grundlegende Architektur wurden von **RoiLeaf** entwickelt.
 
-[![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Fpf2e-leveler)](https://forge-vtt.com/bazaar)
+[Deutsch](#deutsch) · [English](#english)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/roileaf)
-# PF2e Leveler
+## Deutsch
 
-A Foundry VTT module for Pathfinder 2nd Edition and Starfinder Second Edition that provides a **Character Creation Wizard**, a **Level-Up Planner** with automatic application on level change, and a **GM Content Guidance** system for controlling what options players see.
+### Kurzbeschreibung
 
-The module name remains **PF2e Leveler**. In standalone Starfinder Second Edition worlds, it uses SF2e system compendiums. In PF2e worlds with the **Starfinder 2e Anachronism** module active, it adds only the Anachronism Starfinder content alongside PF2e content; it does not pull standalone SF2e system packs into PF2e worlds. In SF2e worlds with the **Pathfinder Anachronism** module active, it adds Pathfinder Anachronism packs alongside SF2e content without pulling standalone PF2e system packs into SF2e worlds.
+PF2e Leveler unterstützt die Charaktererschaffung und die Planung von Stufenaufstiegen in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition. Dieser Fork konzentriert sich auf eine flüssigere Bedienung, optionale deutsche Texte und eine bessere Verwaltung eigener Kampagneninhalte. Die interne Modul-ID bleibt `pf2e-leveler`, damit bestehende Welten und Einstellungen kompatibel bleiben.
 
-## Features
+### Was wurde geändert – und warum?
 
-### Character Creation Wizard
+- **Schnellere Suche:** Die alte Suchlogik konnte bereits nach einem einzelnen Zeichen große Kompendien vollständig durchsuchen und Tausende DOM-Elemente erzeugen. Suchvorgänge beginnen nun erst ab drei Zeichen, werden um 250 ms verzögert und veraltete asynchrone Ergebnisse werden verworfen. Ausrüstung, Talente und Zauber zeigen höchstens 200 Ergebniszeilen gleichzeitig an. Unveränderliche Ausrüstungsfilter werden zwischengespeichert und mehrere Zauberkompendien parallel geladen.
+- **Eigene Schnellausrüstungspakete:** Spielleiter können wiederverwendbare Pakete mit Name, Bild, Beschreibung, Klasse, Stufe, Seltenheit und Merkmalen erstellen. Ein Paket enthält Verweise auf normale PF2e-Gegenstände; Preis und Last werden automatisch aus Inhalt und Menge berechnet. Dadurch lassen sich vollständige Klassenausrüstungen verwalten, statt lediglich einen einzelnen Abenteurerrucksack anzubieten.
+- **Herkünfte in den Inhaltsvorgaben:** Standardherkünfte, vielseitige Herkünfte, gemischte Abstammungen sowie Herkünfte aus Welten und Modulen können wie Abstammungen empfohlen, eingeschränkt oder verboten werden. Das schließt eine Lücke bei der Steuerung erlaubter Kampagneninhalte.
+- **Verständlichere Attributsverbesserungen:** Der entsprechende Schritt erklärt nun Verbesserungen, Attributsschwächen und die alternative Abstammungsregel. Eine dynamische Anzeige zeigt außerdem, wie viele der vier freien Attributsverbesserungen noch zu vergeben sind.
+- **Optionale deutsche Oberfläche:** Deutsch wurde als zusätzliche Sprache ergänzt. Englisch, Französisch und Chinesisch bleiben verfügbar. Die Übersetzung verwendet PF2e-Begriffe wie „Abstammung“, „Herkunft“, „Attributsverbesserung“, „Fertigkeitsverbesserung“, „Last“ und „Zaubergrad“.
+- **Stabilitätskorrekturen:** Suchläufe unterhalb der Mindestlänge lösen keine vollständigen Neuberechnungen mehr aus. Ergebnislisten bleiben begrenzt, und ein bereits geschlossenes Ausrüstungsfenster wird nach einem verspäteten Kompendium-Ladevorgang nicht erneut gerendert.
 
-A full step-by-step character creation flow that builds and applies a complete level-1 character to an actor.
+Namen und Beschreibungen von Talenten, Zaubern, Gegenständen und anderen Spielinhalten stammen aus den aktiven PF2e-/SF2e-Kompendien. Für übersetzte Spielinhalte muss zusätzlich eine passende System- oder Kompendiumsübersetzung aktiv sein.
 
-**Steps covered:**
+### Getestete Umgebung
 
-- **Ancestry** — browse and select ancestry with image preview
-- **Heritage** — grouped display separating ancestry heritages from versatile heritages; ChoiceSets like Elf Atavism correctly resolve to heritage options
-- **Background** — auto-detects trained skills and lores from background data
-- **Class** — all supported PF2e and SF2e classes from the active system profile; creates and applies the class item
-- **SF2e subclass prompts** — Starfinder class paths, such as envoy leadership styles, are detected from SF2e system data or Anachronism data and shown in the prompt summary
-- **Deity** — for divine classes; auto-sets divine font and sanctification when only one option is valid
-- **Subclass** — full selection of subclasses (Bloodlines, Orders, Schools, Mysteries, Patrons, Doctrines, etc.) with automatic tradition resolution and granted skill/lore detection
-- **Subclass choices** — inline ChoiceSet prompts for subclass-specific options (e.g. element for Kineticist, conscious mind for Psychic)
-- **Ability Boosts** — per-source rows (ancestry, background, class, free) matching PF2e's layout; alternate ancestry boost mode supported
-- **Skills** — class, background, subclass, and deity skill grants shown as auto-trained; remaining free picks selectable; lore selection for background and subclass lores; SF2e worlds use the SF2e skill list, and PF2e worlds with Anachronism add Starfinder skills such as Computers and Piloting
-- **Feats** — ancestry feat, class feat, skill feat, and class-specific slots (tactics, ikons, kinetic impulses, implements, etc.) with inline ChoiceSet resolution; feat cards show items granted by selected feats
-- **Languages** — ancestry-granted languages shown as non-removable; feat-granted languages (e.g. Angelkin granting Empyrean) auto-detected and marked as granted with source label; choosable languages sorted with ancestry suggestions first; slot count respects INT modifier and feat bonuses (e.g. Multilingual)
-- **Spells** — cantrips and rank-1 spells via popup spell picker; curriculum spells for Magus/Witch; focus spell selection where applicable
-- **Equipment** — browse and add starting equipment within a configurable budget; batch-priced items (ammunition, rations) handled correctly with proper quantities; permanent item slots for higher-level starting wealth
-- **Summary** — full review of all choices before applying; pending ChoiceSet prompts listed
+- Foundry VTT 14, Build 3654
+- Pathfinder Second Edition 8.3.0
 
-**Prerequisite checking** (character wizard and level planner):
+Die Moduldefinition unterstützt weiterhin Foundry VTT ab Version 13 sowie PF2e ab 7.0.0. Die oben genannten Versionen bezeichnen die konkret getestete Kombination.
 
-- Skill rank requirements (trained/expert/master/legendary), including comma/or-separated lists
-- Feat prerequisites with cross-feat matching
-- Armor, weapon, and casting proficiency requirements
-- Sense prerequisites (low-light vision, darkvision, etc.) — darkvision satisfies low-light vision; senses granted by ancestry and heritage are detected
-- Ancestry and heritage trait prerequisites — Remaster half-heritage names (Dromaar, Aiuvarin) map to parent ancestry traits, unlocking orc/elf feats correctly
-- Level, ability score, class feature, deity, and spellcasting state requirements
-- Subclass spell prerequisites (bloodline spell, mystery spell, patron spell)
+### Anforderungen
 
-**Applies to actor:**
+- Foundry VTT 13 oder neuer
+- Pathfinder Second Edition 7.0.0 oder neuer; alternativ Starfinder Second Edition 0.0.10 oder neuer
+- `socketlib` wird für die zuverlässige Übermittlung von Prüfanfragen empfohlen
 
-- Ancestry, heritage, background, class, subclass, deity
-- Ability boosts, skills, languages, lores
-- Ancestry feat, class feat, skill feat, and class-specific feats
-- Spellcasting entries with correct tradition, ability, and prepared/spontaneous type
-- Chosen spells (cantrips, rank-1, focus spells)
-- Starting equipment with correct quantities
+### Geplantes Feature: Homebrew-Götter
 
-### Level-Up Planner
+Geplant ist eine eigenständige Homebrew-Götter-Erweiterung mit Verbindung zu PF2e Leveler. Das vorgesehene technische Modell ist ein separates Foundry-Modul, das kompatible PF2e-Gegenstände vom Typ `deity` über ein Kompendium bereitstellt. PF2e Leveler soll dieses Kompendium anschließend als Gottheitenquelle verwenden können; Standardgottheiten sollen sich über Kompendiums- und Inhaltsvorgaben aus der Auswahl entfernen lassen.
 
-Plan all level-up choices from level 2 to 20, then auto-apply when the character levels up.
+Dies ist ein Roadmap-Eintrag und **noch nicht Bestandteil dieser Version**.
 
-- Class feat, skill feat, general feat, and ancestry feat selection per level with prerequisite checking
-- Active-system compendium routing for PF2e, standalone SF2e, and optional Anachronism content in either direction
-- Archetype feat support including Free Archetype variant; dedication filter only active until a dedication has been chosen
-- Skill increase picker with rank-colored buttons and proficiency cap enforcement
-- Ability boost selector with partial boost (18+) support and score progression display across the full build
-- Spell slot progression for casters; inline spell selection for spontaneous casters with heightening support (pick any spell at a rank above its base level)
-- INT-based bonus skill and language planning following actual level-1 boost state
-- Class feature skill proficiency grants respected in rank calculations
-- Starting wealth and equipment management per level using Table 10-10 (permanent item slots + lump sum + custom mode)
-- Custom feat, skill increase, and spell additions for edge cases
-- Per-level reminders/notes
-- Export and import plans as JSON
-- Per-level reset via the Clear Level button
-- Plan validation with per-level completion status shown in the sidebar
-- Auto-apply on level change with confirmation dialog
-- Multi-level application: if a character skips levels, all planned levels between old and new are applied together
-- Chat message summary of applied changes (whispered to GM and character owner)
+### Installation
 
-### Spell Preparation Sheet Integration
+1. Öffne in Foundry VTT **Zusatzmodule** und anschließend **Modul installieren**.
+2. Füge diese Adresse unter **Manifest-URL** ein:
 
-- **"Add to Spellbook"** button appears on spell preparation sheet headers for each spell rank
-- Opens a pre-configured spell picker filtered to the correct rank and tradition
-- Prevents adding already-owned spells
-- Applies only to prepared casters
+   ```text
+   https://github.com/Darkiyus/pf2e-leveler/releases/latest/download/module.json
+   ```
 
-### GM Content Guidance
+3. Klicke auf **Installieren** und aktiviere anschließend **PF2e Leveler – German Edition & Fixes** in deiner Welt.
 
-GMs can mark any ancestry, heritage, background, class, skill, or language as **Suggested** or **Disallowed** from a dedicated settings menu (Module Settings → Configure Suggestions).
+Die Manifest-URL verweist immer auf die neueste veröffentlichte Version dieses Forks.
 
-- Suggested items display a gold star badge and sort to the top of their list
-- Disallowed items are dimmed with a red "Disallowed" badge and their Select button is disabled
-- Marks are stored as a world-scoped setting; changing marks automatically invalidates the cache
-- Disallowed options remain visible so players know they exist
-- Available compendium choices follow the active system profile: PF2e packs in PF2e worlds, SF2e packs in SF2e worlds, Starfinder Anachronism packs only when active in PF2e worlds, and Pathfinder Anachronism packs only when active in SF2e worlds
+### Charaktererschaffung exportieren und importieren
 
-### Supported Classes
+Über **Export** am unteren Rand des Charaktererschaffungs-Assistenten wird der aktuelle Entwurf als `<Charaktername>-creation-plan.json` gespeichert. Diese Datei enthält die Auswahl des Assistenten, verändert den Charakterbogen aber nicht.
 
-PF2e: Alchemist, Animist, Barbarian, Bard, Champion, Cleric, Commander, Daredevil, Druid, Exemplar, Fighter, Guardian, Gunslinger, Inventor, Investigator, Kineticist, Magus, Monk, Oracle, Psychic, Ranger, Rogue, Slayer, Sorcerer, Summoner, Swashbuckler, Thaumaturge, Witch, Wizard
+So lädst du einen Entwurf wieder:
 
-SF2e: classes are loaded from the active SF2e system compendiums, from Starfinder 2e Anachronism compendiums when that module is active in a PF2e world, or from Pathfinder Anachronism compendiums when that module is active in an SF2e world.
+1. Öffne den Charakter, für den du den Entwurf verwenden möchtest, und starte **Charakter erschaffen**.
+2. Klicke unten im Assistenten auf **Import** und wähle eine zuvor exportierte JSON-Datei aus.
+3. Der importierte Entwurf ersetzt die bisher gespeicherte Auswahl für den aktuell geöffneten Charakter. Prüfe alle Schritte, besonders Inhalte aus zusätzlichen Modulen oder eigenen Kompendien.
+4. Erst wenn du auf der Zusammenfassungsseite die Charaktererschaffung bestätigst, werden Gegenstände und Auswahlmöglichkeiten auf den Charakter angewendet.
 
-### Variant Rules
+Der Import akzeptiert ausschließlich Charaktererschaffungspläne von PF2e Leveler; Stufenpläne verwenden eine andere Importfunktion. Module und Kompendien, aus denen der Entwurf Einträge referenziert, müssen in der Zielwelt aktiv und für den Benutzer zugänglich sein.
 
-- **Free Archetype** — archetype feat slots at every even level; dedication filter unlocks after first dedication is chosen
-- **Ancestral Paragon** — additional ancestry feat at levels 3, 7, 11, 15, and 19
-- **Mythic** — mythic feat slots at every even level
-- **Automatic Bonus Progression (ABP)** — skill potency tracking integrated into planner
-- **Gradual Ability Boosts** — 1 boost per level instead of 4 at milestones; prevents selecting the same ability twice across a 4-level group
+### Sprache auswählen
 
-### Module Settings
+Deutsch ist optional und wird wie jede andere Foundry-Sprache in der Kernkonfiguration des jeweiligen Benutzers ausgewählt. Verfügbar bleiben Deutsch, Englisch, Französisch und Chinesisch.
 
-**World settings (GM only):**
+### Ursprung und Lizenz
 
-| Setting | Description |
-|---|---|
-| Show Plan Button | Show/hide the Level Planner button on character sheets |
-| Auto Apply On Level Up | Automatically prompt to apply plans when a character levels up |
-| Show Prerequisites | Display prerequisite check results in feat pickers |
-| Enforce Prerequisites | Block selecting feats with unmet prerequisites (advisory mode when disabled) |
-| Hide Uncommon Feats | Filter out uncommon feats by default in pickers |
-| Hide Rare Feats | Filter out rare feats by default in pickers |
-| Player Allow Uncommon | Allow players to select uncommon feats |
-| Player Allow Rare | Allow players to select rare feats |
-| Player Allow Unique | Allow players to select unique feats |
-| Starting Wealth Mode | Disabled / Items & Currency / Lump Sum / Custom gold limit |
-| Starting Equipment Gold Limit | Custom gold budget for level-1 equipment (Custom mode) |
-| Ancestral Paragon | Enable the Ancestral Paragon variant rule |
-| Compendium Manager | Select custom feat compendiums to include |
-| Player Compendium Access | Configure per-player access to feat compendiums |
-| Restrict Player Compendium Access | Enable/disable player compendium access restrictions |
-| Content Guidance | GM menu for marking items as Suggested or Disallowed |
+- Ursprüngliches Projekt und Entwickler: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
+- Community-Fork: [Darkiyus/pf2e-leveler](https://github.com/Darkiyus/pf2e-leveler)
+- Lizenz: MIT
 
-**Client settings (per user):**
+Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers.
 
-| Setting | Description |
-|---|---|
-| Feat Sort Method | Sort feats by level (desc/asc) or alphabetically (asc/desc) |
+---
 
-### Localization
+## English
 
-- English and French module locales included
-- Core wizard and planner flows work with localized PF2e data including French translations
-- Post-apply ChoiceSet prompts are handled by the active PF2e/SF2e system and follow its own localization
+### Overview
 
-## Installation
+PF2e Leveler assists with character creation and level-up planning in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition. This fork focuses on responsive interaction, an optional German interface, and better control over campaign-specific content. The internal module ID remains `pf2e-leveler` to preserve existing worlds and settings.
 
-1. In Foundry VTT, go to **Add-on Modules** → **Install Module**
-2. Paste the manifest URL: `https://github.com/roi007leaf/pf2e-leveler/releases/latest/download/module.json`
-3. Click **Install**
-4. Enable the module in your world's module settings
+### What changed – and why?
 
-## Usage
+- **Faster search:** The previous search flow could scan large compendiums and create thousands of DOM elements after a single character. Searches now start at three characters, use a 250 ms debounce, and discard stale asynchronous results. Equipment, feat, and spell pickers render at most 200 result rows at once. Static equipment facets are cached, and multiple spell compendiums load in parallel.
+- **Custom quick-equipment packages:** Game Masters can create reusable packages with a name, image, description, class, level, rarity, and traits. Each package references normal PF2e items, while price and Bulk are calculated automatically from its contents and quantities. This makes complete class loadouts possible instead of exposing only an adventurer's pack.
+- **Heritages in content guidance:** Standard, versatile, mixed-ancestry, world, and module heritages can be suggested, restricted, or banned in the same way as ancestries. This closes a gap in campaign content control.
+- **Clearer ability boosts:** The ability-boost step now explains boosts, ancestry flaws, and the alternate ancestry rule. A live counter also shows how many of the four free boosts remain.
+- **Optional German interface:** German is an additional language, not a replacement. English, French, and Chinese remain available. The German wording follows established PF2e terminology.
+- **Stability fixes:** Queries below the minimum length no longer trigger full list rebuilds. Result lists remain bounded, and an equipment picker that has already been closed is not rendered again after a delayed compendium load completes.
 
-### Character Creation
+Feat, spell, item, and other game-content names and descriptions come from the active PF2e/SF2e compendiums. A matching system or compendium translation is therefore required for translated game content.
 
-1. Create a new character (level 1, no class assigned)
-2. Click the **Create Character** button on the character sheet header
-3. Walk through each step, selecting your choices
-4. Review the summary and click **Create Character**
-5. The PF2e system will prompt for any remaining ChoiceSet selections (subclass options, etc.)
+### Tested environment
 
-### Level-Up Planning
+- Foundry VTT 14, Build 3654
+- Pathfinder Second Edition 8.3.0
 
-1. Open a character with a supported class
-2. Click the **Plan Levels** button on the character sheet header
-3. Click any level in the sidebar to plan choices for that level
-4. Select feats, skills, boosts, and spells
-5. When the character levels up, a confirmation dialog will offer to auto-apply the planned selections
+The manifest continues to support Foundry VTT 13 or newer and PF2e 7.0.0 or newer. The versions above identify the combination that was explicitly tested.
 
-### GM Content Guidance
+### Requirements
 
-1. Go to **Module Settings** → **Configure Suggestions**
-2. Use the search field and filters to find any ancestry, heritage, background, class, skill, or language
-3. Click the star to mark it Suggested, or the X to mark it Disallowed
-4. Players will see the badges and sort order immediately
+- Foundry VTT 13 or newer
+- Pathfinder Second Edition 7.0.0 or newer; alternatively, Starfinder Second Edition 0.0.10 or newer
+- `socketlib` is recommended for reliable review-request delivery
 
-## Requirements
+### Planned feature: homebrew deities
 
-- Foundry VTT v13+
-- PF2e System v7.0.0+ or SF2e System v0.0.10+
-- Optional for mixed Pathfinder/Starfinder PF2e campaigns: Starfinder 2e Anachronism module
-- Optional for mixed Pathfinder/Starfinder SF2e campaigns: Pathfinder Anachronism module
+A separate homebrew deity add-on with PF2e Leveler integration is planned. The intended technical model is a companion Foundry module that provides compatible PF2e `deity` items in a compendium. PF2e Leveler can then use that compendium as a deity source, while standard deities can be removed from the available selection through compendium and content-guidance configuration.
 
-## License
+This is a roadmap item and is **not included in the current version**.
 
-MIT
+### Installation
+
+1. In Foundry VTT, open **Add-on Modules** and select **Install Module**.
+2. Enter this address in the **Manifest URL** field:
+
+   ```text
+   https://github.com/Darkiyus/pf2e-leveler/releases/latest/download/module.json
+   ```
+
+3. Select **Install**, then enable **PF2e Leveler – German Edition & Fixes** in your world.
+
+The manifest URL always points to the latest published version of this fork.
+
+### Exporting and importing character creation
+
+Select **Export** in the footer of the character-creation wizard to save the current draft as `<character-name>-creation-plan.json`. The file contains the wizard selections but does not modify the actor sheet.
+
+To restore a draft:
+
+1. Open the actor that should receive the draft and start **Character Creation**.
+2. Select **Import** in the wizard footer and choose a previously exported JSON file.
+3. The imported draft replaces the saved wizard selections for the currently open actor. Review every step, especially content supplied by add-on modules or custom compendiums.
+4. Items and choices are applied to the actor only after you confirm character creation on the Summary step.
+
+This import accepts PF2e Leveler character-creation plans only; level plans use their separate import function. Any module or compendium referenced by the draft must be active in the target world and accessible to the user.
+
+### Languages
+
+German is optional and can be selected through each user's Foundry core language setting. German, English, French, and Chinese remain available.
+
+### Origin and license
+
+- Original project and developer: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
+- Community fork: [Darkiyus/pf2e-leveler](https://github.com/Darkiyus/pf2e-leveler)
+- License: MIT
+
+This community fork is not an official release by the original developer.

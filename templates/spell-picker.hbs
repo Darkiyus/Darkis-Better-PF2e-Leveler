@@ -27,7 +27,8 @@
       <div class="picker__filter-group picker__filter-group--compact picker__filter-group--search">
         <input type="text" class="picker__search"
                placeholder="{{localize 'PF2E_LEVELER.SPELLS.SEARCH'}}"
-               data-action="searchSpells">
+               data-action="searchSpells"
+               minlength="3">
         {{#if isGM}}
         <button type="button" class="picker__settings-gear" data-action="openContentGuidance"
                 data-tooltip="{{localize 'PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.OPEN_SETTINGS'}}">
@@ -235,7 +236,7 @@
             {{localize "PF2E_LEVELER.SPELLS.ADD_SELECTED"}} <i class="fa-solid fa-arrow-right"></i>
           </button>
           {{/if}}
-          <div class="picker__results-count">{{filteredCount}}</div>
+          <div class="picker__results-count">{{#if capped}}{{renderedCount}}/{{filteredCount}}{{else}}{{filteredCount}}{{/if}}</div>
         </div>
       </div>
 
@@ -284,6 +285,9 @@
           <p>{{localize "PF2E_LEVELER.SPELLS.NO_RESULTS"}}</p>
         </div>
         {{/each}}
+        {{#if capped}}
+        <div class="item-picker__cap-notice">{{localize "PF2E_LEVELER.ITEM_PICKER.SHOWING_PARTIAL"}} {{renderedCount}} / {{filteredCount}}</div>
+        {{/if}}
       </div>
     </section>
   </div>

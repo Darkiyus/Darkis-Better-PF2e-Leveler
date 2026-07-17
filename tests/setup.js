@@ -21,6 +21,7 @@ global.game = {
           hideUncommonFeats: false,
           featSortMethod: 'LEVEL_DESC',
           customCompendiums: {},
+          quickEquipmentPackages: [],
           additionalFeatCompendiums: '',
         },
         pf2e: {

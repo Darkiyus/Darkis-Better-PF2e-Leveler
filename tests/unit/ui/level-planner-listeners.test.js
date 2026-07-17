@@ -239,6 +239,7 @@ describe('Level planner skill increase listeners', () => {
   });
 
   it('filters intelligence bonus languages by label or slug without rerendering', () => {
+    jest.useFakeTimers();
     document.body.innerHTML = `
       <div class="level-section">
         <input type="text" data-action="searchIntBonusLanguages">
@@ -257,6 +258,7 @@ describe('Level planner skill increase listeners', () => {
     const search = document.querySelector('[data-action="searchIntBonusLanguages"]');
     search.value = 'dra';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    jest.runOnlyPendingTimers();
 
     expect(document.querySelector('[data-language="draconic"]').hidden).toBe(false);
     expect(document.querySelector('[data-language="elven"]').hidden).toBe(true);
@@ -265,9 +267,11 @@ describe('Level planner skill increase listeners', () => {
 
     search.value = 'under';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    jest.runOnlyPendingTimers();
 
     expect(document.querySelector('[data-language="draconic"]').hidden).toBe(true);
     expect(document.querySelector('[data-language="undercommon"]').hidden).toBe(false);
+    jest.useRealTimers();
   });
 
   it('uses same-level planned feat skill rank rules when selecting a skill increase', () => {

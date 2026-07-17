@@ -13,7 +13,8 @@
       <div class="picker__filter-group picker__filter-group--compact picker__filter-group--search">
         <input type="text" class="picker__search"
                placeholder="{{localize 'PF2E_LEVELER.FEAT_PICKER.SEARCH'}}"
-               data-action="searchFeats">
+               data-action="searchFeats"
+               minlength="3">
         {{#if isGM}}
         <button type="button" class="picker__settings-gear" data-action="openContentGuidance"
                 data-tooltip="{{localize 'PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.OPEN_SETTINGS'}}">
@@ -248,7 +249,7 @@
             {{localize "PF2E_LEVELER.FEAT_PICKER.ADD_SELECTED"}} <i class="fa-solid fa-arrow-right"></i>
           </button>
           {{/if}}
-          <div class="picker__results-count">{{filteredCount}}</div>
+          <div class="picker__results-count">{{#if capped}}{{renderedCount}}/{{filteredCount}}{{else}}{{filteredCount}}{{/if}}</div>
         </div>
       </div>
 
@@ -311,7 +312,7 @@
               <i class="fa-solid fa-comment"></i>
             </button>
             {{#if this.alreadyTaken}}
-              <button type="button" class="feat-option__select-btn" disabled data-tooltip="{{#if this.takenAtLevel}}Taken at level {{this.takenAtLevel}} - {{/if}}{{localize 'PF2E_LEVELER.FEAT_PICKER.ALREADY_TAKEN'}}">Taken</button>
+              <button type="button" class="feat-option__select-btn" disabled data-tooltip="{{#if this.takenAtLevel}}{{format 'PF2E_LEVELER.FEAT_PICKER.TAKEN_AT_LEVEL' level=this.takenAtLevel}} - {{/if}}{{localize 'PF2E_LEVELER.FEAT_PICKER.ALREADY_TAKEN'}}">{{localize "PF2E_LEVELER.FEAT_PICKER.TAKEN"}}</button>
             {{else}}
               <button type="button" class="feat-option__select-btn" data-action="selectFeat" data-uuid="{{this.uuid}}" {{#if this.selectionBlocked}}disabled{{/if}} data-tooltip="{{#if this.guidanceSelectionBlocked}}{{this.guidanceSelectionTooltip}}{{else if this.selectionBlocked}}{{localize 'PF2E_LEVELER.FEAT_PICKER.PREREQ_UNMET_BLOCKED'}}{{else if this.hasUnknownPrerequisites}}{{localize 'PF2E_LEVELER.FEAT_PICKER.PREREQ_UNVERIFIED_HINT'}}{{else if this.isDisallowed}}{{this.guidanceSelectionTooltip}}{{/if}}">
                 {{#if ../multiSelect}}
@@ -334,6 +335,9 @@
           <p>{{localize "PF2E_LEVELER.FEAT_PICKER.NO_RESULTS"}}</p>
         </div>
         {{/each}}
+        {{#if capped}}
+        <div class="item-picker__cap-notice">{{localize "PF2E_LEVELER.ITEM_PICKER.SHOWING_PARTIAL"}} {{renderedCount}} / {{filteredCount}}</div>
+        {{/if}}
       </div>
     </section>
   </div>

@@ -16,7 +16,7 @@ export class WizardHandler extends CasterBaseHandler {
 
   getExtraSteps() {
     return [
-      { id: 'thesis', label: 'Arcane Thesis', visible: () => true },
+      { id: 'thesis', label: this.localize('CREATION.WIZARD.ARCANE_THESIS', 'Arcane Thesis'), visible: () => true },
     ];
   }
 

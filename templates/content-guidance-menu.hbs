@@ -47,6 +47,7 @@
           class="compendium-manager__packSearch"
           placeholder="{{searchPlaceholder}}"
           value="{{searchText}}"
+          minlength="3"
           data-action="search-guidance">
       </header>
 
@@ -251,7 +252,7 @@
                 <span class="tag tag--rarity-{{this.rarity}} tag--tiny">{{this.rarity}}</span>
                 {{/if}}
                 {{#if this.level}}
-                <span class="tag tag--muted tag--tiny">Lv {{this.level}}</span>
+                    <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.FEAT_PICKER.LEVEL" level=this.level}}</span>
                 {{/if}}
                 {{#if this.matchedCount}}
                 <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.MATCHED_COUNT" count=this.matchedCount}}</span>
@@ -319,7 +320,7 @@
               <span class="tag tag--rarity-{{this.rarity}} tag--tiny">{{this.rarity}}</span>
               {{/if}}
               {{#if this.level}}
-              <span class="tag tag--muted tag--tiny">Lv {{this.level}}</span>
+                    <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.FEAT_PICKER.LEVEL" level=this.level}}</span>
               {{/if}}
               {{#if this.matchedCount}}
               <span class="tag tag--muted tag--tiny">{{format "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.MATCHED_COUNT" count=this.matchedCount}}</span>

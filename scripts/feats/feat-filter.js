@@ -91,8 +91,11 @@ function checkNotDuplicate(feat, seen) {
 
 export function filterBySearch(feats, searchText) {
   if (!searchText) return feats;
-  const lower = searchText.toLowerCase();
-  return feats.filter((feat) => feat.name.toLowerCase().includes(lower));
+  const lower = searchText.toLocaleLowerCase();
+  return feats.filter((feat) => {
+    feat._levelerSearchName ??= String(feat.name ?? '').toLocaleLowerCase();
+    return feat._levelerSearchName.includes(lower);
+  });
 }
 
 export function filterByRarity(feats, hideUncommon) {
