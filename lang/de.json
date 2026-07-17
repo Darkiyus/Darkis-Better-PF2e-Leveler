@@ -1,6 +1,13 @@
 {
   "PF2E_LEVELER": {
     "MODULE_TITLE": "PF2e Leveler",
+    "KEYBINDINGS": {
+      "OPEN_LEVELER": {
+        "NAME": "PF2e Leveler öffnen",
+        "HINT": "Öffnet den Stufenplaner für einen ausgewählten Token oder deinen zugewiesenen Charakter."
+      },
+      "NO_ACTOR": "Wähle einen eigenen Charakter-Token aus oder weise deinem Benutzer zuerst einen Charakter zu."
+    },
     "UI": {
       "OPEN_PLANNER": "Stufen planen",
       "LEVEL": "Stufe {level}",

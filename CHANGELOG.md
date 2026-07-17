@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.8.1 – Upstream Issue Fixes
+
+### Fixed
+
+- German localized proficiency prerequisites such as `Geübt in Athletik` and `Experte in Heilkunde` are parsed against the correct PF2e skills and retain their original casing in the UI ([upstream #91](https://github.com/roi007leaf/pf2e-leveler/issues/91))
+- Ancestry prerequisites and homebrew heritage aliases can be evaluated together, covering ancestry/heritage combinations such as Android with Hellforge Android ([upstream #91](https://github.com/roi007leaf/pf2e-leveler/issues/91))
+- The Time Oracle's Advanced Revelation now grants Time Skip; Manifold Lives is correctly reserved for Greater Revelation ([upstream #90](https://github.com/roi007leaf/pf2e-leveler/issues/90))
+- Advanced Revelation remains a normal Oracle class feat and no longer risks being treated as an Advanced multiclass feat picker
+- Actor-sheet launch controls explicitly remain visible under competing sheet themes and UI modules ([upstream #59](https://github.com/roi007leaf/pf2e-leveler/issues/59))
+
+### Added
+
+- Editable **Shift+L** Foundry keybinding as an alternative Leveler launcher for one selected token, the user's assigned character, or the only available owned character
+- English, German, French, and Simplified Chinese localization for the launcher keybinding and its guidance
+
 ## 3.8.0 – GM Setup, Heritage Controls & Smooth Navigation
 
 ### Added
