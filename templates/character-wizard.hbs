@@ -1806,6 +1806,22 @@
 
     {{else if (eq stepId "summary")}}
       <h2>{{localize "PF2E_LEVELER.CREATION.STEPS.SUMMARY"}}</h2>
+      {{#if campaignPolicy}}
+      <section class="wizard-campaign-policy">
+        <header>
+          <h3><i class="fa-solid fa-shield-halved"></i> {{campaignPolicy.title}}</h3>
+          <p>{{campaignPolicy.hint}}</p>
+        </header>
+        <div class="wizard-campaign-policy__grid">
+          {{#each campaignPolicy.rows}}
+          <div class="wizard-campaign-policy__row">
+            <span>{{label}}</span>
+            <span class="tag {{#if active}}tag--success{{else}}tag--muted{{/if}}">{{value}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
       <div class="wizard-summary">
         {{#if data.ancestry}}
         <div class="wizard-summary__row">

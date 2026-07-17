@@ -1,0 +1,172 @@
+<section class="setup-wizard">
+  <aside class="setup-wizard__sidebar">
+    <div class="setup-wizard__brand">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span>{{localize "PF2E_LEVELER.SETUP.SIDEBAR_TITLE"}}</span>
+    </div>
+    <nav class="setup-wizard__steps">
+      {{#each steps}}
+      <button type="button" class="setup-wizard__step {{#if active}}is-active{{/if}} {{#if complete}}is-complete{{/if}}" data-action="go-step" data-step="{{index}}">
+        <span class="setup-wizard__stepIcon">{{#if complete}}<i class="fa-solid fa-check"></i>{{else}}{{index}}{{/if}}</span>
+        <span>{{label}}</span>
+      </button>
+      {{/each}}
+    </nav>
+  </aside>
+
+  <main class="setup-wizard__main">
+    <div class="setup-wizard__content">
+      {{#if isWelcome}}
+      <section class="setup-wizard__page">
+        <div class="setup-wizard__heroIcon"><i class="fa-solid fa-shield-halved"></i></div>
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.WELCOME_EYEBROW"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.WELCOME_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.WELCOME_BODY"}}</p>
+        <div class="setup-wizard__environment">
+          <span class="tag tag--info">Foundry {{foundryVersion}}</span>
+          <span class="tag tag--info">{{systemName}} {{systemVersion}}</span>
+        </div>
+        <div class="setup-wizard__notice"><i class="fa-solid fa-rotate"></i><span>{{localize "PF2E_LEVELER.SETUP.REVERSIBLE_HINT"}}</span></div>
+      </section>
+      {{/if}}
+
+      {{#if isLanguage}}
+      <section class="setup-wizard__page">
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.STEPS.LANGUAGE"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.LANGUAGE_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.LANGUAGE_BODY"}}</p>
+        <div class="setup-wizard__choiceGrid">
+          {{#each languages}}
+          <button type="button" class="setup-wizard__choice {{#if selected}}is-selected{{/if}}" data-action="select-language" data-language="{{value}}">
+            <i class="fa-solid fa-language"></i>
+            <span>{{label}}</span>
+            {{#if selected}}<i class="fa-solid fa-check"></i>{{/if}}
+          </button>
+          {{/each}}
+        </div>
+        <div class="setup-wizard__notice"><i class="fa-solid fa-circle-info"></i><span>{{localize "PF2E_LEVELER.SETUP.LANGUAGE_GLOBAL_HINT"}}</span></div>
+      </section>
+      {{/if}}
+
+      {{#if isContent}}
+      <section class="setup-wizard__page">
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.STEPS.CONTENT"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.CONTENT_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.CONTENT_BODY"}}</p>
+        <div class="setup-wizard__presetGrid">
+          {{#each presets}}
+          <button type="button" class="setup-wizard__preset {{#if active}}is-selected{{/if}}" data-action="apply-preset" data-preset="{{key}}">
+            <strong>{{label}}</strong>
+            <span>{{hint}}</span>
+          </button>
+          {{/each}}
+        </div>
+        <div class="setup-wizard__settingsGrid">
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="playerAllowUncommon" data-namespace="module" {{#if moduleSettings.playerAllowUncommon}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.ALLOW_UNCOMMON"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.ALLOW_UNCOMMON_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="playerAllowRare" data-namespace="module" {{#if moduleSettings.playerAllowRare}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.ALLOW_RARE"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.ALLOW_RARE_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="playerAllowUnique" data-namespace="module" {{#if moduleSettings.playerAllowUnique}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.ALLOW_UNIQUE"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.ALLOW_UNIQUE_HINT"}}</small></span></label>
+          <label class="setup-wizard__field"><span>{{localize "PF2E_LEVELER.SETUP.DISALLOWED_MODE"}}</span><select data-setting="playerDisallowedContentMode" data-namespace="module"><option value="unselectable" {{#if (eq moduleSettings.playerDisallowedContentMode "unselectable")}}selected{{/if}}>{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_DISALLOWED_MODE.UNSELECTABLE"}}</option><option value="hidden" {{#if (eq moduleSettings.playerDisallowedContentMode "hidden")}}selected{{/if}}>{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_DISALLOWED_MODE.HIDDEN"}}</option></select></label>
+        </div>
+        <div class="setup-wizard__actionsRow">
+          <button type="button" data-action="open-guidance"><i class="fa-solid fa-star"></i>{{localize "PF2E_LEVELER.SETUP.OPEN_GUIDANCE"}}</button>
+          <button type="button" data-action="open-compendiums"><i class="fa-solid fa-atlas"></i>{{localize "PF2E_LEVELER.SETUP.OPEN_COMPENDIUMS"}}</button>
+          <button type="button" data-action="open-player-compendiums"><i class="fa-solid fa-users"></i>{{localize "PF2E_LEVELER.SETUP.OPEN_PLAYER_COMPENDIUMS"}}</button>
+        </div>
+      </section>
+      {{/if}}
+
+      {{#if isRules}}
+      <section class="setup-wizard__page">
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.STEPS.RULES"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.RULES_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.RULES_BODY"}}</p>
+        <div class="setup-wizard__settingsGrid">
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="showPrerequisites" data-namespace="module" {{#if moduleSettings.showPrerequisites}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.SHOW_PREREQUISITES"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.SHOW_PREREQUISITES_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="enforcePrerequisites" data-namespace="module" {{#if moduleSettings.enforcePrerequisites}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.ENFORCE_PREREQUISITES"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.ENFORCE_PREREQUISITES_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="ancestralParagon" data-namespace="module" {{#if moduleSettings.ancestralParagon}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.ANCESTRAL_PARAGON"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.RELOAD_SETTING_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="enableDualClassSupport" data-namespace="module" {{#if moduleSettings.enableDualClassSupport}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.DUAL_CLASS"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.RELOAD_SETTING_HINT"}}</small></span></label>
+        </div>
+        {{#if isPf2e}}
+        <h3>{{localize "PF2E_LEVELER.SETUP.PF2E_RULES_TITLE"}}</h3>
+        <div class="setup-wizard__settingsGrid">
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="freeArchetypeVariant" data-namespace="system" {{#if systemSettings.freeArchetypeVariant}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.FREE_ARCHETYPE"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.SYSTEM_SETTING_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="gradualBoostsVariant" data-namespace="system" {{#if systemSettings.gradualBoostsVariant}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.GRADUAL_BOOSTS"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.SYSTEM_SETTING_HINT"}}</small></span></label>
+          <label class="setup-wizard__field"><span>{{localize "PF2E_LEVELER.SETUP.AUTOMATIC_BONUS"}}</span><select data-setting="automaticBonusVariant" data-namespace="system"><option value="noABP" {{#if (eq systemSettings.automaticBonusVariant "noABP")}}selected{{/if}}>{{localize "PF2E_LEVELER.SETUP.ABP_OFF"}}</option><option value="ABPFundamentalPotency" {{#if (eq systemSettings.automaticBonusVariant "ABPFundamentalPotency")}}selected{{/if}}>{{localize "PF2E_LEVELER.SETUP.ABP_FUNDAMENTAL"}}</option><option value="ABPRulesAsWritten" {{#if (eq systemSettings.automaticBonusVariant "ABPRulesAsWritten")}}selected{{/if}}>{{localize "PF2E_LEVELER.SETUP.ABP_RAW"}}</option></select></label>
+        </div>
+        {{else}}
+        <div class="setup-wizard__notice"><i class="fa-solid fa-circle-info"></i><span>{{localize "PF2E_LEVELER.SETUP.PF2E_ONLY_HINT"}}</span></div>
+        {{/if}}
+      </section>
+      {{/if}}
+
+      {{#if isWorkflow}}
+      <section class="setup-wizard__page">
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.STEPS.WORKFLOW"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.WORKFLOW_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.WORKFLOW_BODY"}}</p>
+        <div class="setup-wizard__settingsGrid">
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="enableReviewRequests" data-namespace="module" {{#if moduleSettings.enableReviewRequests}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.REVIEW_REQUESTS"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.REVIEW_REQUESTS_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="requireReviewApproval" data-namespace="module" {{#if moduleSettings.requireReviewApproval}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.REQUIRE_APPROVAL"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.REQUIRE_APPROVAL_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="restrictPlayerCompendiumAccess" data-namespace="module" {{#if moduleSettings.restrictPlayerCompendiumAccess}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.RESTRICT_PACKS"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.RESTRICT_PACKS_HINT"}}</small></span></label>
+          <label class="setup-wizard__toggle"><input type="checkbox" data-setting="allowIncompleteCreation" data-namespace="module" {{#if moduleSettings.allowIncompleteCreation}}checked{{/if}}><span><strong>{{localize "PF2E_LEVELER.SETUP.ALLOW_INCOMPLETE"}}</strong><small>{{localize "PF2E_LEVELER.SETUP.ALLOW_INCOMPLETE_HINT"}}</small></span></label>
+        </div>
+        <div class="setup-wizard__actionsRow">
+          <button type="button" data-action="open-player-compendiums"><i class="fa-solid fa-users"></i>{{localize "PF2E_LEVELER.SETUP.OPEN_PLAYER_COMPENDIUMS"}}</button>
+          <button type="button" data-action="open-equipment-packages"><i class="fa-solid fa-box-open"></i>{{localize "PF2E_LEVELER.SETUP.OPEN_EQUIPMENT_PACKAGES"}}</button>
+        </div>
+      </section>
+      {{/if}}
+
+      {{#if isDiagnostics}}
+      <section class="setup-wizard__page">
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.STEPS.DIAGNOSTICS"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.DIAGNOSTICS_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.DIAGNOSTICS_BODY"}}</p>
+        <div class="setup-wizard__actionsRow">
+          <button type="button" data-action="run-diagnostics" {{#if isRunningDiagnostics}}disabled{{/if}}><i class="fa-solid {{#if isRunningDiagnostics}}fa-spinner fa-spin{{else}}fa-stethoscope{{/if}}"></i>{{localize "PF2E_LEVELER.SETUP.RUN_DIAGNOSTICS"}}</button>
+          <button type="button" data-action="clear-caches"><i class="fa-solid fa-broom"></i>{{localize "PF2E_LEVELER.SETUP.CLEAR_CACHES"}}</button>
+        </div>
+        {{#if diagnostics}}
+        <div class="setup-wizard__diagnostics">
+          {{#each diagnostics}}
+          <div class="setup-wizard__diagnostic setup-wizard__diagnostic--{{level}}"><i class="fa-solid {{icon}}"></i><span>{{message}}</span></div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="setup-wizard__empty">{{localize "PF2E_LEVELER.SETUP.DIAGNOSTICS_EMPTY"}}</div>
+        {{/if}}
+      </section>
+      {{/if}}
+
+      {{#if isSummary}}
+      <section class="setup-wizard__page">
+        <p class="setup-wizard__eyebrow">{{localize "PF2E_LEVELER.SETUP.STEPS.SUMMARY"}}</p>
+        <h2>{{localize "PF2E_LEVELER.SETUP.SUMMARY_TITLE"}}</h2>
+        <p>{{localize "PF2E_LEVELER.SETUP.SUMMARY_BODY"}}</p>
+        <div class="setup-wizard__summaryGrid">
+          <div><strong>{{guidanceCount}}</strong><span>{{localize "PF2E_LEVELER.SETUP.SUMMARY_GUIDANCE"}}</span></div>
+          <div><strong>{{customPackCount}}</strong><span>{{localize "PF2E_LEVELER.SETUP.SUMMARY_PACKS"}}</span></div>
+          <div><strong>{{quickPackageCount}}</strong><span>{{localize "PF2E_LEVELER.SETUP.SUMMARY_EQUIPMENT"}}</span></div>
+        </div>
+        <div class="setup-wizard__actionsRow">
+          <button type="button" data-action="export-profile"><i class="fa-solid fa-file-export"></i>{{localize "PF2E_LEVELER.SETUP.EXPORT_PROFILE"}}</button>
+          <button type="button" data-action="import-profile"><i class="fa-solid fa-file-import"></i>{{localize "PF2E_LEVELER.SETUP.IMPORT_PROFILE"}}</button>
+        </div>
+        {{#if reloadRequired}}<div class="setup-wizard__notice setup-wizard__notice--warning"><i class="fa-solid fa-rotate"></i><span>{{localize "PF2E_LEVELER.SETUP.RELOAD_REQUIRED"}}</span></div>{{/if}}
+      </section>
+      {{/if}}
+    </div>
+
+    <footer class="setup-wizard__footer">
+      <button type="button" class="setup-wizard__skip" data-action="skip" {{#if isSaving}}disabled{{/if}}>{{localize "PF2E_LEVELER.SETUP.SKIP"}}</button>
+      <div>
+        <button type="button" data-action="previous" {{#if isFirst}}disabled{{/if}}><i class="fa-solid fa-arrow-left"></i>{{localize "PF2E_LEVELER.SETUP.BACK"}}</button>
+        {{#if isLast}}
+        <button type="button" class="setup-wizard__primary" data-action="finish" {{#if isSaving}}disabled{{/if}}><i class="fa-solid {{#if isSaving}}fa-spinner fa-spin{{else}}fa-check{{/if}}"></i>{{localize "PF2E_LEVELER.SETUP.FINISH"}}</button>
+        {{else}}
+        <button type="button" class="setup-wizard__primary" data-action="next">{{localize "PF2E_LEVELER.SETUP.NEXT"}}<i class="fa-solid fa-arrow-right"></i></button>
+        {{/if}}
+      </div>
+    </footer>
+  </main>
+</section>

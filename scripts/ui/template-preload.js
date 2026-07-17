@@ -14,6 +14,9 @@ export async function ensureLevelerTemplatesLoaded() {
     levelDetail: `modules/${MODULE_ID}/templates/partials/level-detail.hbs`,
     alchemistPanel: `modules/${MODULE_ID}/templates/partials/alchemist-panel.hbs`,
     animistPanel: `modules/${MODULE_ID}/templates/partials/animist-panel.hbs`,
+    gmSetupWizard: `modules/${MODULE_ID}/templates/gm-setup-wizard.hbs`,
+    contentGuidanceMenu: `modules/${MODULE_ID}/templates/content-guidance-menu.hbs`,
+    compendiumSettings: `modules/${MODULE_ID}/templates/compendium-settings.hbs`,
   };
 
   templatePreloadPromise = foundry.applications.handlebars.loadTemplates(partials);

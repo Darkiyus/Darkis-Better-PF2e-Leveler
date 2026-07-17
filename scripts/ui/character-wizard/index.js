@@ -140,6 +140,16 @@ function normalizeSanctificationSelection(value) {
 const HANDLER_STEP_IDS = new Set(['deity', 'sanctification', 'divineFont', 'implement', 'tactics', 'ikons', 'innovationDetails', 'kineticGate', 'subconsciousMind', 'thesis', 'apparitions']);
 const WIZARD_WINDOW_SELECTORS = ['#pf2e-leveler-wizard', '.pf2e-leveler.character-wizard'];
 
+function waitForBrowserIdle() {
+  return new Promise((resolve) => {
+    if (typeof globalThis.requestIdleCallback === 'function') {
+      globalThis.requestIdleCallback(() => resolve(), { timeout: 1200 });
+      return;
+    }
+    setTimeout(resolve, 32);
+  });
+}
+
 function getActorSheetSelectors(actor) {
   const actorId = String(actor?.id ?? '').trim();
   return actorId ? [`#CharacterSheetPF2e-Actor-${cssIdentifierEscape(actorId)}`] : [];
@@ -185,6 +195,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     this._cachedRequiredClassBoostSelections = 0;
     this._cachedBoostStepComplete = null;
     this._cachedFeatGrantRequirements = [];
+    this._derivedStatePromise = null;
+    this._preloadPromise = null;
     this._shouldBringToFrontOnRender = true;
     this._focusAnchorElement = null;
   }
@@ -262,9 +274,17 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   _preloadCompendiums() {
-    ['feats', 'spells', 'classFeatures', 'ancestries', 'backgrounds', 'classes'].forEach((category) => {
-      this._loadCompendiumCategory(category);
-    });
+    if (this._preloadPromise) return this._preloadPromise;
+    const categories = ['heritages', 'backgrounds', 'classes', 'deities', 'classFeatures', 'feats', 'spells', 'equipment'];
+    this._preloadPromise = (async () => {
+      for (const category of categories) {
+        await waitForBrowserIdle();
+        await this._loadCompendiumCategory(category).catch((error) => {
+          console.warn(`${MODULE_ID} | Failed to preload ${category}`, error);
+        });
+      }
+    })();
+    return this._preloadPromise;
   }
 
   static DEFAULT_OPTIONS = {
@@ -404,29 +424,21 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _prepareContext() {
-    await this._ensureClassMetadata();
-    await this._ensureDualClassMetadata();
-    await this._backfillSubclassChoiceCurricula();
-    this._cachedHasClassFeatAtLevel1 = this.data.class?.uuid ? await this._hasClassFeatAtLevel1() : false;
-    this._cachedHasDualClassFeatAtLevel1 = this.data.dualClass?.uuid ? await this._hasClassFeatAtLevel1('dualClass') : false;
-    this._cachedRequiredClassBoostSelections = await this._getRequiredClassBoostSelections();
-    this._cachedBoostStepComplete = await this._computeBoostStepComplete();
-    this._cachedFeatGrantRequirements = await this._buildFeatGrantRequirements();
-    const extraSteps = this._getStepHandlers().flatMap((entry) => entry.steps);
-    const extraLabels = {
-      featChoices: localize('CREATION.FEAT_CHOICES'),
-      mixedAncestry: localize('CREATION.STEPS.MIXED_ANCESTRY'),
-      ...Object.fromEntries(extraSteps.filter((s) => s.label).map((s) => [s.id, s.label])),
-    };
-    const steps = this.visibleSteps.map((id) => ({
-      id,
-      label: extraLabels[id] ?? localize(`CREATION.STEPS.${id.toUpperCase()}`),
-      active: STEPS.indexOf(id) === this.currentStep,
-      complete: this._isStepComplete(id),
-      index: STEPS.indexOf(id),
-    }));
-
     if (this._isBooting) {
+      this._cachedBoostStepComplete = await this._computeBoostStepComplete();
+      const extraSteps = this._getStepHandlers().flatMap((entry) => entry.steps);
+      const extraLabels = {
+        featChoices: localize('CREATION.FEAT_CHOICES'),
+        mixedAncestry: localize('CREATION.STEPS.MIXED_ANCESTRY'),
+        ...Object.fromEntries(extraSteps.filter((s) => s.label).map((s) => [s.id, s.label])),
+      };
+      const steps = this.visibleSteps.map((id) => ({
+        id,
+        label: extraLabels[id] ?? localize(`CREATION.STEPS.${id.toUpperCase()}`),
+        active: STEPS.indexOf(id) === this.currentStep,
+        complete: this._isStepComplete(id),
+        index: STEPS.indexOf(id),
+      }));
       return {
         steps,
         stepId: this.stepId,
@@ -446,11 +458,21 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       };
     }
 
-    if (this._featChoiceDataDirty) {
-      await this._refreshAllFeatChoiceData();
-    }
-    this._cachedMaxLanguages = await this._getAdditionalLanguageCount();
-    this._cachedMaxSkills = await this._getAdditionalSkillCount();
+    await this._prepareDerivedState();
+    const extraSteps = this._getStepHandlers().flatMap((entry) => entry.steps);
+    const extraLabels = {
+      featChoices: localize('CREATION.FEAT_CHOICES'),
+      mixedAncestry: localize('CREATION.STEPS.MIXED_ANCESTRY'),
+      ...Object.fromEntries(extraSteps.filter((s) => s.label).map((s) => [s.id, s.label])),
+    };
+    const steps = this.visibleSteps.map((id) => ({
+      id,
+      label: extraLabels[id] ?? localize(`CREATION.STEPS.${id.toUpperCase()}`),
+      active: STEPS.indexOf(id) === this.currentStep,
+      complete: this._isStepComplete(id),
+      index: STEPS.indexOf(id),
+    }));
+
     const allComplete = this.visibleSteps.filter((s) => s !== 'summary').every((s) => this._isStepComplete(s));
     const canApplyCreation = allComplete || game.settings.get(MODULE_ID, 'allowIncompleteCreation');
 
@@ -472,6 +494,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       browserStep.backgroundAttributeLogic = this._backgroundAttributeFilterLogic;
     }
     const applyOverlay = this.isApplying ? await this._buildApplyOverlayContext() : {};
+    const campaignPolicy = this.stepId === 'summary' ? this._buildCampaignPolicyContext() : null;
 
     return {
       steps,
@@ -492,8 +515,59 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       showGlobalPublicationFilter: publicationOptions.length > 0 && !browserStep,
       enableReviewRequests: isReviewFeatureActive(),
       isGM: game.user?.isGM === true,
+      campaignPolicy,
       ...applyOverlay,
       ...stepContext,
+    };
+  }
+
+  async _prepareDerivedState() {
+    if (this._derivedStatePromise) return this._derivedStatePromise;
+    this._derivedStatePromise = (async () => {
+    await this._ensureClassMetadata();
+    await this._ensureDualClassMetadata();
+    await this._backfillSubclassChoiceCurricula();
+    if (this._featChoiceDataDirty) {
+      await this._refreshAllFeatChoiceData();
+    }
+    this._cachedHasClassFeatAtLevel1 = this.data.class?.uuid ? await this._hasClassFeatAtLevel1() : false;
+    this._cachedHasDualClassFeatAtLevel1 = this.data.dualClass?.uuid ? await this._hasClassFeatAtLevel1('dualClass') : false;
+    this._cachedRequiredClassBoostSelections = await this._getRequiredClassBoostSelections();
+    this._cachedBoostStepComplete = await this._computeBoostStepComplete();
+    this._cachedFeatGrantRequirements = await this._buildFeatGrantRequirements();
+    this._cachedMaxLanguages = await this._getAdditionalLanguageCount();
+    this._cachedMaxSkills = await this._getAdditionalSkillCount();
+    })().catch((error) => {
+      this._derivedStatePromise = null;
+      throw error;
+    });
+    return this._derivedStatePromise;
+  }
+
+  _invalidateDerivedState() {
+    this._derivedStatePromise = null;
+  }
+
+  _buildCampaignPolicyContext() {
+    const enabled = game.i18n.localize('PF2E_LEVELER.SETUP.ENABLED');
+    const disabled = game.i18n.localize('PF2E_LEVELER.SETUP.DISABLED');
+    const booleanRow = (labelKey, value) => ({
+      label: game.i18n.localize(labelKey),
+      value: value ? enabled : disabled,
+      active: value === true,
+    });
+    return {
+      title: game.i18n.localize('PF2E_LEVELER.SETUP.CAMPAIGN_POLICY_TITLE'),
+      hint: game.i18n.localize('PF2E_LEVELER.SETUP.CAMPAIGN_POLICY_HINT'),
+      rows: [
+        booleanRow('PF2E_LEVELER.SETUP.ALLOW_UNCOMMON', game.settings.get(MODULE_ID, 'playerAllowUncommon')),
+        booleanRow('PF2E_LEVELER.SETUP.ALLOW_RARE', game.settings.get(MODULE_ID, 'playerAllowRare')),
+        booleanRow('PF2E_LEVELER.SETUP.ALLOW_UNIQUE', game.settings.get(MODULE_ID, 'playerAllowUnique')),
+        booleanRow('PF2E_LEVELER.SETUP.RESTRICT_PACKS', game.settings.get(MODULE_ID, 'restrictPlayerCompendiumAccess')),
+        booleanRow('PF2E_LEVELER.SETUP.REVIEW_REQUESTS', game.settings.get(MODULE_ID, 'enableReviewRequests')),
+        booleanRow('PF2E_LEVELER.SETUP.DUAL_CLASS', game.settings.get(MODULE_ID, 'enableDualClassSupport')),
+        booleanRow('PF2E_LEVELER.SETUP.FREE_ARCHETYPE', game.system?.id === 'pf2e' && game.settings.get('pf2e', 'freeArchetypeVariant')),
+      ],
     };
   }
 
@@ -535,9 +609,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         await new Promise((resolve) => setTimeout(resolve, 0));
         await this._recoverCreationDataFromActor();
         await this._normalizeLegacyMixedAncestrySelection();
+        this._invalidateDerivedState();
         this._isBooting = false;
         await this.render({ force: true, parts: ['wizard'] });
-        setTimeout(() => this._preloadCompendiums(), 0);
+        this._preloadCompendiums();
       })
       .catch((error) => {
         console.error(`${MODULE_ID} | Failed to bootstrap character wizard`, error);
@@ -1758,6 +1833,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   async _saveAndRender() {
     this._captureWizardScroll();
     this._applyPromptRowsCache = null;
+    this._invalidateDerivedState();
     await saveCreationData(this.actor, this.data);
     await this.render({ force: true, parts: ['wizard'] });
   }
@@ -1809,6 +1885,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         this._featChoiceDataDirty = !this._hasReusableFeatChoiceData(this.data);
         if (sanitizedDisabledDualClassState) this._featChoiceDataDirty = true;
         this._applyPromptRowsCache = null;
+        this._invalidateDerivedState();
         await saveCreationData(this.actor, this.data);
         ui.notifications.info(localize('NOTIFICATIONS.CREATION_IMPORTED'));
         this.render(true);

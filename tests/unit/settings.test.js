@@ -123,4 +123,26 @@ describe('registerSettings', () => {
       icon: 'fas fa-box-open',
     }));
   });
+
+  test('registers the optional GM setup wizard and completion flag', () => {
+    registerSettings();
+
+    const menuRegistration = game.settings.registerMenu.mock.calls.find(
+      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'gmSetupWizardMenu',
+    );
+    const completedRegistration = game.settings.register.mock.calls.find(
+      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'gmSetupCompleted',
+    );
+
+    expect(menuRegistration?.[2]).toEqual(expect.objectContaining({
+      restricted: true,
+      icon: 'fas fa-wand-magic-sparkles',
+    }));
+    expect(completedRegistration?.[2]).toEqual(expect.objectContaining({
+      scope: 'world',
+      config: false,
+      type: Boolean,
+      default: false,
+    }));
+  });
 });

@@ -10,9 +10,48 @@ import {
 } from '../../system-support/profiles.js';
 
 let compendiumCacheVersion = 0;
+const sharedCompendiumCache = new Map();
+const sharedCompendiumRequests = new Map();
+
+const COMPENDIUM_INDEX_FIELDS = [
+  'img',
+  'type',
+  'slug',
+  'system.slug',
+  'system.publication.title',
+  'system.description.value',
+  'system.traits.value',
+  'system.traits.otherTags',
+  'system.traits.traditions',
+  'system.traits.rarity',
+  'system.traditions.value',
+  'system.level.value',
+  'system.category',
+  'system.ancestry.slug',
+  'system.usage.value',
+  'system.range',
+  'system.damage',
+  'system.trainedSkills.value',
+  'system.boosts',
+  'system.font',
+  'system.sanctification',
+  'system.domains',
+  'system.skill',
+  'system.keyAbility',
+];
 
 export function invalidateCharacterWizardCompendiumCaches() {
   compendiumCacheVersion += 1;
+  sharedCompendiumCache.clear();
+  sharedCompendiumRequests.clear();
+}
+
+export function getCharacterWizardCacheStats() {
+  return {
+    cachedPacks: sharedCompendiumCache.size,
+    pendingPacks: sharedCompendiumRequests.size,
+    version: compendiumCacheVersion,
+  };
 }
 
 export async function loadCompendium(wizard, key) {
@@ -20,12 +59,57 @@ export async function loadCompendium(wizard, key) {
   if (wizard._compendiumCache[key]) return wizard._compendiumCache[key];
   const pack = game.packs.get(key);
   if (!pack) return [];
+  const sharedKey = `${compendiumCacheVersion}:${key}`;
+  const cached = sharedCompendiumCache.get(sharedKey);
+  let items = cached?.pack === pack ? cached.items : null;
+  if (!items) {
+    const pending = sharedCompendiumRequests.get(sharedKey);
+    let request = pending?.pack === pack ? pending.promise : null;
+    if (!request) {
+      request = loadCompendiumIndex(pack, key)
+        .then((entries) => mapCompendiumEntries(entries, pack, key))
+        .then((mapped) => {
+          sharedCompendiumCache.set(sharedKey, { pack, items: mapped });
+          return mapped;
+        })
+        .finally(() => sharedCompendiumRequests.delete(sharedKey));
+      sharedCompendiumRequests.set(sharedKey, { pack, promise: request });
+    }
+    items = await request;
+  }
+  wizard._compendiumCache[key] = items;
+  return items;
+}
+
+async function loadCompendiumIndex(pack, key) {
+  if (typeof pack.getIndex === 'function') {
+    try {
+      const index = await pack.getIndex({ fields: COMPENDIUM_INDEX_FIELDS });
+      const entries = normalizeIndexEntries(index);
+      if (entries.length > 0 || Number(pack.index?.size ?? 0) === 0) return entries;
+    } catch (error) {
+      console.warn(`pf2e-leveler | Could not load lightweight index for ${key}; using documents`, error);
+    }
+  }
+  return pack.getDocuments();
+}
+
+function normalizeIndexEntries(index) {
+  if (!index) return [];
+  if (Array.isArray(index)) return index;
+  if (Array.isArray(index.contents)) return index.contents;
+  if (typeof index.values === 'function') return [...index.values()];
+  if (typeof index[Symbol.iterator] === 'function') return [...index];
+  return [];
+}
+
+function mapCompendiumEntries(entries, pack, key) {
   const sourceLabel = pack.metadata?.label ?? pack.title ?? key;
   const sourcePackage = pack.metadata?.packageName ?? pack.metadata?.package ?? pack.collection ?? key;
   const sourcePackageLabel = resolveCompendiumPackageLabel(sourcePackage);
-  const docs = await pack.getDocuments();
-  const items = docs.map((d) => ({
-    uuid: d.uuid,
+  const documentName = pack.documentName ?? pack.metadata?.type ?? 'Item';
+  return entries.map((d) => ({
+    uuid: d.uuid ?? buildCompendiumUuid(key, documentName, d._id ?? d.id),
     name: d.name,
     img: d.img,
     sourcePack: key,
@@ -33,7 +117,7 @@ export async function loadCompendium(wizard, key) {
     sourcePackage,
     sourcePackageLabel,
     type: d.type,
-    slug: d.slug ?? null,
+    slug: d.slug ?? d.system?.slug ?? null,
     publicationTitle: d.system?.publication?.title ?? null,
     description: d.system?.description?.value?.substring(0, 150) ?? '',
     traits: d.system?.traits?.value ?? [],
@@ -56,10 +140,12 @@ export async function loadCompendium(wizard, key) {
     domains: d.system?.domains ?? { primary: [], alternate: [] },
     skill: normalizeSkillSlug(d.system?.skill),
     keyAbility: normalizeKeyAbilityOptions(d.system?.keyAbility ?? null),
-  }));
-  items.sort((a, b) => a.name.localeCompare(b.name));
-  wizard._compendiumCache[key] = items;
-  return items;
+  })).sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
+}
+
+function buildCompendiumUuid(key, documentName, id) {
+  if (!id) return null;
+  return `Compendium.${key}.${documentName}.${id}`;
 }
 
 export async function loadCompendiumCategory(wizard, category, cacheKey = `category-${category}`) {

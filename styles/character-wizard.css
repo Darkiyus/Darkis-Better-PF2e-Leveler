@@ -2081,6 +2081,40 @@
   gap: var(--leveler-spacing-sm);
 }
 
+.pf2e-leveler .wizard-campaign-policy {
+  margin-bottom: var(--leveler-spacing-md);
+  padding: var(--leveler-spacing-md);
+  border: 1px solid rgba(196, 167, 112, 0.28);
+  border-radius: var(--leveler-radius-md);
+  background: rgba(196, 167, 112, 0.06);
+}
+
+.pf2e-leveler .wizard-campaign-policy h3,
+.pf2e-leveler .wizard-campaign-policy p {
+  margin: 0;
+}
+
+.pf2e-leveler .wizard-campaign-policy p {
+  margin-top: 4px;
+  color: var(--leveler-text-muted);
+  font-size: var(--leveler-font-sm);
+}
+
+.pf2e-leveler .wizard-campaign-policy__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+  margin-top: var(--leveler-spacing-sm);
+}
+
+.pf2e-leveler .wizard-campaign-policy__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
 .pf2e-leveler .wizard-summary__row {
   display: flex;
   justify-content: space-between;

@@ -5,9 +5,12 @@ import {
   CATEGORY_DEFAULT_POLICIES,
   getCategoryDefaultGuidanceKey,
   getContentGuidance,
+  getGuidanceKeyForItem,
+  getPlayerDisallowedContentMode,
   getSourceGuidanceKey,
   invalidateGuidanceCache,
   normalizeGuidanceEntry,
+  PLAYER_DISALLOWED_CONTENT_MODES,
 } from '../access/content-guidance.js';
 import { getLanguageMap, getLanguageRarityMap } from './character-wizard/skills-languages.js';
 import { PUBLICATION_GROUPS, getPublicationGroupMembers } from '../access/source-classification.js';
@@ -52,6 +55,20 @@ const SOURCE_SCAN_CATEGORIES = [
   ['actions', (doc) => doc.type === 'action'],
   ['deities', (doc) => doc.type === 'deity'],
 ];
+const GUIDANCE_INDEX_FIELDS = [
+  'img',
+  'type',
+  'slug',
+  'system.slug',
+  'system.category',
+  'system.level.value',
+  'system.traits.value',
+  'system.traits.otherTags',
+  'system.traits.rarity',
+  'system.ancestry.slug',
+  'system.publication.title',
+  'system.prerequisites.value',
+];
 
 export function openContentGuidanceMenu() {
   return new ContentGuidanceMenu().render(true);
@@ -63,6 +80,8 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     this.activeCategory = 'ancestries';
     this.searchText = '';
     this.classArchetypesDedicationsOnly = true;
+    this.heritageView = 'all';
+    this.previewAsPlayer = false;
     this._draft = null;
     this._itemCache = {};
     this._pendingScrollTop = null;
@@ -115,6 +134,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       const resolved = this._resolveDraftStatus(item);
       return {
       uuid: item.uuid,
+      guidanceKey: getGuidanceKeyForItem(item),
       name: item.name,
       img: item.img,
       ancestrySlug: item.ancestrySlug ?? null,
@@ -134,15 +154,20 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       isFreeArchetypeExclusive: resolved.freeArchetypeExclusive === true,
       showFreeArchetypeExclusiveControls: this.activeCategory === 'classArchetypes',
       guidanceInherited: resolved.inherited,
+      previewBlocked: this.previewAsPlayer && resolved.status === 'disallowed',
     };
     });
+    const playerMode = getPlayerDisallowedContentMode();
+    const previewItems = this.previewAsPlayer && playerMode === PLAYER_DISALLOWED_CONTENT_MODES.HIDDEN
+      ? displayItems.filter((item) => !item.isDisallowed)
+      : displayItems;
     const categoryDefaultPolicy = this._getCategoryDefaultPolicy(this.activeCategory);
 
     return {
       categories,
       primaryCategories: categories.filter((category) => category.key !== 'sources'),
       secondaryCategories: categories.filter((category) => category.key === 'sources'),
-      items: displayItems,
+      items: previewItems,
       useGridLayout: this.activeCategory !== 'heritages',
       searchText: this.searchText,
       totalMarked,
@@ -169,17 +194,25 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
           label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.CLASS_ARCHETYPE_ALL_FEATS'),
         },
       ],
+      showHeritageModeFilter: this.activeCategory === 'heritages',
+      heritageModeOptions: [
+        { value: 'all', active: this.heritageView === 'all', label: game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.HERITAGE_VIEW_ALL') },
+        { value: 'ancestry', active: this.heritageView === 'ancestry', label: game.i18n.localize('PF2E_LEVELER.CREATION.HERITAGE_GROUP_ANCESTRY') },
+        { value: 'versatile', active: this.heritageView === 'versatile', label: game.i18n.localize('PF2E_LEVELER.CREATION.HERITAGE_GROUP_VERSATILE') },
+      ],
+      previewAsPlayer: this.previewAsPlayer,
+      previewModeLabel: game.i18n.localize(`PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_DISALLOWED_MODE.${playerMode.toUpperCase()}`),
       rarityBulkGroups: this._buildRarityBulkGroups(items),
       publicationGroupBulkGroups: this._buildPublicationGroupBulkGroups(items),
       specialBulkGroups: this._buildSpecialBulkGroups(items),
-      groupedItems: this.activeCategory === 'heritages' ? this._buildHeritageGroups(displayItems) : null,
+      groupedItems: this.activeCategory === 'heritages' ? this._buildHeritageGroups(previewItems) : null,
     };
   }
 
   _findCachedItem(uuid) {
     for (const [categoryKey, items] of Object.entries(this._itemCache)) {
       if (!Array.isArray(items)) continue;
-      const found = items.find((item) => item.uuid === uuid);
+      const found = items.find((item) => item.uuid === uuid || getGuidanceKeyForItem(item) === uuid);
       if (found) return { ...found, categoryKey };
     }
     return null;
@@ -223,7 +256,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     for (const key of keys) {
       const pack = game.packs.get(key);
       if (!pack) continue;
-      const docs = await pack.getDocuments().catch(() => []);
+      const docs = await loadGuidancePackEntries(pack, key);
       documents.push(...docs);
     }
 
@@ -264,33 +297,33 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
 
     root.querySelectorAll('[data-action="cycle-guidance"]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const uuid = btn.dataset.uuid;
-        if (!uuid) return;
-        const current = normalizeGuidanceEntry(this._draft[uuid]).status ?? 'default';
+        const guidanceKey = btn.dataset.guidanceKey ?? btn.dataset.uuid;
+        if (!guidanceKey) return;
+        const current = normalizeGuidanceEntry(this._draft[guidanceKey]).status ?? 'default';
         const cycle = this._getGuidanceStatusCycle();
         const currentIndex = cycle.includes(current) ? cycle.indexOf(current) : 0;
         const next = cycle[(currentIndex + 1) % cycle.length];
-        this._setGuidanceStatus(uuid, next);
+        this._setGuidanceStatus(guidanceKey, next);
         this._rerenderPreservingScroll();
       });
     });
 
     root.querySelectorAll('[data-action="toggle-exclusive-guidance"]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const uuid = btn.dataset.uuid;
-        if (!uuid) return;
-        const current = normalizeGuidanceEntry(this._draft[uuid]);
-        this._setGuidanceExclusive(uuid, !current.exclusive);
+        const guidanceKey = btn.dataset.guidanceKey ?? btn.dataset.uuid;
+        if (!guidanceKey) return;
+        const current = normalizeGuidanceEntry(this._draft[guidanceKey]);
+        this._setGuidanceExclusive(guidanceKey, !current.exclusive);
         this._rerenderPreservingScroll();
       });
     });
 
     root.querySelectorAll('[data-action="toggle-free-archetype-exclusive-guidance"]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const uuid = btn.dataset.uuid;
-        if (!uuid) return;
-        const current = normalizeGuidanceEntry(this._draft[uuid]);
-        this._setGuidanceFreeArchetypeExclusive(uuid, !current.freeArchetypeExclusive);
+        const guidanceKey = btn.dataset.guidanceKey ?? btn.dataset.uuid;
+        if (!guidanceKey) return;
+        const current = normalizeGuidanceEntry(this._draft[guidanceKey]);
+        this._setGuidanceFreeArchetypeExclusive(guidanceKey, !current.freeArchetypeExclusive);
         this._rerenderPreservingScroll();
       });
     });
@@ -357,6 +390,20 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
       });
     });
 
+    root.querySelectorAll('[data-action="set-heritage-mode"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (!['all', 'ancestry', 'versatile'].includes(mode) || mode === this.heritageView) return;
+        this.heritageView = mode;
+        this._rerenderPreservingScroll({ resetScroll: true });
+      });
+    });
+
+    root.querySelector('[data-action="toggle-player-preview"]')?.addEventListener('click', () => {
+      this.previewAsPlayer = !this.previewAsPlayer;
+      this._rerenderPreservingScroll({ resetScroll: true });
+    });
+
     root.querySelector('[data-action="search-guidance"]')?.addEventListener('input', (e) => {
       const input = e.currentTarget;
       this.searchText = input.value ?? '';
@@ -409,7 +456,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     const items = this._getActiveBulkItems();
     const uuids = items
       .filter((item) => this._matchesBulkScope(item, scopeType, scopeValue))
-      .map((item) => item.uuid);
+      .map((item) => getGuidanceKeyForItem(item));
 
     for (const uuid of uuids) {
       this._setGuidanceStatus(uuid, status);
@@ -420,7 +467,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     const items = this._getActiveBulkItems();
     const uuids = items
       .filter((item) => this._matchesBulkScope(item, scopeType, scopeValue))
-      .map((item) => item.uuid);
+      .map((item) => getGuidanceKeyForItem(item));
 
     for (const uuid of uuids) {
       this._setGuidanceExclusive(uuid, exclusive);
@@ -431,7 +478,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     const items = this._getActiveBulkItems();
     const uuids = items
       .filter((item) => this._matchesBulkScope(item, scopeType, scopeValue))
-      .map((item) => item.uuid);
+      .map((item) => getGuidanceKeyForItem(item));
 
     for (const uuid of uuids) {
       this._setGuidanceFreeArchetypeExclusive(uuid, freeArchetypeExclusive);
@@ -461,13 +508,25 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
   }
 
   _filterActiveCategoryItems(items) {
-    if (this.activeCategory !== 'classArchetypes' || !this.classArchetypesDedicationsOnly) return items;
-    return items.filter((item) => isDedicationFeat(item));
+    let filtered = items;
+    if (this.activeCategory === 'classArchetypes' && this.classArchetypesDedicationsOnly) {
+      filtered = filtered.filter((item) => isDedicationFeat(item));
+    }
+    if (this.activeCategory === 'heritages' && this.heritageView !== 'all') {
+      filtered = filtered.filter((item) => this.heritageView === 'versatile' ? !item.ancestrySlug : !!item.ancestrySlug);
+    }
+    return filtered;
   }
 
   _resolveDraftStatus(item) {
-    const direct = normalizeGuidanceEntry(item?.uuid ? this._draft?.[item.uuid] : null);
+    const guidanceKey = getGuidanceKeyForItem(item);
+    const direct = normalizeGuidanceEntry(guidanceKey ? this._draft?.[guidanceKey] : null);
     if (direct.status || direct.exclusive || direct.freeArchetypeExclusive) return { ...direct, inherited: false };
+
+    const legacyDirect = normalizeGuidanceEntry(item?.uuid && item.uuid !== guidanceKey ? this._draft?.[item.uuid] : null);
+    if (legacyDirect.status || legacyDirect.exclusive || legacyDirect.freeArchetypeExclusive) {
+      return { ...legacyDirect, inherited: false };
+    }
 
     const sourceKey = getSourceGuidanceKey(item?.publicationTitle ?? item?.name ?? '');
     const inherited = normalizeGuidanceEntry(sourceKey ? this._draft?.[sourceKey] : null);
@@ -529,7 +588,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     for (const key of getCompendiumKeysForCategory(categoryKey)) {
       const pack = game.packs.get(key);
       if (!pack) continue;
-      const docs = await pack.getDocuments().catch(() => []);
+      const docs = await loadGuidancePackEntries(pack, key);
       items.push(...docs.filter((doc) => matcher(doc)));
     }
     items.push(...getAllWorldItems().filter((doc) => matcher(doc)));
@@ -544,7 +603,7 @@ export class ContentGuidanceMenu extends HandlebarsApplicationMixin(ApplicationV
     for (const key of getCompendiumKeysForCategory('ancestries')) {
       const pack = game.packs.get(key);
       if (!pack) continue;
-      const docs = await pack.getDocuments().catch(() => []);
+      const docs = await loadGuidancePackEntries(pack, key);
       for (const doc of docs) {
         if (doc.type !== 'ancestry') continue;
         const slug = String(doc.slug ?? doc.system?.slug ?? '').toLowerCase();
@@ -797,6 +856,34 @@ function humanizeSlug(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+async function loadGuidancePackEntries(pack, key) {
+  if (typeof pack?.getIndex === 'function') {
+    try {
+      const index = await pack.getIndex({ fields: GUIDANCE_INDEX_FIELDS });
+      const entries = Array.isArray(index)
+        ? index
+        : Array.isArray(index?.contents)
+          ? index.contents
+          : typeof index?.values === 'function'
+            ? [...index.values()]
+            : [];
+      return entries.map((entry) => ({
+        ...entry,
+        uuid: entry.uuid ?? buildGuidanceCompendiumUuid(pack, key, entry._id ?? entry.id),
+        slug: entry.slug ?? entry.system?.slug ?? null,
+      }));
+    } catch (error) {
+      console.warn(`${MODULE_ID} | Could not load content-guidance index for ${key}`, error);
+    }
+  }
+  return pack?.getDocuments?.().catch(() => []) ?? [];
+}
+
+function buildGuidanceCompendiumUuid(pack, key, id) {
+  if (!id) return null;
+  return `Compendium.${key}.${pack.documentName ?? pack.metadata?.type ?? 'Item'}.${id}`;
 }
 
 function isClassArchetypeFeat(doc) {
