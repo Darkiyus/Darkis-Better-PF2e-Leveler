@@ -111,7 +111,7 @@ describe('writers', () => {
     const out = await postPlanComment(actor, 'level:3:classFeat', { text: '  hello  ', items: ['U'] });
     expect(out).toMatchObject({ id: 'gen-id', text: 'hello', items: ['U'], isGM: true });
     expect(update).toHaveBeenCalledWith(
-      { 'flags.pf2e-leveler.planComments': { 'level:3:classFeat': { resolved: false, messages: [expect.objectContaining({ id: 'gen-id', text: 'hello' })] } } },
+      { 'flags.darkis-better-pf2e-leveler.planComments': { 'level:3:classFeat': { resolved: false, messages: [expect.objectContaining({ id: 'gen-id', text: 'hello' })] } } },
       { recursive: false },
     );
   });
@@ -131,6 +131,6 @@ describe('writers', () => {
     const update = jest.fn(() => Promise.resolve());
     const actor = { isOwner: true, getFlag: jest.fn(() => ({ p: { resolved: false, messages: [{ id: 'm1' }] } })), update };
     await deletePlanComment(actor, 'p', 'm1');
-    expect(update).toHaveBeenCalledWith({ 'flags.pf2e-leveler.planComments': {} }, { recursive: false });
+    expect(update).toHaveBeenCalledWith({ 'flags.darkis-better-pf2e-leveler.planComments': {} }, { recursive: false });
   });
 });

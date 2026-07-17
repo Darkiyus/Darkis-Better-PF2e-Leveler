@@ -336,7 +336,7 @@ describe('applyFeatGrants', () => {
         name: 'Wizard Dedication Spells',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             archetypeSpellcastingEntry: 'wizard',
           },
         },
@@ -413,7 +413,7 @@ describe('applyFeatGrants', () => {
           id: 'wizard-entry',
           type: 'spellcastingEntry',
           name: 'Wizard Dedication Spells',
-          flags: { 'pf2e-leveler': { archetypeSpellcastingEntry: 'wizard' } },
+          flags: { 'darkis-better-pf2e-leveler': { archetypeSpellcastingEntry: 'wizard' } },
           system: {
             tradition: { value: 'arcane' },
             prepared: { value: 'prepared' },

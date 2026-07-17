@@ -1,3 +1,4 @@
+import { MODULE_ID } from '../constants.js';
 import { getLevelData } from '../plan/plan-model.js';
 import {
   buildFeatGrantRequirements,
@@ -203,7 +204,7 @@ async function resolveSpellcastingEntry(actor, grant, context = {}) {
     if (staged) return staged;
     const existing = items.find((item) =>
       item?.type === 'spellcastingEntry'
-      && item?.flags?.['pf2e-leveler']?.archetypeSpellcastingEntry === archetypeClassSlug,
+      && item?.flags?.[MODULE_ID]?.archetypeSpellcastingEntry === archetypeClassSlug,
     );
     if (existing) {
       await ensureGrantArchetypeCantripSlots(actor, existing, grant);
@@ -229,7 +230,7 @@ async function createGrantArchetypeSpellcastingEntry(actor, classSlug, grant) {
     name: `${capitalize(classSlug)} Dedication Spells`,
     type: 'spellcastingEntry',
     flags: {
-      'pf2e-leveler': {
+      [MODULE_ID]: {
         archetypeSpellcastingEntry: classSlug,
       },
     },

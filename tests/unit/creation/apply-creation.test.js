@@ -1444,7 +1444,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('applies the extra level-1 ancestry feat to the ancestry paragon location', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return true;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });
@@ -1754,7 +1754,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('backfills ancestry paragon selected feat chains nested under Ancestral Paragon', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });
@@ -2338,7 +2338,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('adds description-linked focus spells from selected ancestry feats during creation', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });
@@ -2455,7 +2455,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('does not turn Halo description light text into a focus cantrip during creation', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });
@@ -2550,7 +2550,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('does not manually apply the selected subclass item during creation', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });
@@ -2610,7 +2610,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('does not separately apply wizard school subclass items during creation', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });
@@ -2679,7 +2679,7 @@ describe('applyCreation ancestry paragon', () => {
 
   it('includes selected wizard school choices in the creation chat message when the stored selection uses the option UUID', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
       if (scope === 'pf2e' && key === 'campaignFeatSections') return [];
       return false;
     });

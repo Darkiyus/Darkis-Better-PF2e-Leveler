@@ -35,7 +35,7 @@ describe('registerSettings', () => {
     registerSettings();
 
     const guidanceRegistration = game.settings.register.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'gmContentGuidance',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'gmContentGuidance',
     );
 
     expect(guidanceRegistration).toBeTruthy();
@@ -52,7 +52,7 @@ describe('registerSettings', () => {
     registerSettings();
 
     const modeRegistration = game.settings.register.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'playerDisallowedContentMode',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'playerDisallowedContentMode',
     );
 
     expect(modeRegistration).toBeTruthy();
@@ -86,10 +86,10 @@ describe('registerSettings', () => {
     registerSettings();
 
     const guidanceRegistration = game.settings.register.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'gmContentGuidance',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'gmContentGuidance',
     );
     const modeRegistration = game.settings.register.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'playerDisallowedContentMode',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'playerDisallowedContentMode',
     );
 
     guidanceRegistration[2].onChange();
@@ -104,10 +104,10 @@ describe('registerSettings', () => {
     registerSettings();
 
     const settingRegistration = game.settings.register.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'quickEquipmentPackages',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'quickEquipmentPackages',
     );
     const menuRegistration = game.settings.registerMenu.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'quickEquipmentPackagesMenu',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'quickEquipmentPackagesMenu',
     );
 
     expect(settingRegistration).toBeTruthy();
@@ -128,10 +128,10 @@ describe('registerSettings', () => {
     registerSettings();
 
     const menuRegistration = game.settings.registerMenu.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'gmSetupWizardMenu',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'gmSetupWizardMenu',
     );
     const completedRegistration = game.settings.register.mock.calls.find(
-      ([moduleId, key]) => moduleId === 'pf2e-leveler' && key === 'gmSetupCompleted',
+      ([moduleId, key]) => moduleId === 'darkis-better-pf2e-leveler' && key === 'gmSetupCompleted',
     );
 
     expect(menuRegistration?.[2]).toEqual(expect.objectContaining({

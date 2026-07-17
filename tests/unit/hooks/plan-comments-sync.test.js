@@ -19,7 +19,7 @@ const makeWindow = (id, actorId) => ({
 
 describe('planCommentsChanged', () => {
   it('detects the planComments flag in a change diff', () => {
-    expect(planCommentsChanged({ flags: { 'pf2e-leveler': { planComments: {} } } })).toBe(true);
+    expect(planCommentsChanged({ flags: { 'darkis-better-pf2e-leveler': { planComments: {} } } })).toBe(true);
     expect(planCommentsChanged({ system: { details: {} } })).toBe(false);
     expect(planCommentsChanged({})).toBe(false);
   });
@@ -73,7 +73,7 @@ describe('onUpdateActorPlanComments', () => {
     global.ui.windows = { 0: planner };
     onUpdateActorPlanComments({ id: 'a1' }, { system: {} });
     expect(planner.element.querySelectorAll).not.toHaveBeenCalled();
-    onUpdateActorPlanComments({ id: 'a1' }, { flags: { 'pf2e-leveler': { planComments: { p: {} } } } });
+    onUpdateActorPlanComments({ id: 'a1' }, { flags: { 'darkis-better-pf2e-leveler': { planComments: { p: {} } } } });
     expect(planner.element.querySelectorAll).toHaveBeenCalled();
   });
 });

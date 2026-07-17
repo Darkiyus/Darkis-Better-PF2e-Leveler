@@ -149,7 +149,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('requires a second ancestry feat at level 1 when ancestry paragon is enabled', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return true;
       return false;
     });
 
@@ -247,7 +247,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('marks ancestry browser entries disallowed when inherited from source guidance', async () => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         gmContentGuidance: {
           'source-title:pathfinder player core': 'disallowed',
         },
@@ -302,7 +302,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('keeps ancestry browser entries selectable for GMs when disallowed by source guidance', async () => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         gmContentGuidance: {
           'source-title:pathfinder player core': 'disallowed',
         },
@@ -353,7 +353,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('keeps ancestry browser entries visible but blocked for players when disallowed mode is unselectable', async () => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         gmContentGuidance: {
           'source-title:pathfinder player core': 'disallowed',
         },
@@ -407,7 +407,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('keeps versatile heritage browser entries selectable for GMs when disallowed by source guidance', async () => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         gmContentGuidance: {
           'source-title:pathfinder player core': 'disallowed',
         },
@@ -484,7 +484,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
     const originalPacksGet = game.packs.get;
     const originalIsGM = game.user.isGM;
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         gmContentGuidance: {
           'Compendium.pf2e.heritages.Item.ancient-elf': 'recommended',
           'Compendium.pf2e.heritages.Item.woodland-elf': 'disallowed',
@@ -1030,7 +1030,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
   it('drops stale cached heritages after compendium settings invalidation', async () => {
     game.user.isGM = false;
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {},
         restrictPlayerCompendiumAccess: true,
         playerCompendiumAccess: {
@@ -1255,7 +1255,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('stores a second class when dual class support is enabled', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -1290,7 +1290,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('class step exposes separate primary and dual class groups and removes primary selection from dual list', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -1335,7 +1335,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('selects class target explicitly for dual-class wizard class step', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -1371,7 +1371,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('subclass step progresses from the primary class subclass to the dual class subclass', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -1440,7 +1440,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('subclass step exposes separate subclass groups for each dual class', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -1484,7 +1484,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('marks paragon ancestry feat selections separately in the feat context', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return true;
       return false;
     });
 
@@ -1790,12 +1790,12 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('uses creation ability modifiers to unlock dedication feat choices', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'featSortMethod') return 'name';
-      if (scope === 'pf2e-leveler' && key === 'defaultEligibleOnly') return false;
-      if (scope === 'pf2e-leveler' && key === 'hideUncommonFeats') return false;
-      if (scope === 'pf2e-leveler' && key === 'hideRareFeats') return false;
-      if (scope === 'pf2e-leveler' && key === 'enforcePrerequisites') return true;
-      if (scope === 'pf2e-leveler' && key === 'showPrerequisites') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'featSortMethod') return 'name';
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'defaultEligibleOnly') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'hideUncommonFeats') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'hideRareFeats') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enforcePrerequisites') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'showPrerequisites') return true;
       return false;
     });
 
@@ -1888,12 +1888,12 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('uses bard muse creation build state to satisfy French muse prerequisites', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'featSortMethod') return 'name';
-      if (scope === 'pf2e-leveler' && key === 'defaultEligibleOnly') return false;
-      if (scope === 'pf2e-leveler' && key === 'hideUncommonFeats') return false;
-      if (scope === 'pf2e-leveler' && key === 'hideRareFeats') return false;
-      if (scope === 'pf2e-leveler' && key === 'enforcePrerequisites') return true;
-      if (scope === 'pf2e-leveler' && key === 'showPrerequisites') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'featSortMethod') return 'name';
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'defaultEligibleOnly') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'hideUncommonFeats') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'hideRareFeats') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enforcePrerequisites') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'showPrerequisites') return true;
       return false;
     });
 
@@ -2052,7 +2052,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('keeps the feat step incomplete when a dual class level 1 class feat is required but not selected yet', () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2102,7 +2102,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('shows a dual class level 1 feat slot when the secondary class has one', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2192,7 +2192,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
     wizard._getStepContext = jest.fn(async () => ({}));
 
     game.settings.get = jest.fn((moduleId, settingId) => {
-      if (moduleId === 'pf2e-leveler' && settingId === 'allowIncompleteCreation') return true;
+      if (moduleId === 'darkis-better-pf2e-leveler' && settingId === 'allowIncompleteCreation') return true;
       return false;
     });
 
@@ -2204,8 +2204,8 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('includes both selected classes in browser context for dual-class class step', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
-      if (scope === 'pf2e-leveler' && key === 'allowIncompleteCreation') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'allowIncompleteCreation') return false;
       return false;
     });
 
@@ -2255,8 +2255,8 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('includes selected class uuid in browser context for single-class class step', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return false;
-      if (scope === 'pf2e-leveler' && key === 'allowIncompleteCreation') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'allowIncompleteCreation') return false;
       return false;
     });
 
@@ -2321,8 +2321,8 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('includes separate selected subclass cards in browser context for dual-class subclass step', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
-      if (scope === 'pf2e-leveler' && key === 'allowIncompleteCreation') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'allowIncompleteCreation') return false;
       return false;
     });
 
@@ -2392,7 +2392,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('includes handler-managed extra steps from both classes in dual-class creation', () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2414,7 +2414,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('keeps subclass step visible after subclass selections are made', () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2452,7 +2452,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('routes handler-managed step context to the dual-class handler that owns the step', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2482,7 +2482,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('keeps subclass metadata on grouped subclass browser items', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2532,7 +2532,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('loads dual-class animist apparitions from the dual-class handler context', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return true;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return true;
       return false;
     });
 
@@ -2613,7 +2613,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
 
   it('ignores stored dual-class subclass, feat-choice, and spell state when support is disabled', async () => {
     game.settings.get = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'enableDualClassSupport') return false;
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'enableDualClassSupport') return false;
       return false;
     });
 
@@ -2803,7 +2803,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
       items: [
         {
           uuid: 'pf2e-leveler.synthetic.heritage.mixed-ancestry',
-          sourcePackage: 'pf2e-leveler',
+          sourcePackage: 'darkis-better-pf2e-leveler',
           sourcePackageLabel: 'PF2E Leveler',
         },
       ],
@@ -2813,7 +2813,7 @@ describe('CharacterWizard feat step ancestry filtering', () => {
       expect.arrayContaining([
         expect.objectContaining({ key: 'pf2e', selected: true }),
         expect.objectContaining({ key: 'battlezoo-dragons-battle-dragons-pf2e', selected: true }),
-        expect.objectContaining({ key: 'pf2e-leveler', label: 'PF2E Leveler', selected: true }),
+        expect.objectContaining({ key: 'darkis-better-pf2e-leveler', label: 'PF2E Leveler', selected: true }),
       ]),
     );
   });

@@ -1,3 +1,4 @@
+import { MODULE_ID } from '../constants.js';
 import { ANCESTRAL_PARAGON_FEAT_LEVELS } from '../classes/progression.js';
 import { ClassRegistry } from '../classes/registry.js';
 import { capitalize, getCampaignFeatSectionIds, isAncestralParagonEnabled } from '../utils/pf2e-api.js';
@@ -318,7 +319,7 @@ async function ensureArchetypeFocusEntry(actor, spell, archetypeSlug) {
     i.type === 'spellcastingEntry'
     && i.system?.prepared?.value === 'focus'
     && (
-      i.flags?.['pf2e-leveler']?.archetypeFocusEntry === archetypeSlug
+      i.flags?.[MODULE_ID]?.archetypeFocusEntry === archetypeSlug
       || String(i.name ?? '').trim().toLowerCase().includes(archetypeSlug.replace(/-/gu, ' '))
     ));
   if (existing) return existing;
@@ -328,7 +329,7 @@ async function ensureArchetypeFocusEntry(actor, spell, archetypeSlug) {
     name: `${humanizeSlug(archetypeSlug)} Focus Spells`,
     type: 'spellcastingEntry',
     flags: {
-      'pf2e-leveler': {
+      [MODULE_ID]: {
         archetypeFocusEntry: archetypeSlug,
       },
     },

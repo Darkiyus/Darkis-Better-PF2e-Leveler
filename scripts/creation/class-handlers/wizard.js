@@ -1,3 +1,4 @@
+import { MODULE_ID } from '../../constants.js';
 import { CasterBaseHandler } from './caster-base.js';
 import { getEffectiveSubclassCurriculum } from '../creation-model.js';
 
@@ -121,7 +122,7 @@ export class WizardHandler extends CasterBaseHandler {
         name: `${schoolName} Curriculum`,
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          [MODULE_ID]: {
             [CURRICULUM_ENTRY_FLAG]: true,
           },
         },
@@ -230,7 +231,7 @@ export class WizardHandler extends CasterBaseHandler {
 
   _isCurriculumEntry(item) {
     if (item?.type !== 'spellcastingEntry') return false;
-    if (item.flags?.['pf2e-leveler']?.[CURRICULUM_ENTRY_FLAG] === true) return true;
+    if (item.flags?.[MODULE_ID]?.[CURRICULUM_ENTRY_FLAG] === true) return true;
     return item.name?.includes?.('Curriculum') === true;
   }
 }

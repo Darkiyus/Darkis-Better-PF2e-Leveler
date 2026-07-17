@@ -373,7 +373,7 @@ describe('CompendiumSettingsMenu', () => {
     });
 
     game.settings.get = jest.fn((moduleId, settingId) => {
-      if (moduleId === 'pf2e-leveler' && settingId === 'playerCompendiumAccess') {
+      if (moduleId === 'darkis-better-pf2e-leveler' && settingId === 'playerCompendiumAccess') {
         return {
           enabled: true,
           selections: {
@@ -411,7 +411,7 @@ describe('CompendiumSettingsMenu', () => {
 
     await menu._saveSelections();
 
-    expect(game.settings.set).toHaveBeenCalledWith('pf2e-leveler', 'customCompendiums', { feats: ['pf2e.feats-srd'] });
+    expect(game.settings.set).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'customCompendiums', { feats: ['pf2e.feats-srd'] });
     expect(featCache.invalidateCache).toHaveBeenCalled();
     expect(itemPicker.invalidateItemCache).toHaveBeenCalled();
     expect(spellPicker.clearSpellPickerCache).toHaveBeenCalled();

@@ -9,8 +9,7 @@ export function isMixedAncestryHeritage(entry) {
   if (!entry) return false;
   return isMixedAncestryHeritageUuid(entry?.uuid)
     || String(entry?.slug ?? '').trim().toLowerCase() === 'mixed-ancestry'
-    || entry?.flags?.[MODULE_ID]?.mixedAncestryHeritage === true
-    || entry?.flags?.['pf2e-leveler']?.mixedAncestryHeritage === true;
+    || entry?.flags?.[MODULE_ID]?.mixedAncestryHeritage === true;
 }
 
 export function createMixedAncestryHeritage(ancestry = null) {
@@ -32,9 +31,9 @@ export function createMixedAncestryHeritage(ancestry = null) {
     img: ancestry?.img ?? null,
     type: 'heritage',
     sourcePack: null,
-    sourceLabel: 'PF2E Leveler',
+    sourceLabel: 'Darkis Better PF2e-Leveler',
     sourcePackage: MODULE_ID,
-    sourcePackageLabel: 'PF2E Leveler',
+    sourcePackageLabel: 'Darkis Better PF2e-Leveler',
     slug: 'mixed-ancestry',
     traits: [],
     rarity: 'uncommon',

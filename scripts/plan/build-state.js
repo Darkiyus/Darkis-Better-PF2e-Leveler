@@ -1,4 +1,4 @@
-import { ANCESTRY_TRAIT_ALIASES, ATTRIBUTES, INITIAL_SKILL_RETRAIN_SOURCE_TYPE, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, MAX_LEVEL, MIN_PLAN_LEVEL, PROFICIENCY_RANKS, SUBCLASS_TAGS } from '../constants.js';
+import { ANCESTRY_TRAIT_ALIASES, ATTRIBUTES, INITIAL_SKILL_RETRAIN_SOURCE_TYPE, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, MAX_LEVEL, MIN_PLAN_LEVEL, MODULE_ID, PROFICIENCY_RANKS, SUBCLASS_TAGS } from '../constants.js';
 import { ClassRegistry } from '../classes/registry.js';
 import { resolveSubclassChoiceTradition } from '../data/subclass-spells.js';
 import { getAllPlannedFeats, getAllPlannedBoosts, getAllPlannedSpells } from './plan-model.js';
@@ -284,7 +284,7 @@ function computeAncestryTraits(actor, plan, atLevel) {
     addAncestryItemTraits(traits, heritage);
   }
 
-  const mixedAncestrySelection = actor?.heritage?.flags?.pf2e?.rulesSelections?.[MIXED_ANCESTRY_CHOICE_FLAG] ?? actor?.heritage?.flags?.['pf2e-leveler']?.mixedAncestrySelection ?? null;
+  const mixedAncestrySelection = actor?.heritage?.flags?.pf2e?.rulesSelections?.[MIXED_ANCESTRY_CHOICE_FLAG] ?? actor?.heritage?.flags?.[MODULE_ID]?.mixedAncestrySelection ?? null;
   if (actor?.heritage?.uuid === MIXED_ANCESTRY_UUID || actor?.heritage?.slug === 'mixed-ancestry') {
     addAncestryTraitAliases(traits, mixedAncestrySelection);
   }
@@ -317,7 +317,7 @@ function computeAncestryFeatTraits(actor, plan, atLevel) {
     addAncestryFeatIdentity(traits, heritage);
   }
 
-  const mixedAncestrySelection = actor?.heritage?.flags?.pf2e?.rulesSelections?.[MIXED_ANCESTRY_CHOICE_FLAG] ?? actor?.heritage?.flags?.['pf2e-leveler']?.mixedAncestrySelection ?? null;
+  const mixedAncestrySelection = actor?.heritage?.flags?.pf2e?.rulesSelections?.[MIXED_ANCESTRY_CHOICE_FLAG] ?? actor?.heritage?.flags?.[MODULE_ID]?.mixedAncestrySelection ?? null;
   if (actor?.heritage?.uuid === MIXED_ANCESTRY_UUID || actor?.heritage?.slug === 'mixed-ancestry') {
     addAncestryTraitAliases(traits, mixedAncestrySelection);
   }
@@ -473,7 +473,7 @@ function inferDivineFontFromSelections(item) {
   const sources = [
     item?.flags?.pf2e?.rulesSelections,
     item?.flags?.system?.rulesSelections,
-    item?.flags?.['pf2e-leveler']?.classFeatureChoices,
+    item?.flags?.[MODULE_ID]?.classFeatureChoices,
   ];
 
   for (const source of sources) {
@@ -1988,7 +1988,7 @@ function addOwnedClassFeatureSelectionAliases(features, item, featureAliases) {
   for (const selected of Object.values(item?.flags?.pf2e?.rulesSelections ?? {})) {
     collectFeatureChoiceAliases(selectedAliases, selected);
   }
-  for (const selected of Object.values(item?.flags?.['pf2e-leveler']?.classFeatureChoices ?? {})) {
+  for (const selected of Object.values(item?.flags?.[MODULE_ID]?.classFeatureChoices ?? {})) {
     collectFeatureChoiceAliases(selectedAliases, selected);
   }
 

@@ -1,4 +1,4 @@
-import { MAX_LEVEL, MIN_PLAN_LEVEL, SPELLBOOK_CLASSES, SUBCLASS_TAGS } from '../../constants.js';
+import { MAX_LEVEL, MIN_PLAN_LEVEL, MODULE_ID, SPELLBOOK_CLASSES, SUBCLASS_TAGS } from '../../constants.js';
 import { ClassRegistry } from '../../classes/registry.js';
 import { computeBuildState } from '../../plan/build-state.js';
 import { getAllPlannedFeats, getLevelData, getPlanApparitions } from '../../plan/plan-model.js';
@@ -200,7 +200,7 @@ export function buildCustomSpellEntryOptions(planner, level) {
     if (item?.type !== 'spellcastingEntry') continue;
     if (item?.system?.prepared?.value === 'focus') continue;
 
-    const archetypeKey = item?.flags?.['pf2e-leveler']?.archetypeSpellcastingEntry;
+    const archetypeKey = item?.flags?.[MODULE_ID]?.archetypeSpellcastingEntry;
     entries.push({
       entryType: archetypeKey ? `archetype:${archetypeKey}` : `existing:${item.id}`,
       label: item.name ?? 'Spellcasting Entry',

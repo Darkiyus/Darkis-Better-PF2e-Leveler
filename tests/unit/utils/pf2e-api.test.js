@@ -12,7 +12,7 @@ describe('isDualClassEnabled', () => {
   test('uses only the Leveler dual class support setting', () => {
     global._testSettings = {
       pf2e: { dualClassVariant: false },
-      'pf2e-leveler': { enableDualClassSupport: true },
+      'darkis-better-pf2e-leveler': { enableDualClassSupport: true },
     };
 
     expect(isDualClassEnabled()).toBe(true);
@@ -20,7 +20,7 @@ describe('isDualClassEnabled', () => {
 
   test('returns false when Leveler dual class support is disabled', () => {
     global._testSettings = {
-      'pf2e-leveler': { enableDualClassSupport: false },
+      'darkis-better-pf2e-leveler': { enableDualClassSupport: false },
     };
 
     expect(isDualClassEnabled()).toBe(false);

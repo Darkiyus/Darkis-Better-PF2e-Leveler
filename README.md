@@ -8,9 +8,11 @@ Darkis Better PF2e-Leveler ist ein Community-Fork von [PF2e Leveler](https://git
 
 ### Kurzbeschreibung
 
-PF2e Leveler unterstützt die Charaktererschaffung und die Planung von Stufenaufstiegen in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition. Dieser Fork konzentriert sich auf eine flüssigere Bedienung, optionale deutsche Texte und eine bessere Verwaltung eigener Kampagneninhalte. Die interne Modul-ID bleibt `pf2e-leveler`, damit bestehende Welten und Einstellungen kompatibel bleiben.
+Darkis Better PF2e-Leveler unterstützt die Charaktererschaffung und die Planung von Stufenaufstiegen in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition. Es konzentriert sich auf eine flüssigere Bedienung, optionale deutsche Texte und eine bessere Verwaltung eigener Kampagneninhalte. Das Modul läuft unter der eigenen Modul-ID `darkis-better-pf2e-leveler` und ist damit ein eigenständiges Foundry-Modul mit eigenem Namensraum – kein Ersatz für das Original.
 
-Foundry behandelt diesen Fork deshalb als Ersatz beziehungsweise Aktualisierung des ursprünglichen PF2e Leveler. Original und Fork werden nicht als zwei getrennte Module angezeigt und sollten nicht parallel installiert werden. Vorhandene Welteinstellungen und gespeicherte Leveler-Daten bleiben dadurch unter demselben Namensraum erhalten.
+Foundry zeigt Darkis Better PF2e-Leveler deshalb als eigenen Eintrag in der Modulliste an, unabhängig vom ursprünglichen PF2e Leveler. Beide können nebeneinander installiert sein; da beide dieselbe Charaktererschaffung und Stufenplanung anbieten, sollte pro Welt aber nur eines der beiden Module aktiv sein, um doppelte Schaltflächen und Menüs zu vermeiden.
+
+**Hinweis für bisherige Tester dieses Forks:** Frühere Versionen (bis einschließlich 3.8.5) liefen noch unter der Modul-ID `pf2e-leveler`. Nach dem Update auf diese Version erscheint das Modul als neuer, separater Eintrag in Foundrys Modulliste; Moduleinstellungen und modul-eigene Daten aus der alten Installation werden nicht automatisch übernommen. Die alte Installation kann danach deaktiviert oder entfernt werden.
 
 ### Warum dieser Fork?
 
@@ -75,7 +77,7 @@ Dies ist ein Roadmap-Eintrag und **noch nicht Bestandteil dieser Version**.
 
 Die Manifest-URL verweist immer auf die neueste veröffentlichte Version dieses Forks.
 
-Da dieser Fork dieselbe Modul-ID wie das Original verwendet, ersetzt die Installation eine vorhandene Originalinstallation in Foundrys Modulliste. Ein paralleler Betrieb ist weder erforderlich noch vorgesehen.
+Darkis Better PF2e-Leveler verwendet eine eigene Modul-ID und erscheint deshalb als eigenständiger Eintrag neben dem Original in Foundrys Modulliste. Aktiviere pro Welt nur eines der beiden Module.
 
 ### Charaktererschaffung exportieren und importieren
 
@@ -119,9 +121,11 @@ Ich hoffe, die Verbesserungen helfen euch genauso wie meinen eigenen Runden. Vie
 
 ### Overview
 
-PF2e Leveler assists with character creation and level-up planning in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition. This fork focuses on responsive interaction, an optional German interface, and better control over campaign-specific content. The internal module ID remains `pf2e-leveler` to preserve existing worlds and settings.
+Darkis Better PF2e-Leveler assists with character creation and level-up planning in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition. It focuses on responsive interaction, an optional German interface, and better control over campaign-specific content. The module runs under its own module ID, `darkis-better-pf2e-leveler`, making it a standalone Foundry module with its own namespace rather than a replacement for the original.
 
-Foundry therefore treats this fork as a replacement or update for the original PF2e Leveler. The original and the fork are not displayed as two separate modules and should not be installed side by side. Existing world settings and saved Leveler data remain in the same namespace.
+Foundry therefore lists Darkis Better PF2e-Leveler as its own entry, independent of the original PF2e Leveler. Both can be installed side by side; since both provide the same character creation and level-up planning, only one should be active per world to avoid duplicate buttons and menus.
+
+**Note for previous testers of this fork:** Earlier releases (up to and including 3.8.5) used the module ID `pf2e-leveler`. After updating to this version, the module appears as a new, separate entry in Foundry's module list; module settings and module-owned data from the old installation are not carried over automatically. The old installation can then be disabled or removed.
 
 ### Why this fork?
 
@@ -186,7 +190,7 @@ This is a roadmap item and is **not included in the current version**.
 
 The manifest URL always points to the latest published version of this fork.
 
-Because this fork uses the original module ID, installing it replaces an existing upstream installation in Foundry's module list. Running both versions in parallel is neither required nor supported.
+Darkis Better PF2e-Leveler uses its own module ID and therefore appears as a separate entry alongside the original in Foundry's module list. Enable only one of the two modules per world.
 
 ### Exporting and importing character creation
 

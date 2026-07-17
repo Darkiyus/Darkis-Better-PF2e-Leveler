@@ -907,7 +907,7 @@ describe('applyFeats', () => {
         name: 'Dragon Disciple Focus Spells',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             archetypeFocusEntry: 'dragon-disciple',
           },
         },

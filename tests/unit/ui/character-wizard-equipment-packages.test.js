@@ -23,7 +23,7 @@ describe('CharacterWizard quick equipment packages', () => {
 
   beforeEach(() => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         quickEquipmentPackages: [
           ROGUE_PACKAGE,
           { ...ROGUE_PACKAGE, id: 'fighter-kit', name: 'Fighter Kit', classSlugs: ['fighter'] },
@@ -66,8 +66,8 @@ describe('CharacterWizard quick equipment packages', () => {
   });
 
   test('blocks a player package that exceeds the remaining custom budget', () => {
-    global._testSettings['pf2e-leveler'].startingWealthMode = 'CUSTOM';
-    global._testSettings['pf2e-leveler'].startingEquipmentGoldLimit = 1;
+    global._testSettings['darkis-better-pf2e-leveler'].startingWealthMode = 'CUSTOM';
+    global._testSettings['darkis-better-pf2e-leveler'].startingEquipmentGoldLimit = 1;
     game.user.isGM = false;
     const wizard = new CharacterWizard(createMockActor());
     wizard._saveAndRender = jest.fn();

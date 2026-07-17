@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.9.0 – Standalone Module
+
+### Changed
+
+- **Breaking:** The module now runs under its own module ID, `darkis-better-pf2e-leveler`, instead of reusing the original PF2e Leveler's ID. It now installs as a separate, standalone module in Foundry rather than replacing an existing PF2e Leveler installation. Testers who installed earlier versions of this fork (3.8.5 and before) will see this appear as a new module entry after updating; settings and module-owned data from the old installation are not carried over automatically. See the README for details.
+- Hover image zoom is now disabled while gallery view is active, since gallery cards already show a large image
+
 ## 3.8.5 – Gallery Layout Rewrite
 
 ### Fixed

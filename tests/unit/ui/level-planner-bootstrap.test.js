@@ -330,7 +330,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
     const actor = createMockActor();
     actor.class.slug = 'alchemist';
     actor.getFlag = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'creation') {
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'creation') {
         return {
           version: 1,
           class: { slug: 'alchemist' },
@@ -548,7 +548,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       class: { slug: 'wizard', name: 'Wizard' },
     });
     actor.getFlag = jest.fn((scope, key) => {
-      if (scope === 'pf2e-leveler' && key === 'creation') {
+      if (scope === 'darkis-better-pf2e-leveler' && key === 'creation') {
         return {
           version: 1,
           class: { slug: 'witch' },
@@ -4319,12 +4319,12 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       },
       settings: {
         get: jest.fn((scope, key) => {
-          if (scope === 'pf2e-leveler' && key === 'gmContentGuidance') {
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'gmContentGuidance') {
             return {
               'language:draconic': 'recommended',
             };
           }
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           if (scope === 'pf2e' && ['gradualBoostsVariant', 'freeArchetypeVariant', 'dualClassVariant'].includes(key)) return false;
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
@@ -4433,7 +4433,7 @@ describe('LevelPlanner bootstrap from existing actor', () => {
       },
       settings: {
         get: jest.fn((scope, key) => {
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           if (scope === 'pf2e' && ['gradualBoostsVariant', 'freeArchetypeVariant', 'dualClassVariant'].includes(key)) return false;
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
@@ -5158,8 +5158,8 @@ describe('LevelPlanner bootstrap from existing actor', () => {
   it('can ignore the free archetype dedication lock via setting', async () => {
     global._testSettings = {
       ...(global._testSettings ?? {}),
-      'pf2e-leveler': {
-        ...(global._testSettings?.['pf2e-leveler'] ?? {}),
+      'darkis-better-pf2e-leveler': {
+        ...(global._testSettings?.['darkis-better-pf2e-leveler'] ?? {}),
         ignoreFreeArchetypeDedicationLock: true,
       },
     };

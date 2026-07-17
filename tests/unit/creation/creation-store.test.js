@@ -10,9 +10,9 @@ describe('creation store', () => {
 
     expect(getCreationData(actor)).toEqual({ version: 1 });
     await saveCreationData(actor, { version: 1, ancestry: { slug: 'human' } });
-    expect(actor.setFlag).toHaveBeenCalledWith('pf2e-leveler', 'creation', { version: 1, ancestry: { slug: 'human' } });
+    expect(actor.setFlag).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'creation', { version: 1, ancestry: { slug: 'human' } });
     await clearCreationData(actor);
-    expect(actor.unsetFlag).toHaveBeenCalledWith('pf2e-leveler', 'creation');
+    expect(actor.unsetFlag).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'creation');
   });
 
   test('exports and imports a wrapped creation payload', () => {

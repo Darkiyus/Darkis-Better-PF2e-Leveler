@@ -36,6 +36,8 @@
   cursor: zoom-in;
 }
 
-.pf2e-leveler .wizard-browser--background img.wizard-item__img {
+.pf2e-leveler .wizard-browser--background img.wizard-item__img,
+.pf2e-leveler .wizard-item-grid--gallery img.wizard-item__img,
+.pf2e-leveler .guidance-list--gallery img.guidance-item__img {
   cursor: default;
 }

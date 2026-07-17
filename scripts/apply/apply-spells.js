@@ -1,4 +1,4 @@
-import { SUBCLASS_TAGS } from '../constants.js';
+import { MODULE_ID, SUBCLASS_TAGS } from '../constants.js';
 import { ClassRegistry } from '../classes/registry.js';
 import { capitalize } from '../utils/pf2e-api.js';
 import { SUBCLASS_SPELLS, resolveSubclassSpells } from '../data/subclass-spells.js';
@@ -222,7 +222,7 @@ async function findOrCreateEntry(actor, config) {
     (i) =>
       i.type === 'spellcastingEntry' &&
       (config.flagKey
-        ? (config.flagValue !== undefined ? i.flags?.['pf2e-leveler']?.[config.flagKey] === config.flagValue : i.flags?.['pf2e-leveler']?.[config.flagKey] === true) ||
+        ? (config.flagValue !== undefined ? i.flags?.[MODULE_ID]?.[config.flagKey] === config.flagValue : i.flags?.[MODULE_ID]?.[config.flagKey] === true) ||
           (config.flagKey === MAGUS_STUDIOUS_ENTRY_FLAG &&
             String(i.name ?? '')
               .toLowerCase()
@@ -248,7 +248,7 @@ function buildEntryData(config) {
     ...(config.flagKey
       ? {
           flags: {
-            'pf2e-leveler': {
+            [MODULE_ID]: {
               [config.flagKey]: config.flagValue ?? true,
             },
           },
@@ -631,13 +631,13 @@ function resolveTargetEntry(actor, entries, entryType) {
     const stagedEntry = entries?.custom?.[entryType];
     if (stagedEntry) return stagedEntry;
     const customKey = entryType.slice('custom:'.length);
-    return actor.items?.find?.((item) => item?.type === 'spellcastingEntry' && item?.flags?.['pf2e-leveler']?.customSpellcastingEntry === customKey) ?? null;
+    return actor.items?.find?.((item) => item?.type === 'spellcastingEntry' && item?.flags?.[MODULE_ID]?.customSpellcastingEntry === customKey) ?? null;
   }
   if (typeof entryType === 'string' && entryType.startsWith('archetype:')) {
     const stagedEntry = entries?.archetypes?.[entryType];
     if (stagedEntry) return stagedEntry;
     const classSlug = entryType.split(':')[1] ?? '';
-    return actor.items?.find?.((item) => item?.type === 'spellcastingEntry' && item?.flags?.['pf2e-leveler']?.archetypeSpellcastingEntry === classSlug) ?? null;
+    return actor.items?.find?.((item) => item?.type === 'spellcastingEntry' && item?.flags?.[MODULE_ID]?.archetypeSpellcastingEntry === classSlug) ?? null;
   }
   return entries.primary ?? entries.animist;
 }

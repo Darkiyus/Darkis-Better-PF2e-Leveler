@@ -6,7 +6,7 @@ describe('feat cache', () => {
     localStorage.clear();
     game.items = [];
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {
           feats: ['my-module.feats'],
         },
@@ -55,7 +55,7 @@ describe('feat cache', () => {
   test('auto-discovers feat packs when no custom feat compendiums are configured', async () => {
     invalidateCache();
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {},
       },
     };
@@ -120,7 +120,7 @@ describe('feat cache', () => {
   test('always includes discovered official pf2e feat packs even when custom feat compendiums are configured', async () => {
     invalidateCache();
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {
           feats: ['my-module.feats'],
         },
@@ -212,7 +212,7 @@ describe('feat cache', () => {
   test('player compendium restrictions block discovered and custom feat packs that are not allowed', async () => {
     invalidateCache();
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {
           feats: ['my-module.feats'],
         },
@@ -313,7 +313,7 @@ describe('feat cache', () => {
   test('reuses stored raw feat pack discovery across reloads instead of rescanning all pack indexes', async () => {
     invalidateCache();
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {},
       },
     };

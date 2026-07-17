@@ -265,7 +265,7 @@ describe('applySpells', () => {
   test('creates and updates separate secondary dual-class spellcasting entries', async () => {
     global._testSettings = {
       pf2e: { dualClassVariant: true },
-      'pf2e-leveler': { enableDualClassSupport: true },
+      'darkis-better-pf2e-leveler': { enableDualClassSupport: true },
     };
 
     const plan = {
@@ -378,7 +378,7 @@ describe('applySpells', () => {
         name: 'Magus Studious Spells',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             magusStudiousEntry: true,
           },
         },
@@ -515,7 +515,7 @@ describe('applySpells', () => {
         name: 'Druid Dedication Spells',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             archetypeSpellcastingEntry: 'druid',
           },
         },
@@ -566,7 +566,7 @@ describe('applySpells', () => {
         name: 'Druid Dedication Spells',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             archetypeSpellcastingEntry: 'druid',
           },
         },
@@ -651,7 +651,7 @@ describe('applySpells', () => {
         name: 'Occult Sidebook',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             customSpellcastingEntry: 'custom-occult',
           },
         },
@@ -856,7 +856,7 @@ describe('applySpells', () => {
         name: 'Ritual Notes',
         type: 'spellcastingEntry',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             customSpellcastingEntry: 'planner-entry',
           },
         },

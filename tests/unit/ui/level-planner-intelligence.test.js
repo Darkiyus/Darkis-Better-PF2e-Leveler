@@ -157,8 +157,8 @@ describe('LevelPlanner intelligence boost planner choices', () => {
 
     global._testSettings = {
       ...(global._testSettings ?? {}),
-      'pf2e-leveler': {
-        ...(global._testSettings?.['pf2e-leveler'] ?? {}),
+      'darkis-better-pf2e-leveler': {
+        ...(global._testSettings?.['darkis-better-pf2e-leveler'] ?? {}),
         gmContentGuidance: {
           'language:draconic': 'recommended',
           'language:elven': 'not-recommended',
@@ -193,10 +193,10 @@ describe('LevelPlanner intelligence boost planner choices', () => {
       },
       settings: {
         get: jest.fn((scope, key) => {
-          if (scope === 'pf2e-leveler' && key === 'gmContentGuidance') {
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'gmContentGuidance') {
             return { 'language:draconic': 'disallowed' };
           }
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           if (scope === 'pf2e' && ['gradualBoostsVariant', 'freeArchetypeVariant', 'dualClassVariant'].includes(key)) return false;
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
@@ -643,7 +643,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -697,7 +697,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1284,14 +1284,14 @@ describe('LevelPlanner intelligence boost planner choices', () => {
       ...global.game,
       settings: {
         get: jest.fn((scope, key) => {
-          if (scope === 'pf2e-leveler' && key === 'gmContentGuidance') {
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'gmContentGuidance') {
             return {
               'skill:arcana': 'recommended',
               'skill:athletics': 'not-recommended',
               'skill:stealth': 'disallowed',
             };
           }
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           if (scope === 'pf2e' && ['gradualBoostsVariant', 'freeArchetypeVariant', 'dualClassVariant'].includes(key)) return false;
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
@@ -1523,7 +1523,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1556,7 +1556,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1588,7 +1588,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1619,7 +1619,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1683,7 +1683,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1748,7 +1748,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1810,7 +1810,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },
@@ -1875,7 +1875,7 @@ describe('LevelPlanner intelligence boost planner choices', () => {
           if (scope === 'pf2e' && key === 'automaticBonusVariant') return 'noABP';
           if (scope === 'pf2e' && key === 'mythic') return 'disabled';
           if (scope === 'pf2e' && key === 'dualClassVariant') return false;
-          if (scope === 'pf2e-leveler' && key === 'ancestralParagon') return false;
+          if (scope === 'darkis-better-pf2e-leveler' && key === 'ancestralParagon') return false;
           return false;
         }),
       },

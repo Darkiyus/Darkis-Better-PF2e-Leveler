@@ -53,7 +53,7 @@ describe('compendium catalog helpers', () => {
     game.system.id = 'pf2e';
     game.modules = new Map([['sf2e-anachronism', { active: true }]]);
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {
           spells: ['sf2e.spells', 'sf2e-anachronism.spells', 'my-module.spells'],
         },
@@ -181,7 +181,7 @@ describe('compendium catalog helpers', () => {
     game.system.id = 'pf2e';
     game.modules = new Map();
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {
           feats: ['my-module.extra-feats'],
         },
@@ -580,7 +580,7 @@ describe('compendium catalog helpers', () => {
 
   test('migrates legacy additional feat compendiums into the new category setting', async () => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         additionalFeatCompendiums: 'my-module.feats, my-module.more-feats',
         customCompendiums: {},
       },
@@ -589,7 +589,7 @@ describe('compendium catalog helpers', () => {
     const migrated = await migrateLegacyFeatCompendiumsSetting();
 
     expect(migrated).toBe(true);
-    expect(game.settings.set).toHaveBeenCalledWith('pf2e-leveler', 'customCompendiums', expect.objectContaining({
+    expect(game.settings.set).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'customCompendiums', expect.objectContaining({
       feats: ['my-module.feats', 'my-module.more-feats'],
     }));
   });

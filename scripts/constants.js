@@ -1,4 +1,4 @@
-export const MODULE_ID = 'pf2e-leveler';
+export const MODULE_ID = 'darkis-better-pf2e-leveler';
 
 export const PLAN_FLAG = 'plan';
 export const MIXED_ANCESTRY_UUID = 'pf2e-leveler.synthetic.heritage.mixed-ancestry';

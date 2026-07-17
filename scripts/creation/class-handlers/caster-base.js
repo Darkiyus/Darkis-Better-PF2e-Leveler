@@ -1,4 +1,4 @@
-import { SPELLBOOK_CLASSES } from '../../constants.js';
+import { MODULE_ID, SPELLBOOK_CLASSES } from '../../constants.js';
 import { BaseClassHandler } from './base.js';
 import { resolveSpellcastingTradition, resolveSubclassSpells } from '../../data/subclass-spells.js';
 import { ClassRegistry } from '../../classes/registry.js';
@@ -368,7 +368,7 @@ export class CasterBaseHandler extends BaseClassHandler {
           name: 'Magus Studious Spells',
           type: 'spellcastingEntry',
           flags: {
-            'pf2e-leveler': {
+            [MODULE_ID]: {
               [MAGUS_STUDIOUS_ENTRY_FLAG]: true,
             },
           },
@@ -395,7 +395,7 @@ export class CasterBaseHandler extends BaseClassHandler {
 
   _isMagusStudiousEntry(item) {
     if (item?.type !== 'spellcastingEntry') return false;
-    if (item.flags?.['pf2e-leveler']?.[MAGUS_STUDIOUS_ENTRY_FLAG] === true) return true;
+    if (item.flags?.[MODULE_ID]?.[MAGUS_STUDIOUS_ENTRY_FLAG] === true) return true;
     return String(item?.name ?? '')
       .toLowerCase()
       .includes('studious');

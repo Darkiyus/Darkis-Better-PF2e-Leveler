@@ -32,12 +32,12 @@ describe('Plan Store', () => {
       canTakeNewDedication: true,
       dedications: [],
     });
-    expect(mockActor.setFlag).toHaveBeenCalledWith('pf2e-leveler', 'plan', plan);
+    expect(mockActor.setFlag).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'plan', plan);
   });
 
   test('clearPlan calls unsetFlag', async () => {
     await clearPlan(mockActor);
-    expect(mockActor.unsetFlag).toHaveBeenCalledWith('pf2e-leveler', 'plan');
+    expect(mockActor.unsetFlag).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'plan');
   });
 
   test('hasPlan returns true when plan exists', () => {

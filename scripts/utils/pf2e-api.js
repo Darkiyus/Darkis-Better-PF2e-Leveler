@@ -34,7 +34,7 @@ export function isDualClassEnabled() {
 }
 
 export function isAncestralParagonEnabled() {
-  try { return game.settings.get('pf2e-leveler', 'ancestralParagon'); } catch { return false; }
+  try { return game.settings.get(MODULE_ID, 'ancestralParagon'); } catch { return false; }
 }
 
 export function getCampaignFeatSectionIds() {

@@ -22,7 +22,7 @@ const { shouldRestrictContentForUser } = jest.requireMock('../../../scripts/acce
 describe('content guidance source rules', () => {
   beforeEach(() => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         gmContentGuidance: {},
         playerDisallowedContentMode: PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE,
       },
@@ -37,7 +37,7 @@ describe('content guidance source rules', () => {
   });
 
   test('reads source guidance by publication title', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'recommended',
     };
 
@@ -45,7 +45,7 @@ describe('content guidance source rules', () => {
   });
 
   test('reads object-backed source guidance by publication title', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': { status: 'allowed', exclusive: true },
     };
 
@@ -53,7 +53,7 @@ describe('content guidance source rules', () => {
   });
 
   test('annotateGuidance applies source status when item has no direct override', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'not-recommended',
     };
 
@@ -70,7 +70,7 @@ describe('content guidance source rules', () => {
   });
 
   test('annotateGuidance keeps direct item guidance over source guidance', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'disallowed',
       'Compendium.test.feats.Item.abc': 'recommended',
     };
@@ -88,7 +88,7 @@ describe('content guidance source rules', () => {
   });
 
   test('category default can disallow unmarked items while explicit allow overrides it', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       [getCategoryDefaultGuidanceKey('backgrounds')]: 'disallowed',
       'Compendium.test.backgrounds.Item.allowed': 'allowed',
     };
@@ -115,7 +115,7 @@ describe('content guidance source rules', () => {
   });
 
   test('heritages use their own guidance category for recommendations and bans', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       [getCategoryDefaultGuidanceKey('heritages')]: 'disallowed',
       'Compendium.test.heritages.Item.ancient-elf': 'recommended',
     };
@@ -147,7 +147,7 @@ describe('content guidance source rules', () => {
   });
 
   test('heritage slug guidance applies across compendium copies', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'heritage-slug:dhampir': 'disallowed',
       'Compendium.pf2e.heritages.Item.dhampir': 'recommended',
     };
@@ -174,7 +174,7 @@ describe('content guidance source rules', () => {
   });
 
   test('exclusive direct guidance filters non-exclusive siblings for players', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'Compendium.test.feats.Item.medic-dedication': { status: 'recommended', exclusive: true },
     };
 
@@ -203,7 +203,7 @@ describe('content guidance source rules', () => {
   });
 
   test('exclusive archetype dedication keeps same archetype follow-up feats selectable', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'Compendium.test.feats.Item.medic-dedication': { status: 'recommended', exclusive: true },
     };
 
@@ -239,7 +239,7 @@ describe('content guidance source rules', () => {
   });
 
   test('free archetype exclusive guidance only gates free archetype contexts', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'Compendium.test.feats.Item.acrobat-dedication': { status: 'recommended', exclusive: true, freeArchetypeExclusive: true },
     };
 
@@ -290,7 +290,7 @@ describe('content guidance source rules', () => {
   });
 
   test('exclusive source guidance filters non-exclusive items in the same list', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': { status: 'allowed', exclusive: true },
     };
 
@@ -315,7 +315,7 @@ describe('content guidance source rules', () => {
   });
 
   test('sources category default disallows items from unmarked sources', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       [getCategoryDefaultGuidanceKey('sources')]: 'disallowed',
       'source-title:pathfinder player core': 'allowed',
     };
@@ -340,7 +340,7 @@ describe('content guidance source rules', () => {
   });
 
   test('slug guidance respects category defaults and exclusive gates', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       [getCategoryDefaultGuidanceKey('skills')]: 'disallowed',
       'skill:medicine': { status: 'allowed', exclusive: true },
     };
@@ -358,7 +358,7 @@ describe('content guidance source rules', () => {
   });
 
   test('disallowed guidance blocks players but not GMs', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'disallowed',
     };
 
@@ -384,13 +384,13 @@ describe('content guidance source rules', () => {
   });
 
   test('defaults player disallowed mode to unselectable when setting is unset', () => {
-    delete global._testSettings['pf2e-leveler'].playerDisallowedContentMode;
+    delete global._testSettings['darkis-better-pf2e-leveler'].playerDisallowedContentMode;
 
     expect(getPlayerDisallowedContentMode()).toBe(PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE);
   });
 
   test('filters disallowed entries only when player mode is hidden', () => {
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'disallowed',
     };
     invalidateGuidanceCache();
@@ -400,10 +400,10 @@ describe('content guidance source rules', () => {
       { uuid: 'blocked', publicationTitle: 'Pathfinder Player Core' },
     ]);
 
-    global._testSettings['pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE;
+    global._testSettings['darkis-better-pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE;
     expect(filterDisallowedForCurrentUser(annotated).map((item) => item.uuid)).toEqual(['allowed', 'blocked']);
 
-    global._testSettings['pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.HIDDEN;
+    global._testSettings['darkis-better-pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.HIDDEN;
     expect(filterDisallowedForCurrentUser(annotated).map((item) => item.uuid)).toEqual(['allowed']);
   });
 });

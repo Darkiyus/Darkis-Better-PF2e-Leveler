@@ -293,7 +293,7 @@ describe('WizardHandler._applyCurriculumEntry', () => {
         id: 'entree-fr',
         type: 'spellcastingEntry',
         name: 'Programme de cursus',
-        flags: { 'pf2e-leveler': { curriculumEntry: true } },
+        flags: { 'darkis-better-pf2e-leveler': { curriculumEntry: true } },
       }],
       createEmbeddedDocuments: jest.fn(async (_type, documents) => {
         createdItems.push(...documents);

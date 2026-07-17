@@ -59,9 +59,9 @@ describe('review-requests', () => {
       global.game.settings.get = jest.fn(() => [{ id: '1' }, { id: '2' }]);
       global.game.settings.set = jest.fn(() => Promise.resolve());
       const del = jest.fn(() => Promise.resolve());
-      global.game.messages = [{ flags: { 'pf2e-leveler': { reviewRequest: { id: '1' } } }, delete: del }];
+      global.game.messages = [{ flags: { 'darkis-better-pf2e-leveler': { reviewRequest: { id: '1' } } }, delete: del }];
       await deleteReviewRequest('1');
-      expect(global.game.settings.set).toHaveBeenCalledWith('pf2e-leveler', 'reviewRequests', [{ id: '2' }]);
+      expect(global.game.settings.set).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'reviewRequests', [{ id: '2' }]);
       expect(del).toHaveBeenCalled();
     });
 
@@ -70,7 +70,7 @@ describe('review-requests', () => {
       global.game.settings.set = jest.fn(() => Promise.resolve());
       global.game.messages = [];
       await deleteReviewRequest('1');
-      expect(global.game.settings.set).toHaveBeenCalledWith('pf2e-leveler', 'reviewRequests', []);
+      expect(global.game.settings.set).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'reviewRequests', []);
     });
   });
 

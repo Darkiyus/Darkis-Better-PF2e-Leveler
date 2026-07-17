@@ -9,7 +9,7 @@ describe('player content restrictions', () => {
   test('restricts compendium sources for non-GM users when player source limits are enabled', () => {
     game.user.isGM = false;
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {
           feats: ['custom.allowed', 'custom.blocked'],
         },
@@ -32,7 +32,7 @@ describe('player content restrictions', () => {
   test('filters unavailable rarities out of character creation loaders for non-GM users', async () => {
     game.user.isGM = false;
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         customCompendiums: {},
         playerAllowUncommon: false,
         playerAllowRare: false,

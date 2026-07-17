@@ -18,8 +18,8 @@ describe('SpellPicker', () => {
     game.user.isGM = true;
     global._testSettings = {
       ...(global._testSettings ?? {}),
-      'pf2e-leveler': {
-        ...((global._testSettings ?? {})['pf2e-leveler'] ?? {}),
+      'darkis-better-pf2e-leveler': {
+        ...((global._testSettings ?? {})['darkis-better-pf2e-leveler'] ?? {}),
         gmContentGuidance: {},
         playerDisallowedContentMode: PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE,
       },
@@ -754,7 +754,7 @@ describe('SpellPicker', () => {
     clearSpellPickerCache();
     invalidateGuidanceCache();
     game.user.isGM = false;
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'disallowed',
     };
     game.packs.get = jest.fn((key) => {
@@ -830,7 +830,7 @@ describe('SpellPicker', () => {
     clearSpellPickerCache();
     invalidateGuidanceCache();
     game.user.isGM = true;
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'disallowed',
     };
     game.packs.get = jest.fn((key) => {
@@ -864,10 +864,10 @@ describe('SpellPicker', () => {
     clearSpellPickerCache();
     invalidateGuidanceCache();
     game.user.isGM = false;
-    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+    global._testSettings['darkis-better-pf2e-leveler'].gmContentGuidance = {
       'source-title:pathfinder player core': 'disallowed',
     };
-    global._testSettings['pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.HIDDEN;
+    global._testSettings['darkis-better-pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.HIDDEN;
     game.packs.get = jest.fn((key) => {
       if (key !== 'pf2e.spells-srd') return null;
       return {
@@ -888,7 +888,7 @@ describe('SpellPicker', () => {
     expect(context.spells.map((spell) => spell.uuid)).toEqual(['other-spell']);
 
     game.user.isGM = true;
-    global._testSettings['pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE;
+    global._testSettings['darkis-better-pf2e-leveler'].playerDisallowedContentMode = PLAYER_DISALLOWED_CONTENT_MODES.UNSELECTABLE;
   });
 });
 

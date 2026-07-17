@@ -11,7 +11,7 @@ global.game = {
         return global._testSettings[moduleId][settingId];
       }
       const defaults = {
-        'pf2e-leveler': {
+        'darkis-better-pf2e-leveler': {
           showPlanButton: true,
           autoApplyOnLevelUp: true,
           allowIncompleteCreation: false,

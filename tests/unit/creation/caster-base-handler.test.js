@@ -102,7 +102,7 @@ describe('CasterBaseHandler._applySpellcasting', () => {
       expect.objectContaining({
         name: 'Magus Studious Spells',
         flags: {
-          'pf2e-leveler': {
+          'darkis-better-pf2e-leveler': {
             magusStudiousEntry: true,
           },
         },

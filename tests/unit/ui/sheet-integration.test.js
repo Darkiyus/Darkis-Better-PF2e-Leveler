@@ -43,7 +43,7 @@ describe('leveler keyboard shortcut', () => {
     registerLevelerKeybindings();
 
     expect(game.keybindings.register).toHaveBeenCalledWith(
-      'pf2e-leveler',
+      'darkis-better-pf2e-leveler',
       'openLevelerForCharacter',
       expect.objectContaining({
         editable: [{ key: 'KeyL', modifiers: ['Shift'] }],

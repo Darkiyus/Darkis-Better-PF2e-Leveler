@@ -98,7 +98,7 @@ describe('ItemPicker', () => {
   test('filters formula items by player rarity permissions when loading items', async () => {
     game.user = { isGM: false };
     game.settings.get = jest.fn((scope, key) => {
-      if (scope !== 'pf2e-leveler') return false;
+      if (scope !== 'darkis-better-pf2e-leveler') return false;
       if (key === 'playerAllowUncommon') return false;
       if (key === 'playerAllowRare') return false;
       if (key === 'playerAllowUnique') return false;

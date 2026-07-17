@@ -9,7 +9,7 @@ import {
 describe('campaign settings profiles', () => {
   beforeEach(() => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         playerAllowUncommon: true,
         playerAllowRare: false,
         playerAllowUnique: false,
@@ -61,7 +61,7 @@ describe('campaign settings profiles', () => {
       systemSettings: { gradualBoostsVariant: true, unknown: true },
     });
 
-    expect(game.settings.set).toHaveBeenCalledWith('pf2e-leveler', 'playerAllowRare', true);
+    expect(game.settings.set).toHaveBeenCalledWith('darkis-better-pf2e-leveler', 'playerAllowRare', true);
     expect(game.settings.set).toHaveBeenCalledWith('pf2e', 'gradualBoostsVariant', true);
     expect(game.settings.set).not.toHaveBeenCalledWith(expect.anything(), 'unknown', expect.anything());
   });

@@ -78,8 +78,8 @@ describe('FeatPicker prerequisite enforcement', () => {
     const originalSettings = global._testSettings;
     global._testSettings = {
       ...(originalSettings ?? {}),
-      'pf2e-leveler': {
-        ...(originalSettings?.['pf2e-leveler'] ?? {}),
+      'darkis-better-pf2e-leveler': {
+        ...(originalSettings?.['darkis-better-pf2e-leveler'] ?? {}),
         gmContentGuidance: guidance,
         playerDisallowedContentMode,
       },
@@ -1662,8 +1662,8 @@ describe('FeatPicker prerequisite enforcement', () => {
   test('custom feat picker starts with all rarities enabled regardless of hide settings', () => {
     global._testSettings = {
       ...(global._testSettings ?? {}),
-      'pf2e-leveler': {
-        ...(global._testSettings?.['pf2e-leveler'] ?? {}),
+      'darkis-better-pf2e-leveler': {
+        ...(global._testSettings?.['darkis-better-pf2e-leveler'] ?? {}),
         hideUncommonFeats: true,
         hideRareFeats: true,
       },

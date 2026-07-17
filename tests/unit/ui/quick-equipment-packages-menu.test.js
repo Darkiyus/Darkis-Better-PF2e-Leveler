@@ -3,7 +3,7 @@ import { QuickEquipmentPackagesMenu } from '../../../scripts/ui/quick-equipment-
 describe('QuickEquipmentPackagesMenu', () => {
   beforeEach(() => {
     global._testSettings = {
-      'pf2e-leveler': {
+      'darkis-better-pf2e-leveler': {
         quickEquipmentPackages: [],
       },
     };
@@ -80,7 +80,7 @@ describe('QuickEquipmentPackagesMenu', () => {
     await menu._save();
 
     expect(game.settings.set).toHaveBeenCalledWith(
-      'pf2e-leveler',
+      'darkis-better-pf2e-leveler',
       'quickEquipmentPackages',
       [expect.objectContaining({ id: 'starter-kit', name: 'Starter Kit', type: 'kit' })],
     );

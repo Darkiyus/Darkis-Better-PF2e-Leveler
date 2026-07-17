@@ -7,7 +7,7 @@ const ZOOM_SELECTOR = [
   'img.spell-option__img',
 ].join(', ');
 
-const ZOOM_EXCLUDED_SELECTOR = '.wizard-browser--background';
+const ZOOM_EXCLUDED_SELECTOR = '.wizard-browser--background, .wizard-item-grid--gallery, .guidance-list--gallery';
 const SHOW_DELAY_MS = 120;
 const CURSOR_OFFSET = 18;
 
