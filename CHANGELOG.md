@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.8.5 – Gallery Layout Rewrite
+
+### Fixed
+
+- The ancestry and GM Content Guidance gallery views still collapsed to thin image slivers on some window sizes after the 3.8.4 fix; the gallery cards now use a plain, non-nested flex layout with a fixed image height instead of relying on CSS grid row auto-sizing, which was the actual source of the collapse
+
 ## 3.8.4 – Gallery Fixes and Cleanup
 
 ### Fixed

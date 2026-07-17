@@ -476,18 +476,19 @@
 
 .pf2e-leveler .wizard-item-grid--browser.wizard-item-grid--gallery {
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-auto-rows: max-content;
+  align-items: start;
   gap: 14px;
 }
 
 .pf2e-leveler .wizard-item-grid--gallery .wizard-item {
-  grid-template-columns: 1fr;
-  grid-auto-rows: min-content;
-  min-height: min-content;
+  display: flex;
+  flex-direction: column;
   padding: 0;
-  overflow: hidden;
 }
 
 .pf2e-leveler .wizard-item-grid--gallery .wizard-item__img {
+  flex: 0 0 170px;
   width: 100%;
   height: 170px;
   border-radius: var(--leveler-radius-sm) var(--leveler-radius-sm) 0 0;
@@ -495,6 +496,7 @@
 }
 
 .pf2e-leveler .wizard-item-grid--gallery .wizard-item__info {
+  flex: 0 0 auto;
   padding: 10px 12px 0;
 }
 
@@ -504,7 +506,9 @@
 }
 
 .pf2e-leveler .wizard-item-grid--gallery .wizard-item__select {
-  justify-self: stretch;
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: auto;
   margin: 10px 12px 12px;
   padding: 7px 10px;
   text-align: center;
