@@ -10,6 +10,18 @@ Community-Fork von [PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler) mi
 
 PF2e Leveler unterstützt die Charaktererschaffung und die Planung von Stufenaufstiegen in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition. Dieser Fork konzentriert sich auf eine flüssigere Bedienung, optionale deutsche Texte und eine bessere Verwaltung eigener Kampagneninhalte. Die interne Modul-ID bleibt `pf2e-leveler`, damit bestehende Welten und Einstellungen kompatibel bleiben.
 
+### Warum dieser Fork?
+
+Zuerst einmal: Ein riesiges Dankeschön an **RoiLeaf**, den ursprünglichen Entwickler dieses Moduls. ❤️ Die Grundidee und das Modul selbst haben mir so gut gefallen, dass ich PF2e Leveler direkt für meine eigenen Pathfinder-2E-Kampagnen verwenden wollte. Dieser Fork baut auf seiner Arbeit auf und wäre ohne sie nicht entstanden.
+
+Beim Einsatz in meinen eigenen Runden sind mir einige Stellen aufgefallen, die ich gern verbessern oder ergänzen wollte:
+
+- **Performance und Stabilität:** Besonders die Suche nach Gegenständen konnte sehr große Kompendien schon nach einem einzelnen Buchstaben vollständig verarbeiten. Dadurch geriet Foundry teilweise stark ins Stocken oder die Oberfläche reagierte nicht mehr. Mein wichtigstes Ziel war deshalb, diese Engpässe zu beseitigen und die Bedienung insgesamt flüssiger zu machen.
+- **Vollständige deutsche Oberfläche:** Da ich selbst auf Deutsch spiele, wollte ich eine optionale deutsche Lokalisierung mit den etablierten Begriffen aus Pathfinder 2E ergänzen, ohne die vorhandenen Sprachen zu ersetzen.
+- **Hilfen für neue Spieler:** Eigene Starter- und Klassenausrüstungspakete lassen sich nun aus normalen PF2e-Gegenständen zusammenstellen. Bilder, Beschreibungen, Preis, Last und enthaltene Gegenstände bleiben dabei nachvollziehbar, damit neue Charaktere schneller und verständlicher ausgerüstet werden können.
+- **Mehr Kontrolle für eigene Kampagnen:** Herkünfte können wie Abstammungen empfohlen, eingeschränkt oder ausgeschlossen werden. Hinzu kommen verständlichere Hinweise bei Attributsverbesserungen sowie eine dokumentierte Import- und Exportfunktion für Charakterentwürfe.
+- **Ein persönliches Hobbyprojekt:** Dieser Fork ist kein kommerzielles Produkt. Er ist entstanden, weil ich das Modul für meine eigenen Foundry-VTT-Runden verbessern wollte – und weil diese Änderungen vielleicht auch anderen Gruppen helfen.
+
 ### Was wurde geändert – und warum?
 
 - **Schnellere Suche:** Die alte Suchlogik konnte bereits nach einem einzelnen Zeichen große Kompendien vollständig durchsuchen und Tausende DOM-Elemente erzeugen. Suchvorgänge beginnen nun erst ab drei Zeichen, werden um 250 ms verzögert und veraltete asynchrone Ergebnisse werden verworfen. Ausrüstung, Talente und Zauber zeigen höchstens 200 Ergebniszeilen gleichzeitig an. Unveränderliche Ausrüstungsfilter werden zwischengespeichert und mehrere Zauberkompendien parallel geladen.
@@ -70,13 +82,18 @@ Der Import akzeptiert ausschließlich Charaktererschaffungspläne von PF2e Level
 
 Deutsch ist optional und wird wie jede andere Foundry-Sprache in der Kernkonfiguration des jeweiligen Benutzers ausgewählt. Verfügbar bleiben Deutsch, Englisch, Französisch und Chinesisch.
 
-### Ursprung und Lizenz
+### Ursprung, Lizenz und Nutzung
 
 - Ursprüngliches Projekt und Entwickler: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
 - Community-Fork: [Darkiyus/pf2e-leveler](https://github.com/Darkiyus/pf2e-leveler)
-- Lizenz: MIT
 
-Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers.
+Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers. Soweit Bestandteile eigenständige Beiträge dieses Forks sind, dürfen diese gern privat oder in eigenen Projekten verwendet, verändert und weitergegeben werden. Eine Erwähnung ist willkommen, aber keine Voraussetzung.
+
+Diese Erlaubnis gilt ausschließlich für die eigenständigen Änderungen dieses Forks. Übernommener Code aus dem ursprünglichen PF2e Leveler sowie Inhalte und Marken von Pathfinder, Foundry VTT oder anderen Projekten unterliegen weiterhin den jeweiligen Rechten und Bedingungen ihrer Rechteinhaber. Das ursprüngliche Repository enthält derzeit keine separate, von GitHub erkannte Lizenzdatei; dieser Fork kann daher für den übernommenen Originalcode keine zusätzlichen Nutzungsrechte erteilen.
+
+Der ursprüngliche Entwickler ist ausdrücklich eingeladen, einzelne oder alle Änderungen dieses Forks in das Originalprojekt zu übernehmen. Genau dieser offene Austausch ist einer der schönsten Aspekte gemeinschaftlicher Softwareentwicklung. 😊
+
+Ich hoffe, die Verbesserungen helfen euch genauso wie meinen eigenen Runden. Viel Spaß beim Basteln, viele unvergessliche Pathfinder-Abenteuer und einen großartigen Pen-&-Paper-Abend! 🎲
 
 ---
 
@@ -85,6 +102,18 @@ Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers.
 ### Overview
 
 PF2e Leveler assists with character creation and level-up planning in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition. This fork focuses on responsive interaction, an optional German interface, and better control over campaign-specific content. The internal module ID remains `pf2e-leveler` to preserve existing worlds and settings.
+
+### Why this fork?
+
+First and foremost, a huge thank-you to **RoiLeaf**, the original developer of this module. ❤️ I liked the idea and the module itself so much that I immediately wanted to use PF2e Leveler in my own Pathfinder Second Edition campaigns. This fork builds on that work and would not exist without it.
+
+While using the module in my own games, I found a few areas that I wanted to improve or expand:
+
+- **Performance and stability:** Item searches could process very large compendiums after only a single typed character. This sometimes caused Foundry to slow down severely or made the interface stop responding. My primary goal was therefore to remove those bottlenecks and make the module feel smoother overall.
+- **A complete German interface:** Because I play in German, I wanted to add an optional German localization using established Pathfinder 2E terminology without replacing any of the existing languages.
+- **Help for new players:** Custom starter and class-equipment packages can now be assembled from normal PF2e items. Their images, descriptions, prices, Bulk, and included items remain visible, making it easier to equip new characters quickly and transparently.
+- **More control for custom campaigns:** Heritages can be recommended, restricted, or excluded in the same way as ancestries. The fork also adds clearer ability-boost guidance and documents the import and export workflow for character-creation drafts.
+- **A personal hobby project:** This fork is not a commercial product. I created it because I wanted to improve the module for my own Foundry VTT games—and because the same changes might be useful to other groups.
 
 ### What changed – and why?
 
@@ -146,10 +175,15 @@ This import accepts PF2e Leveler character-creation plans only; level plans use 
 
 German is optional and can be selected through each user's Foundry core language setting. German, English, French, and Chinese remain available.
 
-### Origin and license
+### Origin, license, and use
 
 - Original project and developer: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
 - Community fork: [Darkiyus/pf2e-leveler](https://github.com/Darkiyus/pf2e-leveler)
-- License: MIT
 
-This community fork is not an official release by the original developer.
+This community fork is not an official release by the original developer. To the extent that material is an original contribution created specifically for this fork, you are welcome to use, modify, and redistribute it privately or in your own projects. Attribution is appreciated, but not required.
+
+This permission applies only to the fork's original contributions. Code inherited from the original PF2e Leveler project, as well as Pathfinder, Foundry VTT, and other third-party content or trademarks, remains subject to the rights and terms of its respective owners. The original repository currently has no separate license file recognized by GitHub, so this fork cannot grant additional rights to the inherited source code.
+
+The original developer is warmly invited to incorporate any or all of these changes into the original project. That kind of open exchange is one of the best parts of collaborative software development. 😊
+
+I hope these improvements help your games as much as they have helped mine. Have fun tinkering, enjoy many unforgettable Pathfinder adventures, and have a fantastic tabletop night! 🎲
