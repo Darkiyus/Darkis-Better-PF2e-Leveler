@@ -10,6 +10,8 @@ Community-Fork von [PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler) mi
 
 PF2e Leveler unterstützt die Charaktererschaffung und die Planung von Stufenaufstiegen in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition. Dieser Fork konzentriert sich auf eine flüssigere Bedienung, optionale deutsche Texte und eine bessere Verwaltung eigener Kampagneninhalte. Die interne Modul-ID bleibt `pf2e-leveler`, damit bestehende Welten und Einstellungen kompatibel bleiben.
 
+Foundry behandelt diesen Fork deshalb als Ersatz beziehungsweise Aktualisierung des ursprünglichen PF2e Leveler. Original und Fork werden nicht als zwei getrennte Module angezeigt und sollten nicht parallel installiert werden. Vorhandene Welteinstellungen und gespeicherte Leveler-Daten bleiben dadurch unter demselben Namensraum erhalten.
+
 ### Warum dieser Fork?
 
 Zuerst einmal: Ein riesiges Dankeschön an **RoiLeaf**, den ursprünglichen Entwickler dieses Moduls. ❤️ Die Grundidee und das Modul selbst haben mir so gut gefallen, dass ich PF2e Leveler direkt für meine eigenen Pathfinder-2E-Kampagnen verwenden wollte. Dieser Fork baut auf seiner Arbeit auf und wäre ohne sie nicht entstanden.
@@ -23,6 +25,12 @@ Beim Einsatz in meinen eigenen Runden sind mir einige Stellen aufgefallen, die i
 - **Ein persönliches Hobbyprojekt:** Dieser Fork ist kein kommerzielles Produkt. Er ist entstanden, weil ich das Modul für meine eigenen Foundry-VTT-Runden verbessern wollte – und weil diese Änderungen vielleicht auch anderen Gruppen helfen.
 
 ### Was wurde geändert – und warum?
+
+- **Flüssigere Tabwechsel:** Der Charakterassistent lädt für Listen bevorzugt schlanke Kompendiumsindizes statt vollständiger Dokumente. Bereits geladene Pakete und laufende Anfragen werden während der gesamten Foundry-Sitzung zwischen Assistenten geteilt. Hintergrunddaten werden priorisiert und nacheinander während Leerlaufzeiten geladen; aufwendige, schrittübergreifende Berechnungen werden bis zur nächsten tatsächlichen Charakteränderung wiederverwendet.
+- **Bessere Steuerung vielseitiger Herkünfte:** Die SL-Ansicht besitzt eigene Filter für Abstammungsherkünfte und vielseitige Herkünfte, Sammelaktionen sowie eine Spielervorschau. Herkunftsregeln verwenden einen stabilen Herkunftsschlüssel, sodass beispielsweise ein verbotenes Dhampir aus einem Übersetzungs- oder Homebrew-Kompendium nicht als ungesperrte Kopie erneut auftaucht. SL dürfen verbotene Optionen weiterhin bewusst überschreiben.
+- **Einrichtungsassistent für den SL:** Beim ersten Einsatz kann ein optionaler Assistent Sprache, Seltenheiten, Inhaltsquellen, Leveler-Regeln, erkannte PF2e-Varianten, Prüfanfragen und Spielerzugriff gemeinsam konfigurieren. Die Presets „Ausgewogen“, „Eingeschränkt“ und „Homebrew-freundlich“ dienen als Ausgangspunkt. Der Assistent bleibt über die Moduleinstellungen erneut erreichbar.
+- **Kampagnenprofile und Diagnose:** Die relevante Leveler- und PF2e-Konfiguration kann als JSON-Profil zwischen Welten übertragen werden. Eine Diagnose erkennt fehlende Kompendien, veraltete Inhaltsverweise, fehlende Gegenstände in Ausrüstungspaketen, doppelte Herkunftsschlüssel und widersprüchliche Prüfeinstellungen. Laufzeit-Caches lassen sich dort sicher leeren.
+- **Kampagnenregeln für Spieler:** Die Zusammenfassung der Charaktererschaffung zeigt die aktiven Zugriffs- und Variantenregeln, damit Spieler vor dem Anwenden erkennen, welche Inhalte und optionalen Regeln in der Welt gelten.
 
 - **Schnellere Suche:** Die alte Suchlogik konnte bereits nach einem einzelnen Zeichen große Kompendien vollständig durchsuchen und Tausende DOM-Elemente erzeugen. Suchvorgänge beginnen nun erst ab drei Zeichen, werden um 250 ms verzögert und veraltete asynchrone Ergebnisse werden verworfen. Ausrüstung, Talente und Zauber zeigen höchstens 200 Ergebniszeilen gleichzeitig an. Unveränderliche Ausrüstungsfilter werden zwischengespeichert und mehrere Zauberkompendien parallel geladen.
 - **Eigene Schnellausrüstungspakete:** Spielleiter können wiederverwendbare Pakete mit Name, Bild, Beschreibung, Klasse, Stufe, Seltenheit und Merkmalen erstellen. Ein Paket enthält Verweise auf normale PF2e-Gegenstände; Preis und Last werden automatisch aus Inhalt und Menge berechnet. Dadurch lassen sich vollständige Klassenausrüstungen verwalten, statt lediglich einen einzelnen Abenteurerrucksack anzubieten.
@@ -65,6 +73,8 @@ Dies ist ein Roadmap-Eintrag und **noch nicht Bestandteil dieser Version**.
 
 Die Manifest-URL verweist immer auf die neueste veröffentlichte Version dieses Forks.
 
+Da dieser Fork dieselbe Modul-ID wie das Original verwendet, ersetzt die Installation eine vorhandene Originalinstallation in Foundrys Modulliste. Ein paralleler Betrieb ist weder erforderlich noch vorgesehen.
+
 ### Charaktererschaffung exportieren und importieren
 
 Über **Export** am unteren Rand des Charaktererschaffungs-Assistenten wird der aktuelle Entwurf als `<Charaktername>-creation-plan.json` gespeichert. Diese Datei enthält die Auswahl des Assistenten, verändert den Charakterbogen aber nicht.
@@ -78,9 +88,15 @@ So lädst du einen Entwurf wieder:
 
 Der Import akzeptiert ausschließlich Charaktererschaffungspläne von PF2e Leveler; Stufenpläne verwenden eine andere Importfunktion. Module und Kompendien, aus denen der Entwurf Einträge referenziert, müssen in der Zielwelt aktiv und für den Benutzer zugänglich sein.
 
+### SL-Einrichtung und Kampagnenprofile
+
+Der Einrichtungsassistent öffnet sich für einen SL einmalig beim ersten Einsatz dieser Version und bleibt danach unter **Moduleinstellungen → PF2e Leveler → Einrichtungsassistent für SL** verfügbar. Die direkt im Assistenten gewählten Einstellungen werden erst mit **Speichern und abschließen** übernommen. Verknüpfte Detailverwaltungen für Inhaltsvorgaben, Kompendiumsquellen und Ausrüstungspakete besitzen weiterhin ihre eigenen Speichern-Schaltflächen. **Nicht automatisch anzeigen** schließt die Ersteinrichtung; der Assistent kann trotzdem jederzeit manuell geöffnet werden.
+
+Über **Kampagnenprofil exportieren** werden relevante Leveler-Welteinstellungen, Inhaltsvorgaben, Kompendiumszuordnungen, Schnellausrüstungspakete und unterstützte PF2e-Varianten als JSON gespeichert. Ein importiertes Profil wird zunächst nur in den Assistenten geladen und erst beim Abschluss angewendet. Die Diagnose verändert keine Daten; nur **Laufzeit-Caches leeren** verwirft bereits geladene Listen, damit sie bei der nächsten Verwendung neu aufgebaut werden.
+
 ### Sprache auswählen
 
-Deutsch ist optional und wird wie jede andere Foundry-Sprache in der Kernkonfiguration des jeweiligen Benutzers ausgewählt. Verfügbar bleiben Deutsch, Englisch, Französisch und Chinesisch.
+Deutsch ist optional und wird wie jede andere Foundry-Sprache in der Kernkonfiguration des jeweiligen Benutzers ausgewählt. Verfügbar bleiben Deutsch, Englisch, Französisch und Chinesisch. Der SL-Einrichtungsassistent bietet dieselbe Foundry-Sprachauswahl direkt an und lädt die Oberfläche nach einer Änderung neu. Die Auswahl gilt für die gesamte Foundry-Oberfläche des Benutzers und nicht ausschließlich für dieses Modul.
 
 ### Ursprung, Lizenz und Nutzung
 
@@ -103,6 +119,8 @@ Ich hoffe, die Verbesserungen helfen euch genauso wie meinen eigenen Runden. Vie
 
 PF2e Leveler assists with character creation and level-up planning in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition. This fork focuses on responsive interaction, an optional German interface, and better control over campaign-specific content. The internal module ID remains `pf2e-leveler` to preserve existing worlds and settings.
 
+Foundry therefore treats this fork as a replacement or update for the original PF2e Leveler. The original and the fork are not displayed as two separate modules and should not be installed side by side. Existing world settings and saved Leveler data remain in the same namespace.
+
 ### Why this fork?
 
 First and foremost, a huge thank-you to **RoiLeaf**, the original developer of this module. ❤️ I liked the idea and the module itself so much that I immediately wanted to use PF2e Leveler in my own Pathfinder Second Edition campaigns. This fork builds on that work and would not exist without it.
@@ -116,6 +134,12 @@ While using the module in my own games, I found a few areas that I wanted to imp
 - **A personal hobby project:** This fork is not a commercial product. I created it because I wanted to improve the module for my own Foundry VTT games—and because the same changes might be useful to other groups.
 
 ### What changed – and why?
+
+- **Smoother tab changes:** Character-creation lists prefer lightweight compendium indexes over complete documents. Loaded packs and in-flight requests are shared between wizards for the complete Foundry session. Background data is loaded in priority order during browser idle time, while expensive cross-step calculations are reused until the character actually changes.
+- **Better versatile-heritage control:** The GM view adds separate ancestry-heritage and versatile-heritage filters, bulk actions, and a player preview. Stable heritage keys make a rule apply to matching copies supplied by translation or homebrew compendiums. GMs retain their intentional override.
+- **GM setup assistant:** An optional first-run assistant configures language, rarities, content sources, Leveler rules, detected PF2e variants, review requests, and player access in one place. Balanced, Restricted, and Homebrew-friendly presets provide starting points, and the assistant can be reopened from Module Settings.
+- **Campaign profiles and diagnostics:** Relevant Leveler and PF2e configuration can be transferred between worlds as a JSON profile. Diagnostics report missing compendiums, stale guidance references, missing quick-package items, duplicate heritage slugs, conflicting review settings, and runtime cache status. The same page can safely clear those caches.
+- **Campaign rules for players:** The Character Creation Summary displays active access and variant rules so players can see which content and optional rules govern the world before applying their character.
 
 - **Faster search:** The previous search flow could scan large compendiums and create thousands of DOM elements after a single character. Searches now start at three characters, use a 250 ms debounce, and discard stale asynchronous results. Equipment, feat, and spell pickers render at most 200 result rows at once. Static equipment facets are cached, and multiple spell compendiums load in parallel.
 - **Custom quick-equipment packages:** Game Masters can create reusable packages with a name, image, description, class, level, rarity, and traits. Each package references normal PF2e items, while price and Bulk are calculated automatically from its contents and quantities. This makes complete class loadouts possible instead of exposing only an adventurer's pack.
@@ -158,6 +182,8 @@ This is a roadmap item and is **not included in the current version**.
 
 The manifest URL always points to the latest published version of this fork.
 
+Because this fork uses the original module ID, installing it replaces an existing upstream installation in Foundry's module list. Running both versions in parallel is neither required nor supported.
+
 ### Exporting and importing character creation
 
 Select **Export** in the footer of the character-creation wizard to save the current draft as `<character-name>-creation-plan.json`. The file contains the wizard selections but does not modify the actor sheet.
@@ -171,9 +197,15 @@ To restore a draft:
 
 This import accepts PF2e Leveler character-creation plans only; level plans use their separate import function. Any module or compendium referenced by the draft must be active in the target world and accessible to the user.
 
+### GM setup and campaign profiles
+
+The setup assistant opens once for a GM on the first use of this version and remains available under **Module Settings → PF2e Leveler → GM Setup Assistant**. Settings selected directly in the assistant are applied through **Save and Finish**. Linked detail managers for content guidance, compendium sources, and equipment packages retain their own Save buttons. **Do not show automatically** dismisses first-run setup; the assistant can still be opened manually at any time.
+
+**Export Campaign Profile** saves relevant Leveler world settings, content guidance, compendium assignments, quick-equipment packages, and supported PF2e variants as JSON. An imported profile is loaded into the assistant draft and is applied only after finishing. Diagnostics are read-only; only **Clear Runtime Caches** discards loaded lists so they can be rebuilt on demand.
+
 ### Languages
 
-German is optional and can be selected through each user's Foundry core language setting. German, English, French, and Chinese remain available.
+German is optional and can be selected through each user's Foundry core language setting. German, English, French, and Chinese remain available. The GM setup assistant exposes the same Foundry language setting and reloads the interface after a change. The selected language applies to that user's complete Foundry interface, not only this module.
 
 ### Origin, license, and use
 

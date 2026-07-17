@@ -7,6 +7,7 @@ import { ensureLevelerTemplatesLoaded } from '../ui/template-preload.js';
 import { info } from '../utils/logger.js';
 import { registerReviewRequestSocket } from '../access/review-requests.js';
 import { registerPlanCommentsHooks } from './plan-comments-sync.js';
+import { maybeOpenGmSetupWizard } from '../ui/gm-setup-wizard.js';
 
 export function registerLifecycleHooks() {
   Hooks.once('init', onInit);
@@ -29,6 +30,7 @@ async function onReady() {
   await migrateWealthSettings();
   registerSheetIntegration();
   registerPlanCommentsHooks();
+  maybeOpenGmSetupWizard();
 }
 
 function registerClasses() {

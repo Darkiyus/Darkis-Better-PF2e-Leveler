@@ -1,8 +1,8 @@
 {
   "id": "pf2e-leveler",
   "title": "PF2e Leveler – German Edition & Fixes",
-  "description": "<p>A community fork of PF2e Leveler with an optional German interface, faster searches, reusable quick-equipment packages, and expanded heritage content guidance.</p>",
-  "version": "3.7.0",
+  "description": "<p>A community fork of PF2e Leveler with an optional German interface, smoother character-creation navigation, GM campaign setup, reusable quick-equipment packages, and expanded heritage content guidance.</p>",
+  "version": "3.8.0",
   "socket": true,
   "compatibility": {
     "minimum": "13",
@@ -39,6 +39,9 @@
     },
     {
       "src": "styles/quick-equipment-packages.css"
+    },
+    {
+      "src": "styles/gm-setup-wizard.css"
     }
   ],
   "languages": [

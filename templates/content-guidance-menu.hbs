@@ -49,7 +49,22 @@
           value="{{searchText}}"
           minlength="3"
           data-action="search-guidance">
+        <button
+          type="button"
+          class="compendium-manager__button compendium-manager__button--small {{#if previewAsPlayer}}compendium-manager__button--primary{{else}}compendium-manager__button--ghost{{/if}}"
+          data-action="toggle-player-preview">
+          <i class="fa-solid fa-user"></i>
+          {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_PREVIEW"}}
+        </button>
       </header>
+
+      {{#if previewAsPlayer}}
+      <div class="guidance-player-preview">
+        <i class="fa-solid fa-eye"></i>
+        <span>{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_PREVIEW_ACTIVE"}}</span>
+        <span class="tag tag--info">{{previewModeLabel}}</span>
+      </div>
+      {{/if}}
 
       <section class="guidance-default-policy">
         <span class="guidance-bulk__title">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.DEFAULT_POLICY"}}</span>
@@ -75,6 +90,23 @@
             type="button"
             class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{#if this.active}}is-active{{/if}}"
             data-action="set-class-archetype-mode"
+            data-mode="{{this.value}}">
+            {{this.label}}
+          </button>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+
+      {{#if showHeritageModeFilter}}
+      <section class="guidance-mode-filter">
+        <span class="guidance-bulk__title">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.HERITAGE_VIEW"}}</span>
+        <div class="guidance-bulk__actions">
+          {{#each heritageModeOptions}}
+          <button
+            type="button"
+            class="compendium-manager__button compendium-manager__button--small guidance-bulk__button {{#if this.active}}is-active{{/if}}"
+            data-action="set-heritage-mode"
             data-mode="{{this.value}}">
             {{this.label}}
           </button>
@@ -233,7 +265,7 @@
             </div>
           </div>
             {{#each this.items}}
-            <div class="guidance-item {{#if this.isRecommended}}guidance-item--recommended{{/if}} {{#if this.isDisallowed}}guidance-item--disallowed{{/if}}">
+            <div class="guidance-item {{#if this.isRecommended}}guidance-item--recommended{{/if}} {{#if this.isDisallowed}}guidance-item--disallowed{{/if}} {{#if this.previewBlocked}}guidance-item--preview-blocked{{/if}}">
               {{#if this.img}}<img src="{{this.img}}" alt="" class="guidance-item__img">{{/if}}
               <div class="guidance-item__info">
                 {{#if this.openable}}
@@ -247,6 +279,7 @@
                 {{#if this.showFreeArchetypeExclusiveControls}}{{#if this.isFreeArchetypeExclusive}}<span class="tag tag--free-archetype-exclusive tag--tiny"><i class="fa-solid fa-layer-group"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_FREE_ARCHETYPE_EXCLUSIVE"}}</span>{{/if}}{{/if}}
                 {{#if this.isNotRecommended}}<span class="tag tag--muted tag--tiny"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_NOT_RECOMMENDED"}}</span>{{/if}}
                 {{#if this.isDisallowed}}<span class="tag tag--disallowed tag--tiny"><i class="fa-solid fa-ban"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_DISALLOWED"}}</span>{{/if}}
+                {{#if this.previewBlocked}}<span class="tag tag--muted tag--tiny">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_PREVIEW_BLOCKED"}}</span>{{/if}}
                 {{#if this.guidanceInherited}}<span class="tag tag--info tag--tiny">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_INHERITED"}}</span>{{/if}}
                 {{#if (notEqual this.rarity "common")}}
                 <span class="tag tag--rarity-{{this.rarity}} tag--tiny">{{this.rarity}}</span>
@@ -265,7 +298,7 @@
                 type="button"
                 class="guidance-item__toggle {{#if this.isExclusive}}is-active{{/if}}"
                 data-action="toggle-exclusive-guidance"
-                data-uuid="{{this.uuid}}"
+                data-guidance-key="{{this.guidanceKey}}"
                 data-tooltip="{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_EXCLUSIVE"}}">
                 <i class="fa-solid fa-filter" style="{{#unless this.isExclusive}}opacity: 0.35;{{/unless}}"></i>
               </button>
@@ -274,7 +307,7 @@
                 type="button"
                 class="guidance-item__toggle {{#if this.isFreeArchetypeExclusive}}is-active is-free-archetype-exclusive{{/if}}"
                 data-action="toggle-free-archetype-exclusive-guidance"
-                data-uuid="{{this.uuid}}"
+                data-guidance-key="{{this.guidanceKey}}"
                 data-tooltip="{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_FREE_ARCHETYPE_EXCLUSIVE"}}">
                 <i class="fa-solid fa-layer-group" style="{{#unless this.isFreeArchetypeExclusive}}opacity: 0.35;{{/unless}}"></i>
               </button>
@@ -283,7 +316,7 @@
                 type="button"
                 class="guidance-item__toggle"
                 data-action="cycle-guidance"
-                data-uuid="{{this.uuid}}">
+                data-guidance-key="{{this.guidanceKey}}">
                 {{#if this.isAllowed}}
                 <i class="fa-solid fa-check" style="color: #63b66d;"></i>
                 {{else if this.isRecommended}}
@@ -301,7 +334,7 @@
           {{/each}}
         {{else}}
           {{#each items}}
-          <div class="guidance-item {{#if this.isRecommended}}guidance-item--recommended{{/if}} {{#if this.isDisallowed}}guidance-item--disallowed{{/if}}">
+          <div class="guidance-item {{#if this.isRecommended}}guidance-item--recommended{{/if}} {{#if this.isDisallowed}}guidance-item--disallowed{{/if}} {{#if this.previewBlocked}}guidance-item--preview-blocked{{/if}}">
             {{#if this.img}}<img src="{{this.img}}" alt="" class="guidance-item__img">{{/if}}
             <div class="guidance-item__info">
               {{#if this.openable}}
@@ -315,6 +348,7 @@
               {{#if this.showFreeArchetypeExclusiveControls}}{{#if this.isFreeArchetypeExclusive}}<span class="tag tag--free-archetype-exclusive tag--tiny"><i class="fa-solid fa-layer-group"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_FREE_ARCHETYPE_EXCLUSIVE"}}</span>{{/if}}{{/if}}
               {{#if this.isNotRecommended}}<span class="tag tag--muted tag--tiny"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_NOT_RECOMMENDED"}}</span>{{/if}}
               {{#if this.isDisallowed}}<span class="tag tag--disallowed tag--tiny"><i class="fa-solid fa-ban"></i> {{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_DISALLOWED"}}</span>{{/if}}
+              {{#if this.previewBlocked}}<span class="tag tag--muted tag--tiny">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.PLAYER_PREVIEW_BLOCKED"}}</span>{{/if}}
               {{#if this.guidanceInherited}}<span class="tag tag--info tag--tiny">{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_INHERITED"}}</span>{{/if}}
               {{#if (notEqual this.rarity "common")}}
               <span class="tag tag--rarity-{{this.rarity}} tag--tiny">{{this.rarity}}</span>
@@ -333,7 +367,7 @@
               type="button"
               class="guidance-item__toggle {{#if this.isExclusive}}is-active{{/if}}"
               data-action="toggle-exclusive-guidance"
-              data-uuid="{{this.uuid}}"
+              data-guidance-key="{{this.guidanceKey}}"
               data-tooltip="{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_EXCLUSIVE"}}">
               <i class="fa-solid fa-filter" style="{{#unless this.isExclusive}}opacity: 0.35;{{/unless}}"></i>
             </button>
@@ -342,7 +376,7 @@
               type="button"
               class="guidance-item__toggle {{#if this.isFreeArchetypeExclusive}}is-active is-free-archetype-exclusive{{/if}}"
               data-action="toggle-free-archetype-exclusive-guidance"
-              data-uuid="{{this.uuid}}"
+              data-guidance-key="{{this.guidanceKey}}"
               data-tooltip="{{localize "PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.BADGE_FREE_ARCHETYPE_EXCLUSIVE"}}">
               <i class="fa-solid fa-layer-group" style="{{#unless this.isFreeArchetypeExclusive}}opacity: 0.35;{{/unless}}"></i>
             </button>
@@ -351,7 +385,7 @@
               type="button"
               class="guidance-item__toggle"
               data-action="cycle-guidance"
-              data-uuid="{{this.uuid}}">
+              data-guidance-key="{{this.guidanceKey}}">
               {{#if this.isAllowed}}
               <i class="fa-solid fa-check" style="color: #63b66d;"></i>
               {{else if this.isRecommended}}

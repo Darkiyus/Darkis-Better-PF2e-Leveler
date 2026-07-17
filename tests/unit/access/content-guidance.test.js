@@ -146,6 +146,33 @@ describe('content guidance source rules', () => {
     }));
   });
 
+  test('heritage slug guidance applies across compendium copies', () => {
+    global._testSettings['pf2e-leveler'].gmContentGuidance = {
+      'heritage-slug:dhampir': 'disallowed',
+      'Compendium.pf2e.heritages.Item.dhampir': 'recommended',
+    };
+
+    const [official, translated] = annotateGuidance([
+      {
+        uuid: 'Compendium.pf2e.heritages.Item.dhampir',
+        type: 'heritage',
+        slug: 'dhampir',
+        name: 'Dhampir',
+      },
+      {
+        uuid: 'Compendium.translation.heritages.Item.dhampir-de',
+        type: 'heritage',
+        slug: 'dhampir',
+        name: 'Dhampir',
+      },
+    ]);
+
+    expect(official.isDisallowed).toBe(true);
+    expect(translated.isDisallowed).toBe(true);
+    expect(official.guidanceIdentityInherited).toBe(true);
+    expect(translated.guidanceSelectionBlocked).toBe(true);
+  });
+
   test('exclusive direct guidance filters non-exclusive siblings for players', () => {
     global._testSettings['pf2e-leveler'].gmContentGuidance = {
       'Compendium.test.feats.Item.medic-dedication': { status: 'recommended', exclusive: true },

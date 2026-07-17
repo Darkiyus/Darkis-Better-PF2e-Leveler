@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.8.0 – GM Setup, Heritage Controls & Smooth Navigation
+
+### Added
+
+- Optional first-run GM setup assistant for Foundry language, player content access, Leveler rules, detected PF2e variants, review workflow, and quick-equipment configuration
+- Balanced, Restricted, and Homebrew-friendly campaign presets
+- Campaign-profile import and export for relevant Leveler world settings, content guidance, compendium assignments, equipment packages, and supported PF2e variants
+- Read-only diagnostics for missing compendiums, stale guidance UUIDs, broken equipment-package references, duplicate heritage slugs, review-setting conflicts, and runtime cache status
+- Player-preview mode and separate ancestry/versatile filters in Heritage Content Guidance
+- Campaign-rule summary on the final Character Creation step
+
+### Improved
+
+- Character-wizard compendiums use lightweight indexes when available and resolve complete documents only when needed
+- Compendium results and in-flight requests are shared across wizard instances for the complete Foundry session
+- Background preloading is sequential and idle-scheduled instead of launching a burst of concurrent full-document loads
+- Expensive cross-step creation calculations are reused while only navigating between tabs
+- Heritage guidance uses stable slug rules so matching translation and homebrew compendium copies inherit the same ban or recommendation
+- The Foundry core language can be selected from the setup assistant and the interface reloads when required
+- Every new interface string is localized in English, German, French, and Simplified Chinese
+
+### Compatibility
+
+- Keeps the original `pf2e-leveler` module ID as an intentional drop-in replacement, preserving existing settings and world data
+- Tested target remains Foundry VTT 14 Build 3654 with Pathfinder Second Edition 8.3.0
+
 ## 3.7.0 – German Edition & Fixes
 
 ### Added

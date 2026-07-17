@@ -16,6 +16,12 @@ jest.mock('../../../scripts/access/content-guidance.js', () => ({
   }),
   CATEGORY_DEFAULT_POLICIES: { ALLOWED: 'allowed', DISALLOWED: 'disallowed' },
   getContentGuidance: jest.fn(() => ({})),
+  getGuidanceKeyForItem: jest.fn((item) => {
+    if (item?.type !== 'heritage' || !item?.slug) return item?.uuid ?? null;
+    return `heritage-slug:${item.slug}`;
+  }),
+  getPlayerDisallowedContentMode: jest.fn(() => 'unselectable'),
+  PLAYER_DISALLOWED_CONTENT_MODES: { HIDDEN: 'hidden', UNSELECTABLE: 'unselectable' },
   invalidateGuidanceCache: jest.fn(),
   getCategoryDefaultGuidanceKey: jest.fn((categoryKey) => `category-default:${categoryKey}`),
   getSourceGuidanceKey: jest.fn((title) => {
@@ -60,6 +66,27 @@ describe('ContentGuidanceMenu', () => {
       isNotRecommended: true,
       isRecommended: false,
       isDisallowed: false,
+    }));
+  });
+
+  test('filters the heritage view to versatile entries and uses stable slug keys', async () => {
+    const menu = new ContentGuidanceMenu();
+    menu.activeCategory = 'heritages';
+    menu.heritageView = 'versatile';
+    menu._draft = { 'heritage-slug:dhampir': 'disallowed' };
+    menu._itemCache.heritages = [
+      { uuid: 'heritage-elf', type: 'heritage', slug: 'ancient-elf', name: 'Ancient Elf', ancestrySlug: 'elf', ancestryLabel: 'Elf', rarity: 'common' },
+      { uuid: 'heritage-versatile', type: 'heritage', slug: 'dhampir', name: 'Dhampir', ancestrySlug: null, rarity: 'uncommon' },
+    ];
+
+    const context = await menu._prepareContext();
+
+    expect(context.showHeritageModeFilter).toBe(true);
+    expect(context.items).toHaveLength(1);
+    expect(context.items[0]).toEqual(expect.objectContaining({
+      name: 'Dhampir',
+      guidanceKey: 'heritage-slug:dhampir',
+      isDisallowed: true,
     }));
   });
 

@@ -3,6 +3,7 @@ import { CompendiumSettingsMenu, PlayerCompendiumAccessMenu } from './ui/compend
 import { ContentGuidanceMenu } from './ui/content-guidance-menu.js';
 import { ReviewRequestsMenu } from './ui/review-requests-menu.js';
 import { QuickEquipmentPackagesMenu } from './ui/quick-equipment-packages-menu.js';
+import { GmSetupWizard } from './ui/gm-setup-wizard.js';
 import { invalidateCache } from './feats/feat-cache.js';
 import { invalidateGuidanceCache, PLAYER_DISALLOWED_CONTENT_MODES } from './access/content-guidance.js';
 import { invalidateItemCache } from './ui/item-picker.js';
@@ -40,6 +41,22 @@ function invalidateContentPickersAndRefreshWindows() {
 }
 
 export function registerSettings() {
+  game.settings.registerMenu(MODULE_ID, 'gmSetupWizardMenu', {
+    name: game.i18n.localize('PF2E_LEVELER.SETUP.MENU_NAME'),
+    label: game.i18n.localize('PF2E_LEVELER.SETUP.MENU_LABEL'),
+    hint: game.i18n.localize('PF2E_LEVELER.SETUP.MENU_HINT'),
+    icon: 'fas fa-wand-magic-sparkles',
+    type: GmSetupWizard,
+    restricted: true,
+  });
+
+  game.settings.register(MODULE_ID, 'gmSetupCompleted', {
+    scope: 'world',
+    config: false,
+    type: Boolean,
+    default: false,
+  });
+
   game.settings.register(MODULE_ID, 'showPlanButton', {
     name: game.i18n.localize('PF2E_LEVELER.SETTINGS.SHOW_BUTTON.NAME'),
     hint: game.i18n.localize('PF2E_LEVELER.SETTINGS.SHOW_BUTTON.HINT'),

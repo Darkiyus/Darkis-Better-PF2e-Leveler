@@ -22,6 +22,7 @@ export const CATEGORY_DEFAULT_POLICIES = {
 };
 
 const CATEGORY_DEFAULT_PREFIX = 'category-default:';
+const HERITAGE_SLUG_PREFIX = 'heritage-slug:';
 const VALID_STATUSES = new Set(Object.values(GUIDANCE_STATUSES));
 const GENERIC_CLASS_ARCHETYPE_TRAITS = new Set([
   'archetype',
@@ -90,6 +91,14 @@ export function getGuidanceForSourceTitle(title) {
 
 export function getGuidanceForUuid(uuid) {
   return getGuidanceForKey(uuid);
+}
+
+export function getGuidanceKeyForItem(item) {
+  const uuid = item?.uuid ?? null;
+  const type = String(item?.type ?? '').trim().toLowerCase();
+  if (type !== 'heritage') return uuid;
+  const slug = normalizeSlug(item?.slug ?? item?.system?.slug);
+  return slug ? `${HERITAGE_SLUG_PREFIX}${slug}` : uuid;
 }
 
 export function getPlayerDisallowedContentMode() {
@@ -166,6 +175,23 @@ export function annotateGuidance(items, options = {}) {
 export function resolveGuidanceStatus(item, { categoryKey = null, ignoreCategoryDefaultDisallowed = false } = {}) {
   const uuid = item?.uuid ?? null;
   const resolvedCategoryKey = categoryKey ?? getGuidanceCategoryKeyForItem(item);
+  const stableKey = getGuidanceKeyForItem(item);
+  const stable = normalizeGuidanceEntry(stableKey && stableKey !== uuid ? getRawGuidanceEntry(stableKey) : null);
+  if (stable.status || stable.exclusive || stable.freeArchetypeExclusive) {
+    return {
+      status: stable.status,
+      inherited: true,
+      identityInherited: true,
+      exclusive: stable.exclusive,
+      exclusiveInherited: stable.exclusive,
+      exclusiveScope: stable.exclusive ? (resolvedCategoryKey ?? '__list') : null,
+      freeArchetypeExclusive: stable.freeArchetypeExclusive,
+      freeArchetypeExclusiveInherited: stable.freeArchetypeExclusive,
+      freeArchetypeExclusiveScope: stable.freeArchetypeExclusive ? (resolvedCategoryKey ?? '__list') : null,
+      categoryKey: resolvedCategoryKey,
+    };
+  }
+
   const direct = normalizeGuidanceEntry(uuid ? getRawGuidanceEntry(uuid) : null);
   if (direct.status || direct.exclusive || direct.freeArchetypeExclusive) {
     return {
@@ -463,6 +489,7 @@ function applyResolvedStatus(item, resolved) {
   item.guidanceExclusiveFiltered = resolved?.exclusiveFiltered === true;
   item.guidanceFreeArchetypeExclusiveFiltered = resolved?.freeArchetypeExclusiveFiltered === true;
   item.guidanceInherited = resolved?.inherited === true && !!status;
+  item.guidanceIdentityInherited = resolved?.identityInherited === true && !!status;
   item.guidanceStatus = status ?? GUIDANCE_STATUSES.DEFAULT;
   item.guidanceSelectionBlocked = isGuidanceSelectionBlocked(item);
   item.guidanceSelectionTooltip = getGuidanceSelectionTooltip(item);
@@ -471,6 +498,9 @@ function applyResolvedStatus(item, resolved) {
 
 function getGuidanceDisallowedTooltip(item) {
   if (item?.isDisallowed !== true) return '';
+  if (item?.guidanceIdentityInherited === true) {
+    return game.i18n.localize('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.DISALLOWED_SHARED_HERITAGE_REASON');
+  }
   const source = item?.publicationTitle ?? item?.system?.publication?.title ?? null;
   if (item?.guidanceInherited === true && source) {
     return game.i18n.format('PF2E_LEVELER.SETTINGS.CONTENT_GUIDANCE.DISALLOWED_SOURCE_REASON', { source });
