@@ -1,6 +1,6 @@
 {
   "name": "pf2e-leveler",
-  "version": "3.8.4",
+  "version": "3.8.5",
   "description": "Darkis Better PF2e-Leveler: a PF2e Leveler community fork with German localization and performance fixes",
   "main": "scripts/main.js",
   "scripts": {
