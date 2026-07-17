@@ -444,6 +444,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       return {
         steps,
         stepId: this.stepId,
+        moduleId: MODULE_ID,
         data: this.data,
         isApplying: false,
         isBooting: true,
@@ -501,6 +502,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       steps,
       stepId: this.stepId,
+      moduleId: MODULE_ID,
       data: this.data,
       isApplying: this.isApplying,
       applyProgressPercent: Math.round((this.applyProgress ?? 0) * 100),

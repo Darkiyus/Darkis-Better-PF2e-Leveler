@@ -2,7 +2,7 @@
   "id": "darkis-better-pf2e-leveler",
   "title": "Darkis Better PF2e-Leveler",
   "description": "Guided character creation and level-up planning for Pathfinder 2E and Starfinder 2E, with GM campaign tools, quick-equipment packages, and an optional German interface.",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "license": "LICENSE",
   "socket": true,
   "compatibility": {

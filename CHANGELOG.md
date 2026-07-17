@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.11.2 – Wizard Logo
+
+### Added
+
+- The module's logo now appears at the bottom of the character-creation wizard's step sidebar, below the step list.
+
 ## 3.11.1 – Release Packaging Fix
 
 ### Fixed
