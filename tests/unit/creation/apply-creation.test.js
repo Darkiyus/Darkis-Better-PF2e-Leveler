@@ -1,6 +1,6 @@
 import { getAdditionalSelectedFormulas, getAdditionalSelectedItems, getAdditionalSelectedSkills } from '../../../scripts/creation/apply-creation.js';
 import { applyCreation } from '../../../scripts/creation/apply-creation.js';
-import { MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, MODULE_ID } from '../../../scripts/constants.js';
+import { MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, MODULE_ID, WEALTH_MODES } from '../../../scripts/constants.js';
 
 jest.mock('../../../scripts/creation/class-handlers/registry.js', () => ({
   getClassHandler: jest.fn(() => ({
@@ -2839,5 +2839,92 @@ describe('applyCreation equipment sizing', () => {
         system: expect.objectContaining({ size: 'tiny', quantity: 2 }),
       }),
     ]);
+  });
+});
+
+describe('applyCreation starting currency', () => {
+  const baseData = {
+    ancestry: null,
+    heritage: null,
+    background: null,
+    class: null,
+    subclass: null,
+    boosts: { free: [] },
+    languages: [],
+    skills: [],
+    lores: [],
+    ancestryFeat: null,
+    ancestryParagonFeat: null,
+    classFeat: null,
+    dualClassFeat: null,
+    skillFeat: null,
+    grantedFeatSections: [],
+    grantedFeatChoices: {},
+    featGrants: [],
+    permanentItems: [],
+    spells: { cantrips: [], rank1: [] },
+  };
+
+  function setup() {
+    const actor = createMockActor({
+      items: [],
+      system: {
+        details: { level: { value: 1 } },
+        traits: { size: { value: 'med' } },
+      },
+    });
+    actor.createEmbeddedDocuments = jest.fn(async (_type, docs) => docs.map((doc, index) => ({ ...doc, id: `created-${index}` })));
+    actor.update = jest.fn(async () => {});
+    actor.testUserPermission = jest.fn(() => true);
+    game.users = [{ isGM: true, id: 'gm-user' }];
+    ChatMessage.create = jest.fn(async () => {});
+    global.fromUuid = jest.fn(async () => null);
+    return actor;
+  }
+
+  it('grants the unspent starting-wealth budget as currency', async () => {
+    game.settings.get = jest.fn((_moduleId, key) => {
+      if (key === 'startingWealthMode') return WEALTH_MODES.ITEMS_AND_CURRENCY;
+      return false;
+    });
+    const actor = setup();
+
+    await applyCreation(actor, {
+      ...baseData,
+      equipment: [{ uuid: 'unused', name: 'Dagger', quantity: 1, price: { gp: 12, sp: 5, cp: 0 } }],
+    });
+
+    expect(actor.update).toHaveBeenCalledWith({
+      'system.currency.gp': 2,
+      'system.currency.sp': 5,
+      'system.currency.cp': 0,
+    });
+  });
+
+  it('does not grant currency when starting wealth is disabled', async () => {
+    game.settings.get = jest.fn((_moduleId, key) => {
+      if (key === 'startingWealthMode') return WEALTH_MODES.DISABLED;
+      return false;
+    });
+    const actor = setup();
+
+    await applyCreation(actor, { ...baseData, equipment: [] });
+
+    expect(actor.update).not.toHaveBeenCalled();
+  });
+
+  it('does not grant currency once the whole budget has been spent', async () => {
+    game.settings.get = jest.fn((_moduleId, key) => {
+      if (key === 'startingWealthMode') return WEALTH_MODES.ITEMS_AND_CURRENCY;
+      return false;
+    });
+    const actor = setup();
+
+    await applyCreation(actor, {
+      ...baseData,
+      equipment: [{ uuid: 'unused', name: 'Armor', quantity: 1, price: { gp: 20, sp: 0, cp: 0 } }],
+    });
+
+    expect(actor.update).not.toHaveBeenCalled();
   });
 });

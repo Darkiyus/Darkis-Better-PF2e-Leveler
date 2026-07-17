@@ -1365,6 +1365,9 @@
   flex-direction: column;
   gap: var(--leveler-spacing-sm);
   margin-top: var(--leveler-spacing-sm);
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .pf2e-leveler .wizard-quick-equipment__package {
@@ -1393,21 +1396,78 @@
   gap: 2px;
 }
 
-.pf2e-leveler .wizard-quick-equipment__info p {
-  max-height: 3.2em;
+.pf2e-leveler .wizard-quick-equipment__description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   margin: 2px 0;
   overflow: hidden;
   color: var(--leveler-text-muted);
   font-size: var(--leveler-font-sm);
+  line-height: 1.4;
 }
 
-.pf2e-leveler .wizard-quick-equipment__info small,
 .pf2e-leveler .wizard-quick-equipment__meta {
   overflow: hidden;
   color: var(--leveler-text-muted);
   font-size: var(--leveler-font-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pf2e-leveler .wizard-quick-equipment__contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.pf2e-leveler .wizard-quick-equipment__item-icon {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.pf2e-leveler .wizard-quick-equipment__item-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border: 1px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-sm);
+}
+
+.pf2e-leveler .wizard-quick-equipment__item-qty {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: var(--leveler-accent);
+  color: #241708;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pf2e-leveler .wizard-quick-equipment__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.pf2e-leveler .wizard-quick-equipment__view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 6px;
 }
 
 .pf2e-leveler .wizard-equipment-row {

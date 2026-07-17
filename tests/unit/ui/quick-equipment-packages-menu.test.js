@@ -33,7 +33,7 @@ describe('QuickEquipmentPackagesMenu', () => {
     expect(menu.render).toHaveBeenCalledWith(true);
   });
 
-  test('normalizes class slugs and recalculates price after content changes', () => {
+  test('toggles class slugs and recalculates price after content changes', () => {
     const menu = new QuickEquipmentPackagesMenu();
     menu._draftPackages = [{
       id: 'rogue-kit',
@@ -56,8 +56,10 @@ describe('QuickEquipmentPackagesMenu', () => {
       },
     }];
     menu.activePackageId = 'rogue-kit';
+    menu.render = jest.fn();
 
-    menu._updateActivePackageField('classSlugs', 'Rogue, Ranger');
+    menu._toggleActivePackageClass('rogue');
+    menu._toggleActivePackageClass('ranger');
 
     expect(menu._getActivePackage()).toEqual(expect.objectContaining({
       classSlugs: ['rogue', 'ranger'],

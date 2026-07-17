@@ -140,36 +140,15 @@
   font-weight: 700;
 }
 
-/* ---------- Tags & badges ---------- */
+/* ---------- Tags & badges ----------
+   Shape and type only here - every tag variant's own background/border/
+   color (rarity, status, etc.) is defined per-class elsewhere and must
+   keep full control of its own colors, so none of that is touched here. */
 
 .pf2e-leveler .tag {
   border-radius: 999px;
-  border: 1px solid var(--leveler-border);
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--leveler-text);
   font-family: var(--leveler-font-display);
   letter-spacing: 0.02em;
-}
-
-.pf2e-leveler .tag--info {
-  border-color: var(--leveler-info);
-  color: #bcd7e6;
-}
-
-.pf2e-leveler .tag--recommended,
-.pf2e-leveler .tag--allowed {
-  border-color: var(--leveler-accent);
-  color: var(--leveler-accent-light);
-}
-
-.pf2e-leveler .tag--disallowed {
-  border-color: var(--leveler-error);
-  color: #e2a89f;
-}
-
-.pf2e-leveler .tag--muted {
-  border-color: var(--leveler-border);
-  color: var(--leveler-text-muted);
 }
 
 /* ---------- Cards, panels, sidebars ---------- */

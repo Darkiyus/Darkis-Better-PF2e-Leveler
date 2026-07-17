@@ -24,6 +24,7 @@ export default [
         CONFIG: 'readonly',
         Handlebars: 'readonly',
         Dialog: 'readonly',
+        FilePicker: 'readonly',
         fromUuid: 'readonly',
         fromUuidSync: 'readonly',
         renderTemplate: 'readonly',

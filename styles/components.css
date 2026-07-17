@@ -1456,3 +1456,110 @@
 .plan-comments-composer__text { width: 100%; box-sizing: border-box; resize: vertical; }
 .plan-comments-composer__actions { display: flex; gap: 8px; justify-content: flex-end; }
 .plan-comments-popover__readonly { padding: 8px 10px; font-size: 0.78rem; opacity: 0.6; border-top: 1px solid var(--leveler-border); }
+
+/* Quick-equipment package preview popup */
+.pf2e-leveler .quick-equipment-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--leveler-spacing-md);
+}
+
+.pf2e-leveler .quick-equipment-preview__header {
+  display: flex;
+  align-items: center;
+  gap: var(--leveler-spacing-md);
+}
+
+.pf2e-leveler .quick-equipment-preview__header h3 {
+  margin: 0;
+}
+
+.pf2e-leveler .quick-equipment-preview__image {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  object-fit: cover;
+  border: 1px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-md);
+}
+
+.pf2e-leveler .quick-equipment-preview__meta {
+  color: var(--leveler-text-muted);
+  font-size: var(--leveler-font-sm);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pf2e-leveler .quick-equipment-preview__description {
+  margin: 0;
+  color: var(--leveler-text-muted);
+  line-height: 1.5;
+}
+
+.pf2e-leveler .quick-equipment-preview__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.pf2e-leveler .quick-equipment-preview__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-sm);
+}
+
+.pf2e-leveler .quick-equipment-preview__item img {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  object-fit: cover;
+  border-radius: var(--leveler-radius-sm);
+}
+
+.pf2e-leveler .quick-equipment-preview__item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--leveler-font-sm);
+}
+
+.pf2e-leveler .quick-equipment-preview__item-qty {
+  flex: 0 0 auto;
+  color: var(--leveler-text-muted);
+  font-size: var(--leveler-font-xs);
+}
+
+/* Coin icons (replaces plain "gp/sp/cp" text wherever currency amounts are shown) */
+.pf2e-leveler .coin-amounts {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf2e-leveler .coin-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.pf2e-leveler .coin-icon {
+  width: 1.15em;
+  height: 1.15em;
+  object-fit: contain;
+  vertical-align: -0.2em;
+  flex-shrink: 0;
+}
+
+.pf2e-leveler .coin-amount__value {
+  font-variant-numeric: tabular-nums;
+}

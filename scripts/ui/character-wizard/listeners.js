@@ -412,6 +412,10 @@ export function activateCharacterWizardListeners(wizard, el) {
     btn.addEventListener('click', () => wizard._addQuickEquipmentPackage(btn.dataset.packageId));
   });
 
+  el.querySelectorAll('[data-action="viewQuickEquipmentPackage"]').forEach((btn) => {
+    btn.addEventListener('click', () => wizard._viewQuickEquipmentPackage(btn.dataset.packageId));
+  });
+
   el.querySelectorAll('[data-action="removeEquipment"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       removeEquipment(wizard.data, btn.dataset.uuid);
