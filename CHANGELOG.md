@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.9.1 – License File
+
+### Fixed
+
+- Added an MIT `LICENSE` file to the repository and package archive, and corrected the README's licensing section. The original PF2e Leveler is MIT-licensed per its own README (GitHub's automatic license detection just doesn't pick up license text that isn't in a dedicated file), so this fork is released under MIT as well.
+- Expanded the module description shown in Foundry's module browser (what it is, how it differs from the original, supported languages).
+
 ## 3.9.0 – Standalone Module
 
 ### Changed

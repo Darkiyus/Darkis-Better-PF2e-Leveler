@@ -1,8 +1,9 @@
 {
   "id": "darkis-better-pf2e-leveler",
   "title": "Darkis Better PF2e-Leveler",
-  "description": "<p>A community fork of PF2e Leveler with an optional German interface, smoother character-creation navigation, GM campaign setup, reusable quick-equipment packages, and expanded heritage content guidance.</p>",
-  "version": "3.9.0",
+  "description": "<p><strong>Darkis Better PF2e-Leveler</strong> is a guided character-creation and level-up planning assistant for Pathfinder Second Edition and Starfinder Second Edition.</p><p>It is an independent fork of RoiLeaf's original <em>PF2e Leveler</em>, rebuilt for smoother performance on large compendiums with an optional German interface and expanded GM tools: a first-run campaign setup assistant, content guidance for ancestries, heritages, backgrounds, classes, and feats, reusable quick-equipment packages, campaign-profile import/export, and a gallery view with image hover-zoom for browsing options.</p><p>Interface languages: English, German, French, and Simplified Chinese.</p>",
+  "version": "3.9.1",
+  "license": "LICENSE",
   "socket": true,
   "compatibility": {
     "minimum": "13",

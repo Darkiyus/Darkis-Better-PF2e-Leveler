@@ -107,9 +107,7 @@ Deutsch ist optional und wird wie jede andere Foundry-Sprache in der Kernkonfigu
 - Ursprüngliches Projekt und Entwickler: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
 - Community-Fork: [Darkiyus/Darkis-Better-PF2e-Leveler](https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler)
 
-Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers. Soweit Bestandteile eigenständige Beiträge dieses Forks sind, dürfen diese gern privat oder in eigenen Projekten verwendet, verändert und weitergegeben werden. Eine Erwähnung ist willkommen, aber keine Voraussetzung.
-
-Diese Erlaubnis gilt ausschließlich für die eigenständigen Änderungen dieses Forks. Übernommener Code aus dem ursprünglichen PF2e Leveler sowie Inhalte und Marken von Pathfinder, Foundry VTT oder anderen Projekten unterliegen weiterhin den jeweiligen Rechten und Bedingungen ihrer Rechteinhaber. Das ursprüngliche Repository enthält derzeit keine separate, von GitHub erkannte Lizenzdatei; dieser Fork kann daher für den übernommenen Originalcode keine zusätzlichen Nutzungsrechte erteilen.
+Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers. Das ursprüngliche PF2e Leveler steht laut dessen README unter der MIT-Lizenz; dieser Fork wird ebenfalls unter der MIT-Lizenz veröffentlicht (siehe [`LICENSE`](LICENSE)). Der komplette Quellcode – übernommener wie eigenständig hinzugefügter – darf damit frei verwendet, verändert und weiterverbreitet werden, solange der Copyright- und Lizenzhinweis erhalten bleibt. Inhalte und Marken von Pathfinder, Foundry VTT oder anderen Drittprojekten sind davon ausgenommen und unterliegen weiterhin den Rechten ihrer jeweiligen Inhaber.
 
 Der ursprüngliche Entwickler ist ausdrücklich eingeladen, einzelne oder alle Änderungen dieses Forks in das Originalprojekt zu übernehmen. Genau dieser offene Austausch ist einer der schönsten Aspekte gemeinschaftlicher Softwareentwicklung. 😊
 
@@ -220,9 +218,7 @@ German is optional and can be selected through each user's Foundry core language
 - Original project and developer: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
 - Community fork: [Darkiyus/Darkis-Better-PF2e-Leveler](https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler)
 
-This community fork is not an official release by the original developer. To the extent that material is an original contribution created specifically for this fork, you are welcome to use, modify, and redistribute it privately or in your own projects. Attribution is appreciated, but not required.
-
-This permission applies only to the fork's original contributions. Code inherited from the original PF2e Leveler project, as well as Pathfinder, Foundry VTT, and other third-party content or trademarks, remains subject to the rights and terms of its respective owners. The original repository currently has no separate license file recognized by GitHub, so this fork cannot grant additional rights to the inherited source code.
+This community fork is not an official release by the original developer. The original PF2e Leveler is MIT-licensed per its README, and this fork is likewise released under the MIT License (see [`LICENSE`](LICENSE)). That covers the complete source code, inherited and original alike: free to use, modify, and redistribute as long as the copyright and license notice is retained. Pathfinder, Foundry VTT, and other third-party content or trademarks are excluded and remain subject to the rights of their respective owners.
 
 The original developer is warmly invited to incorporate any or all of these changes into the original project. That kind of open exchange is one of the best parts of collaborative software development. 😊
 
