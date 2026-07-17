@@ -675,6 +675,21 @@
         "DEITIES": "Divinites"
       }
     },
+    "CREDITS": {
+      "MENU_NAME": "Credits",
+      "MENU_LABEL": "Afficher les credits",
+      "MENU_HINT": "Indique qui a cree ce module et l'original dont il est issu.",
+      "TITLE": "Credits",
+      "MODULE_NAME": "Darkis Better PF2e-Leveler",
+      "INTRO": "Ce module repose sur le travail d'autres personnes. Merci a toutes celles qui y ont contribue !",
+      "ORIGINAL_LABEL": "Projet original",
+      "ORIGINAL_NAME": "PF2e Leveler par RoiLeaf",
+      "ORIGINAL_TEXT": "L'idee de base, l'assistant de creation de personnage et la planification de niveaux proviennent du PF2e Leveler original de RoiLeaf. Ce fork n'existerait pas sans ce travail.",
+      "FORK_LABEL": "Ce fork",
+      "FORK_NAME": "Darkis Better PF2e-Leveler par Darkiyus",
+      "FORK_TEXT": "Un fork independant avec une interface allemande, des ameliorations de performance, un assistant de configuration MJ, des recommandations de contenu, une vue galerie et d'autres outils de campagne.",
+      "LICENSE_TEXT": "Publie sous licence MIT."
+    },
     "SETUP": {
       "TITLE": "Configuration MJ de PF2e Leveler",
       "MENU_NAME": "Assistant de configuration MJ",

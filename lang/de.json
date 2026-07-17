@@ -939,6 +939,21 @@
       "NOTIFY": "{author} hat „{part}“ kommentiert",
       "BADGE_AWAITING": "{count} Kommentarthread(s) warten auf deine Antwort"
     },
+    "CREDITS": {
+      "MENU_NAME": "Credits",
+      "MENU_LABEL": "Credits anzeigen",
+      "MENU_HINT": "Zeigt an, wer dieses Modul und seine ursprüngliche Version entwickelt hat.",
+      "TITLE": "Credits",
+      "MODULE_NAME": "Darkis Better PF2e-Leveler",
+      "INTRO": "Dieses Modul steht auf den Schultern der Arbeit anderer. Danke an alle, die daran mitgewirkt haben!",
+      "ORIGINAL_LABEL": "Ursprüngliches Projekt",
+      "ORIGINAL_NAME": "PF2e Leveler von RoiLeaf",
+      "ORIGINAL_TEXT": "Die Grundidee, der Charaktererschaffungs-Assistent und die Stufenplanung stammen aus RoiLeafs ursprünglichem PF2e Leveler. Ohne diese Arbeit gäbe es diesen Fork nicht.",
+      "FORK_LABEL": "Dieser Fork",
+      "FORK_NAME": "Darkis Better PF2e-Leveler von Darkiyus",
+      "FORK_TEXT": "Eigenständiger Fork mit deutscher Oberfläche, Performance-Verbesserungen, SL-Einrichtungsassistent, Inhaltsvorgaben, Galerie-Ansicht und weiteren Kampagnenwerkzeugen.",
+      "LICENSE_TEXT": "Veröffentlicht unter der MIT-Lizenz."
+    },
     "SETUP": {
       "TITLE": "PF2e-Leveler-Einrichtung für SL",
       "MENU_NAME": "Einrichtungsassistent für SL",

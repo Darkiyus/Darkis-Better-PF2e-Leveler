@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.10.0 – Dark Leather-and-Parchment Theme
+
+### Added
+
+- A new visual theme across every window: a dark, candlelit leather-and-parchment palette, subtle grain texture, serif display headings, and reworked buttons, tags, cards, and form fields. Applied module-wide through updated shared design tokens and a new overlay stylesheet, without changing any screen's layout or behavior.
+- A Credits menu in Module Settings (visible to all users) crediting RoiLeaf's original PF2e Leveler and this fork, with license information.
+- A rewritten README with badges, a clearer feature overview, and a more prominent migration notice for testers coming from version 3.8.5 or earlier.
+
+### Fixed
+
+- The `.codex/` local tooling folder is no longer tracked in the repository.
+
 ## 3.9.1 – License File
 
 ### Fixed

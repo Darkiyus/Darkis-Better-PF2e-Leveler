@@ -939,6 +939,21 @@
       "NOTIFY": "{author} commented on \"{part}\"",
       "BADGE_AWAITING": "{count} comment thread(s) awaiting your reply"
     },
+    "CREDITS": {
+      "MENU_NAME": "Credits",
+      "MENU_LABEL": "Show Credits",
+      "MENU_HINT": "Shows who built this module and the original it is based on.",
+      "TITLE": "Credits",
+      "MODULE_NAME": "Darkis Better PF2e-Leveler",
+      "INTRO": "This module stands on the work of others. Thanks to everyone who contributed!",
+      "ORIGINAL_LABEL": "Original project",
+      "ORIGINAL_NAME": "PF2e Leveler by RoiLeaf",
+      "ORIGINAL_TEXT": "The core idea, the character-creation wizard, and level-up planning come from RoiLeaf's original PF2e Leveler. This fork would not exist without that work.",
+      "FORK_LABEL": "This fork",
+      "FORK_NAME": "Darkis Better PF2e-Leveler by Darkiyus",
+      "FORK_TEXT": "An independent fork with a German interface, performance improvements, a GM setup assistant, content guidance, gallery view, and additional campaign tools.",
+      "LICENSE_TEXT": "Released under the MIT License."
+    },
     "SETUP": {
       "TITLE": "PF2e Leveler GM Setup",
       "MENU_NAME": "GM Setup Assistant",

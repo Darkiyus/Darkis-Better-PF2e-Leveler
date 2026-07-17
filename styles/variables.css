@@ -1,23 +1,26 @@
 :root {
-  --leveler-accent: #b0a08a;
-  --leveler-accent-light: #c4b49e;
-  --leveler-accent-dim: rgba(176, 160, 138, 0.15);
-  --leveler-success: #2e7d32;
-  --leveler-warning: #f57f17;
-  --leveler-error: #c62828;
-  --leveler-info: #1565c0;
+  /* Dark, candlelit leather-and-parchment theme. Kept single-tone (dark
+     surfaces, light text) throughout so existing components that pair
+     --leveler-text with --leveler-bg-surface stay readable. */
+  --leveler-accent: #c9973f;
+  --leveler-accent-light: #e2b968;
+  --leveler-accent-dim: rgba(201, 151, 63, 0.16);
+  --leveler-success: #6a9153;
+  --leveler-warning: #c9973f;
+  --leveler-error: #b0483c;
+  --leveler-info: #5b8caf;
 
-  --leveler-bg: #1e1e1e;
-  --leveler-bg-light: #262626;
-  --leveler-bg-surface: #2e2e2e;
-  --leveler-bg-hover: #383838;
+  --leveler-bg: #1a130c;
+  --leveler-bg-light: #241a10;
+  --leveler-bg-surface: #2b2013;
+  --leveler-bg-hover: #382a19;
 
-  --leveler-text: #e0e0e0;
-  --leveler-text-muted: #9e9e9e;
-  --leveler-text-bright: #ffffff;
+  --leveler-text: #ead9b8;
+  --leveler-text-muted: #a8926c;
+  --leveler-text-bright: #f6ead0;
 
-  --leveler-border: #3a3a3a;
-  --leveler-border-light: #4a4a4a;
+  --leveler-border: #5c4326;
+  --leveler-border-light: #7c5c34;
 
   --leveler-sidebar-width: 220px;
   --leveler-spacing-xs: 4px;
@@ -34,9 +37,13 @@
   --leveler-font-md: 0.875rem;
   --leveler-font-lg: 1rem;
 
-  --leveler-rank-untrained: #757575;
-  --leveler-rank-trained: #5078c0;
-  --leveler-rank-expert: #8b5cf6;
-  --leveler-rank-master: #d4a017;
-  --leveler-rank-legendary: #c62828;
+  --leveler-font-display: Georgia, 'Palatino Linotype', 'Book Antiqua', serif;
+
+  --leveler-rank-untrained: #8a7a5c;
+  --leveler-rank-trained: #5b8caf;
+  --leveler-rank-expert: #8a6ab8;
+  --leveler-rank-master: #c9973f;
+  --leveler-rank-legendary: #b0483c;
+
+  --leveler-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
 }

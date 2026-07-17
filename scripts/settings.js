@@ -4,6 +4,7 @@ import { ContentGuidanceMenu } from './ui/content-guidance-menu.js';
 import { ReviewRequestsMenu } from './ui/review-requests-menu.js';
 import { QuickEquipmentPackagesMenu } from './ui/quick-equipment-packages-menu.js';
 import { GmSetupWizard } from './ui/gm-setup-wizard.js';
+import { CreditsMenu } from './ui/credits-menu.js';
 import { invalidateCache } from './feats/feat-cache.js';
 import { invalidateGuidanceCache, PLAYER_DISALLOWED_CONTENT_MODES } from './access/content-guidance.js';
 import { invalidateItemCache } from './ui/item-picker.js';
@@ -48,6 +49,15 @@ export function registerSettings() {
     icon: 'fas fa-wand-magic-sparkles',
     type: GmSetupWizard,
     restricted: true,
+  });
+
+  game.settings.registerMenu(MODULE_ID, 'creditsMenu', {
+    name: game.i18n.localize('PF2E_LEVELER.CREDITS.MENU_NAME'),
+    label: game.i18n.localize('PF2E_LEVELER.CREDITS.MENU_LABEL'),
+    hint: game.i18n.localize('PF2E_LEVELER.CREDITS.MENU_HINT'),
+    icon: 'fa-solid fa-heart',
+    type: CreditsMenu,
+    restricted: false,
   });
 
   game.settings.register(MODULE_ID, 'gmSetupCompleted', {

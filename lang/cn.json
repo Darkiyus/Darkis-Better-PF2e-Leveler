@@ -821,6 +821,21 @@
             "HEADER": "{actorName}（{level}）有需要手动操作的选择：",
             "OK": "明白了"
         },
+        "CREDITS": {
+            "MENU_NAME": "鸣谢",
+            "MENU_LABEL": "查看鸣谢",
+            "MENU_HINT": "显示本模组及其原始版本的开发者。",
+            "TITLE": "鸣谢",
+            "MODULE_NAME": "Darkis Better PF2e-Leveler",
+            "INTRO": "本模组建立在他人工作的基础之上。感谢所有为此做出贡献的人！",
+            "ORIGINAL_LABEL": "原始项目",
+            "ORIGINAL_NAME": "PF2e Leveler，作者 RoiLeaf",
+            "ORIGINAL_TEXT": "核心理念、角色创建向导和升级规划均源自 RoiLeaf 的原始 PF2e Leveler。没有这项工作，就不会有这个分支。",
+            "FORK_LABEL": "本分支",
+            "FORK_NAME": "Darkis Better PF2e-Leveler，作者 Darkiyus",
+            "FORK_TEXT": "一个独立的分支，提供德语界面、性能改进、GM设置助手、内容指引、画廊视图以及其他战役工具。",
+            "LICENSE_TEXT": "基于 MIT 许可证发布。"
+        },
         "SETUP": {
             "TITLE": "PF2e Leveler GM设置",
             "MENU_NAME": "GM设置向导",

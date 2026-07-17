@@ -1,0 +1,236 @@
+/*
+  Shared dark-leather-and-parchment skin, layered on top of every screen's
+  existing layout CSS. Loaded last so its rules win on visual properties
+  (color, background, border, shadow, font) without touching layout
+  (display, grid, flex, width, height) — those stay exactly as each
+  screen's own stylesheet defines them.
+*/
+
+/* ---------- Canvas & scroll chrome ---------- */
+
+.pf2e-leveler .window-content {
+  background:
+    radial-gradient(120% 140% at 15% 0%, rgba(90, 62, 30, 0.35), transparent 55%),
+    linear-gradient(175deg, var(--leveler-bg-light) 0%, var(--leveler-bg) 65%),
+    var(--leveler-grain);
+  background-blend-mode: normal, normal, overlay;
+}
+
+.pf2e-leveler ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.pf2e-leveler ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+}
+
+.pf2e-leveler ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--leveler-border-light), var(--leveler-border));
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.pf2e-leveler ::-webkit-scrollbar-thumb:hover {
+  background: var(--leveler-accent);
+}
+
+/* ---------- Typography ---------- */
+
+.pf2e-leveler h2,
+.pf2e-leveler h3 {
+  font-family: var(--leveler-font-display);
+  letter-spacing: 0.02em;
+  color: var(--leveler-text-bright);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 0 18px rgba(201, 151, 63, 0.18);
+}
+
+.pf2e-leveler h2 {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.pf2e-leveler h2::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--leveler-accent), transparent);
+}
+
+/* ---------- Form controls ---------- */
+
+.pf2e-leveler input[type='text'],
+.pf2e-leveler input[type='number'],
+.pf2e-leveler input[type='search'],
+.pf2e-leveler select,
+.pf2e-leveler textarea {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-sm);
+  color: var(--leveler-text-bright);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.pf2e-leveler input[type='text']:focus,
+.pf2e-leveler input[type='number']:focus,
+.pf2e-leveler input[type='search']:focus,
+.pf2e-leveler select:focus,
+.pf2e-leveler textarea:focus {
+  border-color: var(--leveler-accent);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 2px var(--leveler-accent-dim);
+}
+
+/* ---------- Buttons ---------- */
+
+.pf2e-leveler button[type='button'],
+.pf2e-leveler button[type='submit'] {
+  background: linear-gradient(180deg, var(--leveler-bg-hover), var(--leveler-bg-surface));
+  border: 1px solid var(--leveler-border);
+  border-radius: var(--leveler-radius-sm);
+  color: var(--leveler-text);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 4px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.05s ease;
+}
+
+.pf2e-leveler button[type='button']:hover:not(:disabled),
+.pf2e-leveler button[type='submit']:hover:not(:disabled) {
+  border-color: var(--leveler-accent);
+  color: var(--leveler-text-bright);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 0 0 1px var(--leveler-accent-dim), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.pf2e-leveler button[type='button']:active:not(:disabled),
+.pf2e-leveler button[type='submit']:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.pf2e-leveler button:disabled,
+.pf2e-leveler button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pf2e-leveler button.is-active,
+.pf2e-leveler button.is-selected,
+.pf2e-leveler button.selected,
+.pf2e-leveler button[aria-pressed='true'] {
+  background: linear-gradient(180deg, var(--leveler-accent-light), var(--leveler-accent));
+  border-color: var(--leveler-accent-light);
+  color: #241708;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset, 0 2px 8px rgba(201, 151, 63, 0.35);
+}
+
+.pf2e-leveler .wizard-item__select--selected {
+  background: linear-gradient(180deg, var(--leveler-success), #3c5230) !important;
+  border-color: var(--leveler-success) !important;
+  color: var(--leveler-text-bright) !important;
+}
+
+/* Primary call-to-action buttons across the various footers/toolbars */
+.pf2e-leveler .setup-wizard__primary,
+.pf2e-leveler button.compendium-manager__button--primary {
+  background: linear-gradient(180deg, var(--leveler-accent-light), var(--leveler-accent)) !important;
+  border-color: var(--leveler-accent-light) !important;
+  color: #241708 !important;
+  font-weight: 700;
+}
+
+/* ---------- Tags & badges ---------- */
+
+.pf2e-leveler .tag {
+  border-radius: 999px;
+  border: 1px solid var(--leveler-border);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--leveler-text);
+  font-family: var(--leveler-font-display);
+  letter-spacing: 0.02em;
+}
+
+.pf2e-leveler .tag--info {
+  border-color: var(--leveler-info);
+  color: #bcd7e6;
+}
+
+.pf2e-leveler .tag--recommended,
+.pf2e-leveler .tag--allowed {
+  border-color: var(--leveler-accent);
+  color: var(--leveler-accent-light);
+}
+
+.pf2e-leveler .tag--disallowed {
+  border-color: var(--leveler-error);
+  color: #e2a89f;
+}
+
+.pf2e-leveler .tag--muted {
+  border-color: var(--leveler-border);
+  color: var(--leveler-text-muted);
+}
+
+/* ---------- Cards, panels, sidebars ---------- */
+
+.pf2e-leveler .wizard-sidebar,
+.pf2e-leveler .planner-sidebar,
+.pf2e-leveler .setup-wizard__sidebar,
+.pf2e-leveler .picker__sidebar {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.16));
+  border-right: 1px solid var(--leveler-border);
+}
+
+.pf2e-leveler .wizard-item,
+.pf2e-leveler .guidance-item,
+.pf2e-leveler .setup-wizard__preset,
+.pf2e-leveler .setup-wizard__choice,
+.pf2e-leveler .setup-wizard__toggle,
+.pf2e-leveler .setup-wizard__field,
+.pf2e-leveler .wizard-selected,
+.pf2e-leveler .sidebar-level,
+.pf2e-leveler .compendium-manager__panel,
+.pf2e-leveler .guidance-bulk__row,
+.pf2e-leveler .quick-equipment-packages__entry,
+.pf2e-leveler .feat-option,
+.pf2e-leveler .item-option,
+.pf2e-leveler .spell-option,
+.pf2e-leveler .credits-menu__entry {
+  background: linear-gradient(175deg, var(--leveler-bg-hover) 0%, var(--leveler-bg-surface) 100%);
+  border-color: var(--leveler-border);
+}
+
+.pf2e-leveler .wizard-item:hover,
+.pf2e-leveler .setup-wizard__choice:hover,
+.pf2e-leveler .feat-option:hover,
+.pf2e-leveler .item-option:hover,
+.pf2e-leveler .spell-option:hover {
+  border-color: var(--leveler-accent) !important;
+}
+
+.pf2e-leveler .wizard-step.active,
+.pf2e-leveler .setup-wizard__step.is-active,
+.pf2e-leveler .sidebar-level.active,
+.pf2e-leveler .compendium-manager__tab.is-active {
+  background: var(--leveler-accent-dim) !important;
+  box-shadow: inset 3px 0 var(--leveler-accent);
+}
+
+.pf2e-leveler .setup-wizard__preset.is-selected,
+.pf2e-leveler .setup-wizard__choice.is-selected {
+  border-color: var(--leveler-accent) !important;
+  background: linear-gradient(175deg, rgba(201, 151, 63, 0.22), rgba(201, 151, 63, 0.08)) !important;
+}
+
+/* ---------- Notices ---------- */
+
+.pf2e-leveler .setup-wizard__notice {
+  background: rgba(91, 140, 175, 0.14);
+  border-color: rgba(91, 140, 175, 0.4);
+}
+
+.pf2e-leveler .setup-wizard__notice--warning {
+  background: rgba(201, 151, 63, 0.14);
+  border-color: rgba(201, 151, 63, 0.4);
+}

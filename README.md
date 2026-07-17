@@ -1,225 +1,488 @@
+<div align="center">
+
 # Darkis Better PF2e-Leveler
 
-Darkis Better PF2e-Leveler ist ein Community-Fork von [PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler) mit optionaler deutscher Oberfläche, Fehlerbehebungen und Performance-Verbesserungen. Die ursprüngliche Erweiterung und ihre grundlegende Architektur wurden von **RoiLeaf** entwickelt.
+**Schnellere Charaktererschaffung, bessere Kampagnenkontrolle und optionale deutsche Oberfläche für Foundry VTT.**  
+**Faster character creation, better campaign control, and an optional German interface for Foundry VTT.**
 
-[Deutsch](#deutsch) · [English](#english)
+<p>
+  <a href="https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler/releases/latest">
+    <img alt="Latest Release" src="https://img.shields.io/github/v/release/Darkiyus/Darkis-Better-PF2e-Leveler?style=for-the-badge&logo=github">
+  </a>
+  <a href="https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler/blob/master/LICENSE">
+    <img alt="MIT License" src="https://img.shields.io/github/license/Darkiyus/Darkis-Better-PF2e-Leveler?style=for-the-badge">
+  </a>
+  <img alt="Foundry VTT 13+" src="https://img.shields.io/badge/Foundry_VTT-13%2B-7a0b0b?style=for-the-badge">
+  <img alt="PF2e 7+" src="https://img.shields.io/badge/PF2e-7.0.0%2B-1d3557?style=for-the-badge">
+</p>
 
-## Deutsch
+<p>
+  <img alt="Languages" src="https://img.shields.io/badge/Languages-DE_%7C_EN_%7C_FR_%7C_CN-4b2e83?style=flat-square">
+  <img alt="SF2e support" src="https://img.shields.io/badge/SF2e-0.0.10%2B-334155?style=flat-square">
+  <img alt="Community Fork" src="https://img.shields.io/badge/Type-Community_Fork-5b1734?style=flat-square">
+</p>
 
-### Kurzbeschreibung
+[Deutsch](#deutsch) · [English](#english) · [Installation](#installation) · [Changelog](CHANGELOG.md) · [Originalprojekt](https://github.com/roi007leaf/pf2e-leveler)
 
-Darkis Better PF2e-Leveler unterstützt die Charaktererschaffung und die Planung von Stufenaufstiegen in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition. Es konzentriert sich auf eine flüssigere Bedienung, optionale deutsche Texte und eine bessere Verwaltung eigener Kampagneninhalte. Das Modul läuft unter der eigenen Modul-ID `darkis-better-pf2e-leveler` und ist damit ein eigenständiges Foundry-Modul mit eigenem Namensraum – kein Ersatz für das Original.
+</div>
 
-Foundry zeigt Darkis Better PF2e-Leveler deshalb als eigenen Eintrag in der Modulliste an, unabhängig vom ursprünglichen PF2e Leveler. Beide können nebeneinander installiert sein; da beide dieselbe Charaktererschaffung und Stufenplanung anbieten, sollte pro Welt aber nur eines der beiden Module aktiv sein, um doppelte Schaltflächen und Menüs zu vermeiden.
+---
 
-**Hinweis für bisherige Tester dieses Forks:** Frühere Versionen (bis einschließlich 3.8.5) liefen noch unter der Modul-ID `pf2e-leveler`. Nach dem Update auf diese Version erscheint das Modul als neuer, separater Eintrag in Foundrys Modulliste; Moduleinstellungen und modul-eigene Daten aus der alten Installation werden nicht automatisch übernommen. Die alte Installation kann danach deaktiviert oder entfernt werden.
+> [!IMPORTANT]
+> **Darkis Better PF2e-Leveler ist ein eigenständig veröffentlichtes Community-Fork von [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler).**  
+> Es besitzt die eigene Modul-ID `darkis-better-pf2e-leveler` und ersetzt das Original nicht. Beide Module können installiert sein, pro Welt sollte jedoch nur eines aktiviert werden.
 
-### Warum dieser Fork?
+> [!WARNING]
+> Versionen dieses Forks bis einschließlich **3.8.5** verwendeten noch die Modul-ID `pf2e-leveler`. Beim Wechsel auf die neue Modul-ID werden frühere Moduleinstellungen und modulinterne Daten nicht automatisch übernommen. Mehr dazu unter [Migration](#migration-von-version-385-oder-älter).
 
-Zuerst einmal: Ein riesiges Dankeschön an **RoiLeaf**, den ursprünglichen Entwickler dieses Moduls. ❤️ Die Grundidee und das Modul selbst haben mir so gut gefallen, dass ich PF2e Leveler direkt für meine eigenen Pathfinder-2E-Kampagnen verwenden wollte. Dieser Fork baut auf seiner Arbeit auf und wäre ohne sie nicht entstanden.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-Beim Einsatz in meinen eigenen Runden sind mir einige Stellen aufgefallen, die ich gern verbessern oder ergänzen wollte:
+### ⚡ Performance / Leistung
 
-- **Performance und Stabilität:** Besonders die Suche nach Gegenständen konnte sehr große Kompendien schon nach einem einzelnen Buchstaben vollständig verarbeiten. Dadurch geriet Foundry teilweise stark ins Stocken oder die Oberfläche reagierte nicht mehr. Mein wichtigstes Ziel war deshalb, diese Engpässe zu beseitigen und die Bedienung insgesamt flüssiger zu machen.
-- **Vollständige deutsche Oberfläche:** Da ich selbst auf Deutsch spiele, wollte ich eine optionale deutsche Lokalisierung mit den etablierten Begriffen aus Pathfinder 2E ergänzen, ohne die vorhandenen Sprachen zu ersetzen.
-- **Hilfen für neue Spieler:** Eigene Starter- und Klassenausrüstungspakete lassen sich nun aus normalen PF2e-Gegenständen zusammenstellen. Bilder, Beschreibungen, Preis, Last und enthaltene Gegenstände bleiben dabei nachvollziehbar, damit neue Charaktere schneller und verständlicher ausgerüstet werden können.
-- **Mehr Kontrolle für eigene Kampagnen:** Herkünfte können wie Abstammungen empfohlen, eingeschränkt oder ausgeschlossen werden. Hinzu kommen verständlichere Hinweise bei Attributsverbesserungen sowie eine dokumentierte Import- und Exportfunktion für Charakterentwürfe.
-- **Ein persönliches Hobbyprojekt:** Dieser Fork ist kein kommerzielles Produkt. Er ist entstanden, weil ich das Modul für meine eigenen Foundry-VTT-Runden verbessern wollte – und weil diese Änderungen vielleicht auch anderen Gruppen helfen.
+Schlankere Kompendiumsindizes, geteilte Sitzungscaches, verzögerte Suchanfragen und begrenzte Ergebnislisten sorgen auch bei großen Inhaltsbibliotheken für eine deutlich flüssigere Bedienung.
 
-### Was wurde geändert – und warum?
+</td>
+<td width="50%" valign="top">
 
-- **Flüssigere Tabwechsel:** Der Charakterassistent lädt für Listen bevorzugt schlanke Kompendiumsindizes statt vollständiger Dokumente. Bereits geladene Pakete und laufende Anfragen werden während der gesamten Foundry-Sitzung zwischen Assistenten geteilt. Hintergrunddaten werden priorisiert und nacheinander während Leerlaufzeiten geladen; aufwendige, schrittübergreifende Berechnungen werden bis zur nächsten tatsächlichen Charakteränderung wiederverwendet.
-- **Bessere Steuerung vielseitiger Herkünfte:** Die SL-Ansicht besitzt eigene Filter für Abstammungsherkünfte und vielseitige Herkünfte sowie Sammelaktionen. Herkunftsregeln verwenden einen stabilen Herkunftsschlüssel, sodass beispielsweise ein verbotenes Dhampir aus einem Übersetzungs- oder Homebrew-Kompendium nicht als ungesperrte Kopie erneut auftaucht. SL dürfen verbotene Optionen weiterhin bewusst überschreiben.
-- **Einrichtungsassistent für den SL:** Beim ersten Einsatz kann ein optionaler Assistent Sprache, Seltenheiten, Inhaltsquellen, Leveler-Regeln, erkannte PF2e-Varianten, Prüfanfragen und Spielerzugriff gemeinsam konfigurieren. Die Presets „Ausgewogen“, „Eingeschränkt“ und „Homebrew-freundlich“ dienen als Ausgangspunkt. Der Assistent bleibt über die Moduleinstellungen erneut erreichbar.
-- **Kampagnenprofile und Diagnose:** Die relevante Leveler- und PF2e-Konfiguration kann als JSON-Profil zwischen Welten übertragen werden. Eine Diagnose erkennt fehlende Kompendien, veraltete Inhaltsverweise, fehlende Gegenstände in Ausrüstungspaketen, doppelte Herkunftsschlüssel und widersprüchliche Prüfeinstellungen. Laufzeit-Caches lassen sich dort sicher leeren.
-- **Kampagnenregeln für Spieler:** Die Zusammenfassung der Charaktererschaffung zeigt die aktiven Zugriffs- und Variantenregeln, damit Spieler vor dem Anwenden erkennen, welche Inhalte und optionalen Regeln in der Welt gelten.
+### 🇩🇪 German localization / Deutsche Oberfläche
 
-- **Schnellere Suche:** Die alte Suchlogik konnte bereits nach einem einzelnen Zeichen große Kompendien vollständig durchsuchen und Tausende DOM-Elemente erzeugen. Suchvorgänge beginnen nun erst ab drei Zeichen, werden um 250 ms verzögert und veraltete asynchrone Ergebnisse werden verworfen. Ausrüstung, Talente und Zauber zeigen höchstens 200 Ergebniszeilen gleichzeitig an. Unveränderliche Ausrüstungsfilter werden zwischengespeichert und mehrere Zauberkompendien parallel geladen.
-- **Eigene Schnellausrüstungspakete:** Spielleiter können wiederverwendbare Pakete mit Name, Bild, Beschreibung, Klasse, Stufe, Seltenheit und Merkmalen erstellen. Ein Paket enthält Verweise auf normale PF2e-Gegenstände; Preis und Last werden automatisch aus Inhalt und Menge berechnet. Dadurch lassen sich vollständige Klassenausrüstungen verwalten, statt lediglich einen einzelnen Abenteurerrucksack anzubieten.
-- **Herkünfte in den Inhaltsvorgaben:** Standardherkünfte, vielseitige Herkünfte, gemischte Abstammungen sowie Herkünfte aus Welten und Modulen können wie Abstammungen empfohlen, eingeschränkt oder verboten werden. Das schließt eine Lücke bei der Steuerung erlaubter Kampagneninhalte.
-- **Verständlichere Attributsverbesserungen:** Der entsprechende Schritt erklärt nun Verbesserungen, Attributsschwächen und die alternative Abstammungsregel. Eine dynamische Anzeige zeigt außerdem, wie viele der vier freien Attributsverbesserungen noch zu vergeben sind.
-- **Optionale deutsche Oberfläche:** Deutsch wurde als zusätzliche Sprache ergänzt. Englisch, Französisch und Chinesisch bleiben verfügbar. Die Übersetzung verwendet PF2e-Begriffe wie „Abstammung“, „Herkunft“, „Attributsverbesserung“, „Fertigkeitsverbesserung“, „Last“ und „Zaubergrad“.
-- **Stabilitätskorrekturen:** Suchläufe unterhalb der Mindestlänge lösen keine vollständigen Neuberechnungen mehr aus. Ergebnislisten bleiben begrenzt, und ein bereits geschlossenes Ausrüstungsfenster wird nach einem verspäteten Kompendium-Ladevorgang nicht erneut gerendert.
-- **Galerie-Ansicht und Bildvorschau:** Der Abstammungsschritt im Charaktererschaffungs-Assistenten sowie die Abstammungs- und Herkunfts-Inhaltsvorgaben in der SL-Verwaltung lassen sich zwischen einer kompakten Liste und einer Galerie mit großen Bildern umschalten; die gewählte Ansicht wird pro Benutzer gemerkt. Zusätzlich zeigt das Bewegen der Maus über ein Bild in allen Auswahllisten (Abstammungen, Herkünfte, Talente, Zauber, Ausrüstung, SL-Inhaltsvorgaben) eine vergrößerte Vorschau neben dem Mauszeiger.
-- **Korrekturen aus gemeldeten Upstream-Issues:** Deutsche Fertigkeitsvoraussetzungen wie „Geübt in Athletik“ und „Experte in Heilkunde“ werden korrekt erkannt; Abstammungs- und Homebrew-Herkunftsvoraussetzungen lassen sich gemeinsam prüfen. Beim Zeit-Orakel verleiht **Advanced Revelation** jetzt korrekt **Time Skip** statt **Manifold Lives**, während **Greater Revelation** weiterhin Manifold Lives verleiht. Die Leveler-Schaltflächen sind robuster gegen Sheet-Themes und UI-Module; zusätzlich öffnet das frei belegbare Foundry-Tastenkürzel **Umschalt+L** den Leveler für einen ausgewählten oder zugewiesenen Charakter.
+Eine optionale vollständige deutsche Moduloberfläche mit etablierten PF2e-Begriffen – zusätzlich zu Englisch, Französisch und vereinfachtem Chinesisch.
 
-Namen und Beschreibungen von Talenten, Zaubern, Gegenständen und anderen Spielinhalten stammen aus den aktiven PF2e-/SF2e-Kompendien. Für übersetzte Spielinhalte muss zusätzlich eine passende System- oder Kompendiumsübersetzung aktiv sein.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-### Getestete Umgebung
+### 🧭 GM Setup / SL-Einrichtung
 
-- Foundry VTT 14, Build 3654 sowie Build 14.365
-- Pathfinder Second Edition 8.3.0
+Ein Einrichtungsassistent bündelt Sprache, Seltenheiten, Inhaltsquellen, Variantenregeln, Prüfanfragen und Spielerzugriffe an einem Ort.
 
-Die Moduldefinition unterstützt weiterhin Foundry VTT ab Version 13 sowie PF2e ab 7.0.0. Die oben genannten Versionen bezeichnen die konkret getestete Kombination.
+</td>
+<td width="50%" valign="top">
+
+### 🎒 Quick equipment / Schnellausrüstung
+
+Eigene Starter- und Klassenausrüstungspakete aus normalen PF2e-Gegenständen – inklusive Bild, Beschreibung, Preis, Last und Mengen.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🗂️ Campaign profiles / Kampagnenprofile
+
+Relevante Leveler- und PF2e-Einstellungen lassen sich als JSON zwischen Welten übertragen und mit einer integrierten Diagnose prüfen.
+
+</td>
+<td width="50%" valign="top">
+
+### 🖼️ Gallery & previews / Galerie & Vorschau
+
+Galerieansichten und vergrößerte Bildvorschauen erleichtern das Durchsuchen von Abstammungen, Herkünften, Talenten, Zaubern und Ausrüstung.
+
+</td>
+</tr>
+</table>
+
+---
+
+# Deutsch
+
+## Was ist Darkis Better PF2e-Leveler?
+
+Darkis Better PF2e-Leveler unterstützt die **Charaktererschaffung** und die **Planung von Stufenaufstiegen** in Foundry VTT für Pathfinder Second Edition und Starfinder Second Edition.
+
+Der Fork erweitert die Grundlage des ursprünglichen PF2e Leveler vor allem in vier Bereichen:
+
+- spürbar flüssigere Bedienung bei großen Kompendien,
+- optionale deutsche Moduloberfläche,
+- zusätzliche Werkzeuge für Spielleiter und eigene Kampagnen,
+- Verbesserungen an Stabilität, Übersicht und Bedienbarkeit.
+
+Das Modul ist ein persönliches, nicht kommerzielles Hobbyprojekt. Es entstand für meine eigenen PF2e-Runden und wird öffentlich geteilt, weil die Änderungen auch anderen Gruppen helfen können.
+
+## Warum dieser Fork?
+
+Zuerst ein großes Dankeschön an **RoiLeaf**, den ursprünglichen Entwickler von PF2e Leveler. ❤️ Die Grundidee, die ursprüngliche Architektur und ein großer Teil der Basisfunktionen stammen aus seinem Projekt. Ohne diese Arbeit würde dieser Fork nicht existieren.
+
+Beim Einsatz in meinen eigenen Runden fielen mir einige Stellen auf, die ich gezielt verbessern wollte:
+
+- Große Kompendien konnten die Suche und Oberfläche stark ausbremsen.
+- Eine vollständige deutsche Moduloberfläche fehlte.
+- Spielleiter benötigten mehr Kontrolle über Herkünfte, Quellen und Kampagnenregeln.
+- Neue Spieler sollten schneller mit verständlichen Ausrüstungspaketen starten können.
+- Wiederkehrende Kampagneneinstellungen sollten sich leichter zwischen Welten übertragen und prüfen lassen.
+
+## Die wichtigsten Erweiterungen
+
+### Schnellere und stabilere Oberfläche
+
+- Suchvorgänge starten erst ab drei Zeichen und werden um 250 ms verzögert.
+- Veraltete asynchrone Suchergebnisse werden verworfen.
+- Ausrüstung, Talente und Zauber rendern höchstens 200 Ergebniszeilen gleichzeitig.
+- Listen verwenden nach Möglichkeit schlanke Kompendiumsindizes statt vollständiger Dokumente.
+- Bereits geladene Kompendien und laufende Anfragen werden innerhalb der Foundry-Sitzung geteilt.
+- Aufwendige Berechnungen werden wiederverwendet, solange sich der Charakter nicht tatsächlich verändert.
+- Mehrere Zauberkompendien können parallel geladen werden.
+- Geschlossene Auswahlfenster werden nach verspäteten Ladevorgängen nicht erneut gerendert.
+
+### Mehr Kontrolle über Kampagneninhalte
+
+- Standard-, vielseitige und gemischte Herkünfte können empfohlen, eingeschränkt oder verboten werden.
+- Herkünfte aus Übersetzungs- oder Homebrew-Kompendien werden über stabile Schlüssel zusammengeführt.
+- Spielleiter können verbotene Optionen weiterhin bewusst überschreiben.
+- Aktive Zugriffs- und Variantenregeln werden Spielern vor dem Anwenden des Charakters angezeigt.
+- Inhaltsquellen, Seltenheiten und Spielerzugriffe lassen sich zentral verwalten.
+
+### Einrichtungsassistent für Spielleiter
+
+Der optionale Assistent bündelt:
+
+- Foundry-Sprache,
+- erlaubte Seltenheiten,
+- Kompendiums- und Inhaltsquellen,
+- Leveler-Regeln,
+- erkannte PF2e-Varianten,
+- Prüfanfragen,
+- Spielerzugriffe.
+
+Die Presets **Ausgewogen**, **Eingeschränkt** und **Homebrew-freundlich** dienen als Ausgangspunkt. Der Assistent kann jederzeit erneut über die Moduleinstellungen geöffnet werden.
+
+### Eigene Schnellausrüstungspakete
+
+Spielleiter können wiederverwendbare Starter- und Klassenausrüstung erstellen. Ein Paket kann enthalten:
+
+- Name, Bild und Beschreibung,
+- Klasse und empfohlene Stufe,
+- Seltenheit und Merkmale,
+- beliebige normale PF2e-Gegenstände mit Mengenangabe,
+- automatisch berechneten Gesamtpreis und Gesamtlast.
+
+Dadurch lassen sich vollständige Startausrüstungen bereitstellen, ohne Gegenstände mehrfach manuell zusammensuchen zu müssen.
+
+### Kampagnenprofile und Diagnose
+
+Relevante Einstellungen können als JSON-Profil zwischen Foundry-Welten übertragen werden. Dazu gehören unter anderem:
+
+- Leveler-Welteinstellungen,
+- Inhaltsvorgaben,
+- Kompendiumszuordnungen,
+- Schnellausrüstungspakete,
+- unterstützte PF2e-Varianten.
+
+Die Diagnose erkennt unter anderem:
+
+- fehlende Kompendien,
+- veraltete Inhaltsverweise,
+- fehlende Paketgegenstände,
+- doppelte Herkunftsschlüssel,
+- widersprüchliche Prüfeinstellungen,
+- den Zustand der Laufzeit-Caches.
+
+Die Diagnose verändert keine Daten. Nur **Laufzeit-Caches leeren** verwirft geladene Listen, damit sie bei der nächsten Verwendung neu aufgebaut werden.
+
+### Galerieansicht und Bildvorschau
+
+- Abstammungen und Herkünfte können als kompakte Liste oder als große Galerie dargestellt werden.
+- Die gewählte Ansicht wird pro Benutzer gespeichert.
+- Beim Überfahren von Bildern erscheint eine vergrößerte Vorschau neben dem Mauszeiger.
+- Die Vorschau funktioniert unter anderem bei Abstammungen, Herkünften, Talenten, Zaubern, Ausrüstung und SL-Inhaltsvorgaben.
+
+### Verbesserte Charaktererschaffung
+
+- Verständlichere Erklärung von Attributsverbesserungen, Attributsschwächen und alternativen Abstammungsverbesserungen.
+- Dynamische Anzeige der verbleibenden vier freien Attributsverbesserungen.
+- Export und Import von Charaktererschaffungsentwürfen.
+- Sichtbare Zusammenfassung der aktiven Kampagnen- und Zugriffsregeln.
+- Robusteres Verhalten der Leveler-Schaltflächen bei Sheet-Themes und UI-Modulen.
+- Frei belegbares Foundry-Tastenkürzel **Umschalt+L** für einen ausgewählten oder zugewiesenen Charakter.
+
+### Korrekturen und Kompatibilität
+
+- Deutsche Fertigkeitsvoraussetzungen wie **„Geübt in Athletik“** und **„Experte in Heilkunde“** werden korrekt erkannt.
+- Abstammungs- und Homebrew-Herkunftsvoraussetzungen können gemeinsam geprüft werden.
+- Beim Zeit-Orakel verleiht **Advanced Revelation** korrekt **Time Skip** statt **Manifold Lives**.
+- **Greater Revelation** verleiht weiterhin **Manifold Lives**.
+
+> [!NOTE]
+> Namen und Beschreibungen von Talenten, Zaubern, Gegenständen und anderen Spielinhalten stammen aus den aktiven PF2e-/SF2e-Kompendien. Für übersetzte Spielinhalte muss zusätzlich eine passende System- oder Kompendiumsübersetzung aktiv sein.
+
+<details>
+<summary><strong>Technische Details zur Performance-Überarbeitung</strong></summary>
+
+Der Charakterassistent lädt für Listen bevorzugt schlanke Kompendiumsindizes statt vollständiger Dokumente. Bereits geladene Pakete und laufende Anfragen werden während der gesamten Foundry-Sitzung zwischen Assistenten geteilt.
+
+Hintergrunddaten werden priorisiert und während Leerlaufzeiten nacheinander geladen. Aufwendige, schrittübergreifende Berechnungen werden bis zur nächsten tatsächlichen Charakteränderung wiederverwendet.
+
+Unveränderliche Ausrüstungsfilter werden zwischengespeichert. Veraltete Suchantworten dürfen neuere Ergebnisse nicht mehr überschreiben. Dadurch reduziert sich sowohl die Anzahl vollständiger Dokumentabrufe als auch die Zahl gleichzeitig erzeugter DOM-Elemente.
+
+</details>
+
+## Installation
+
+1. Öffne in Foundry VTT **Zusatzmodule**.
+2. Wähle **Modul installieren**.
+3. Füge folgende Adresse in das Feld **Manifest-URL** ein:
+
+```text
+https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler/releases/latest/download/module.json
+```
+
+4. Klicke auf **Installieren**.
+5. Aktiviere anschließend **Darkis Better PF2e-Leveler** in deiner Welt.
+
+Die Manifest-URL verweist immer auf die neueste veröffentlichte Version dieses Forks.
+
+> [!CAUTION]
+> Aktiviere pro Welt nur **Darkis Better PF2e-Leveler** oder das ursprüngliche **PF2e Leveler**. Werden beide gleichzeitig aktiviert, können doppelte Schaltflächen, Menüs oder konkurrierende Abläufe entstehen.
+
+## Anforderungen und getestete Umgebung
 
 ### Anforderungen
 
 - Foundry VTT 13 oder neuer
-- Pathfinder Second Edition 7.0.0 oder neuer; alternativ Starfinder Second Edition 0.0.10 oder neuer
+- Pathfinder Second Edition 7.0.0 oder neuer  
+  **oder** Starfinder Second Edition 0.0.10 oder neuer
 - `socketlib` wird für die zuverlässige Übermittlung von Prüfanfragen empfohlen
 
-### Geplantes Feature: Homebrew-Götter
+### Konkret getestet
 
-Geplant ist eine eigenständige Homebrew-Götter-Erweiterung mit Verbindung zu PF2e Leveler. Das vorgesehene technische Modell ist ein separates Foundry-Modul, das kompatible PF2e-Gegenstände vom Typ `deity` über ein Kompendium bereitstellt. PF2e Leveler soll dieses Kompendium anschließend als Gottheitenquelle verwenden können; Standardgottheiten sollen sich über Kompendiums- und Inhaltsvorgaben aus der Auswahl entfernen lassen.
+- Foundry VTT **14.365**
+- Pathfinder Second Edition **8.3.0**
+- Starfinder Second Edition wird laut Moduldefinition bis **1.0.1** als verifiziert geführt
 
-Dies ist ein Roadmap-Eintrag und **noch nicht Bestandteil dieser Version**.
+Die Moduldefinition unterstützt weiterhin Foundry VTT ab Version 13 sowie PF2e ab 7.0.0. Die genannten Versionen bezeichnen die konkret geprüfte Kombination und keine harte Obergrenze.
 
-### Installation
+## Migration von Version 3.8.5 oder älter
 
-1. Öffne in Foundry VTT **Zusatzmodule** und anschließend **Modul installieren**.
-2. Füge diese Adresse unter **Manifest-URL** ein:
+Frühere Testversionen dieses Forks verwendeten noch die Modul-ID `pf2e-leveler`. Seit der Umstellung besitzt das Projekt die eigene ID `darkis-better-pf2e-leveler`.
 
-   ```text
-   https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler/releases/latest/download/module.json
-   ```
+Dadurch behandelt Foundry die neue Version als eigenständiges Modul:
 
-3. Klicke auf **Installieren** und aktiviere anschließend **Darkis Better PF2e-Leveler** in deiner Welt.
+1. Installiere die aktuelle Version über die neue Manifest-URL.
+2. Aktiviere **Darkis Better PF2e-Leveler** in der gewünschten Welt.
+3. Prüfe und übertrage frühere Einstellungen bei Bedarf manuell.
+4. Deaktiviere oder entferne danach die alte Installation.
 
-Die Manifest-URL verweist immer auf die neueste veröffentlichte Version dieses Forks.
+Moduleinstellungen und modulinterne Daten der alten ID werden nicht automatisch übernommen.
 
-Darkis Better PF2e-Leveler verwendet eine eigene Modul-ID und erscheint deshalb als eigenständiger Eintrag neben dem Original in Foundrys Modulliste. Aktiviere pro Welt nur eines der beiden Module.
+## Charaktererschaffung exportieren und importieren
 
-### Charaktererschaffung exportieren und importieren
-
-Über **Export** am unteren Rand des Charaktererschaffungs-Assistenten wird der aktuelle Entwurf als `<Charaktername>-creation-plan.json` gespeichert. Diese Datei enthält die Auswahl des Assistenten, verändert den Charakterbogen aber nicht.
+Über **Export** am unteren Rand des Charaktererschaffungs-Assistenten wird der aktuelle Entwurf als `<Charaktername>-creation-plan.json` gespeichert. Die Datei enthält die Auswahl des Assistenten, verändert den Charakterbogen aber nicht.
 
 So lädst du einen Entwurf wieder:
 
-1. Öffne den Charakter, für den du den Entwurf verwenden möchtest, und starte **Charakter erschaffen**.
-2. Klicke unten im Assistenten auf **Import** und wähle eine zuvor exportierte JSON-Datei aus.
-3. Der importierte Entwurf ersetzt die bisher gespeicherte Auswahl für den aktuell geöffneten Charakter. Prüfe alle Schritte, besonders Inhalte aus zusätzlichen Modulen oder eigenen Kompendien.
-4. Erst wenn du auf der Zusammenfassungsseite die Charaktererschaffung bestätigst, werden Gegenstände und Auswahlmöglichkeiten auf den Charakter angewendet.
+1. Öffne den Zielcharakter und starte **Charakter erschaffen**.
+2. Klicke unten im Assistenten auf **Import**.
+3. Wähle eine zuvor exportierte JSON-Datei aus.
+4. Prüfe alle Schritte, besonders Inhalte aus zusätzlichen Modulen oder eigenen Kompendien.
+5. Bestätige die Charaktererschaffung erst auf der Zusammenfassungsseite.
 
-Der Import akzeptiert ausschließlich Charaktererschaffungspläne von PF2e Leveler; Stufenpläne verwenden eine andere Importfunktion. Module und Kompendien, aus denen der Entwurf Einträge referenziert, müssen in der Zielwelt aktiv und für den Benutzer zugänglich sein.
+Der Import akzeptiert ausschließlich Charaktererschaffungspläne von PF2e Leveler. Stufenpläne verwenden eine getrennte Importfunktion. Referenzierte Module und Kompendien müssen in der Zielwelt aktiv und für den Benutzer zugänglich sein.
 
-### SL-Einrichtung und Kampagnenprofile
+## SL-Einrichtung und Kampagnenprofile
 
-Der Einrichtungsassistent öffnet sich für einen SL einmalig beim ersten Einsatz dieser Version und bleibt danach unter **Moduleinstellungen → PF2e Leveler → Einrichtungsassistent für SL** verfügbar. Die direkt im Assistenten gewählten Einstellungen werden erst mit **Speichern und abschließen** übernommen. Verknüpfte Detailverwaltungen für Inhaltsvorgaben, Kompendiumsquellen und Ausrüstungspakete besitzen weiterhin ihre eigenen Speichern-Schaltflächen. **Nicht automatisch anzeigen** schließt die Ersteinrichtung; der Assistent kann trotzdem jederzeit manuell geöffnet werden.
+Der Einrichtungsassistent öffnet sich für einen Spielleiter einmalig beim ersten Einsatz und bleibt danach unter:
 
-Über **Kampagnenprofil exportieren** werden relevante Leveler-Welteinstellungen, Inhaltsvorgaben, Kompendiumszuordnungen, Schnellausrüstungspakete und unterstützte PF2e-Varianten als JSON gespeichert. Ein importiertes Profil wird zunächst nur in den Assistenten geladen und erst beim Abschluss angewendet. Die Diagnose verändert keine Daten; nur **Laufzeit-Caches leeren** verwirft bereits geladene Listen, damit sie bei der nächsten Verwendung neu aufgebaut werden.
+**Moduleinstellungen → PF2e Leveler → Einrichtungsassistent für SL**
 
-### Sprache auswählen
+Die direkt im Assistenten gewählten Einstellungen werden erst mit **Speichern und abschließen** übernommen. Verknüpfte Detailverwaltungen für Inhaltsvorgaben, Kompendiumsquellen und Ausrüstungspakete besitzen weiterhin eigene Speichern-Schaltflächen.
 
-Deutsch ist optional und wird wie jede andere Foundry-Sprache in der Kernkonfiguration des jeweiligen Benutzers ausgewählt. Verfügbar bleiben Deutsch, Englisch, Französisch und Chinesisch. Der SL-Einrichtungsassistent bietet dieselbe Foundry-Sprachauswahl direkt an und lädt die Oberfläche nach einer Änderung neu. Die Auswahl gilt für die gesamte Foundry-Oberfläche des Benutzers und nicht ausschließlich für dieses Modul.
+Ein importiertes Kampagnenprofil wird zunächst nur in den Assistenten geladen und erst beim Abschluss angewendet.
 
-### Ursprung, Lizenz und Nutzung
+## Sprache auswählen
 
-- Ursprüngliches Projekt und Entwickler: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
-- Community-Fork: [Darkiyus/Darkis-Better-PF2e-Leveler](https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler)
+Deutsch ist optional und wird über die Foundry-Kernkonfiguration des jeweiligen Benutzers ausgewählt. Verfügbar bleiben:
 
-Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers. Das ursprüngliche PF2e Leveler steht laut dessen README unter der MIT-Lizenz; dieser Fork wird ebenfalls unter der MIT-Lizenz veröffentlicht (siehe [`LICENSE`](LICENSE)). Der komplette Quellcode – übernommener wie eigenständig hinzugefügter – darf damit frei verwendet, verändert und weiterverbreitet werden, solange der Copyright- und Lizenzhinweis erhalten bleibt. Inhalte und Marken von Pathfinder, Foundry VTT oder anderen Drittprojekten sind davon ausgenommen und unterliegen weiterhin den Rechten ihrer jeweiligen Inhaber.
+- Deutsch
+- Englisch
+- Französisch
+- Vereinfachtes Chinesisch
 
-Der ursprüngliche Entwickler ist ausdrücklich eingeladen, einzelne oder alle Änderungen dieses Forks in das Originalprojekt zu übernehmen. Genau dieser offene Austausch ist einer der schönsten Aspekte gemeinschaftlicher Softwareentwicklung. 😊
+Der SL-Einrichtungsassistent bietet dieselbe Foundry-Sprachauswahl direkt an. Die Auswahl gilt für die gesamte Foundry-Oberfläche des Benutzers und nicht ausschließlich für dieses Modul.
 
-Ich hoffe, die Verbesserungen helfen euch genauso wie meinen eigenen Runden. Viel Spaß beim Basteln, viele unvergessliche Pathfinder-Abenteuer und einen großartigen Pen-&-Paper-Abend! 🎲
+## Roadmap: Homebrew-Götter
+
+Geplant ist eine eigenständige Homebrew-Götter-Erweiterung mit Verbindung zu PF2e Leveler. Das vorgesehene Modell ist ein separates Foundry-Modul, das kompatible PF2e-Gegenstände vom Typ `deity` über ein Kompendium bereitstellt.
+
+Der Leveler soll dieses Kompendium anschließend als Gottheitenquelle verwenden können. Standardgottheiten sollen sich über Kompendiums- und Inhaltsvorgaben aus der Auswahl entfernen lassen.
+
+> [!NOTE]
+> Dieses Feature ist geplant und **noch nicht Bestandteil der aktuellen Version**.
+
+## Ursprung, Credits und Lizenz
+
+- **Ursprüngliches Projekt:** [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
+- **Community-Fork:** [Darkiyus – Darkis Better PF2e-Leveler](https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler)
+
+Dieser Fork ist kein offizielles Release des ursprünglichen Entwicklers.
+
+Das ursprüngliche PF2e Leveler und dieser Fork stehen unter der **MIT-Lizenz**. Der Quellcode darf verwendet, verändert, zusammengeführt, veröffentlicht und weiterverbreitet werden, solange die enthaltenen Copyright- und Lizenzhinweise erhalten bleiben. Details stehen in der Datei [`LICENSE`](LICENSE).
+
+Inhalte, Namen und Marken von Pathfinder, Starfinder, Foundry VTT und anderen Drittprojekten sind davon ausgenommen und unterliegen weiterhin den Rechten ihrer jeweiligen Inhaber.
+
+Der ursprüngliche Entwickler ist ausdrücklich eingeladen, einzelne oder alle Änderungen dieses Forks in sein Projekt zu übernehmen. Offener Austausch und gemeinschaftliche Weiterentwicklung sind ein wesentlicher Teil von Open Source. ❤️
 
 ---
 
-## English
+# English
 
-### Overview
+## What is Darkis Better PF2e-Leveler?
 
-Darkis Better PF2e-Leveler assists with character creation and level-up planning in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition. It focuses on responsive interaction, an optional German interface, and better control over campaign-specific content. The module runs under its own module ID, `darkis-better-pf2e-leveler`, making it a standalone Foundry module with its own namespace rather than a replacement for the original.
+Darkis Better PF2e-Leveler assists with **character creation** and **level-up planning** in Foundry VTT for Pathfinder Second Edition and Starfinder Second Edition.
 
-Foundry therefore lists Darkis Better PF2e-Leveler as its own entry, independent of the original PF2e Leveler. Both can be installed side by side; since both provide the same character creation and level-up planning, only one should be active per world to avoid duplicate buttons and menus.
+It is an independently distributed community fork of RoiLeaf's original PF2e Leveler. The fork focuses on:
 
-**Note for previous testers of this fork:** Earlier releases (up to and including 3.8.5) used the module ID `pf2e-leveler`. After updating to this version, the module appears as a new, separate entry in Foundry's module list; module settings and module-owned data from the old installation are not carried over automatically. The old installation can then be disabled or removed.
+- smoother performance with large compendiums,
+- an optional German interface,
+- expanded Game Master tools,
+- better campaign-content control,
+- improved stability and usability.
 
-### Why this fork?
+The module uses its own ID, `darkis-better-pf2e-leveler`, and does not replace the original package. Both can be installed, but only one should be enabled in a world.
 
-First and foremost, a huge thank-you to **RoiLeaf**, the original developer of this module. ❤️ I liked the idea and the module itself so much that I immediately wanted to use PF2e Leveler in my own Pathfinder Second Edition campaigns. This fork builds on that work and would not exist without it.
+## Main improvements
 
-While using the module in my own games, I found a few areas that I wanted to improve or expand:
+### Performance and stability
 
-- **Performance and stability:** Item searches could process very large compendiums after only a single typed character. This sometimes caused Foundry to slow down severely or made the interface stop responding. My primary goal was therefore to remove those bottlenecks and make the module feel smoother overall.
-- **A complete German interface:** Because I play in German, I wanted to add an optional German localization using established Pathfinder 2E terminology without replacing any of the existing languages.
-- **Help for new players:** Custom starter and class-equipment packages can now be assembled from normal PF2e items. Their images, descriptions, prices, Bulk, and included items remain visible, making it easier to equip new characters quickly and transparently.
-- **More control for custom campaigns:** Heritages can be recommended, restricted, or excluded in the same way as ancestries. The fork also adds clearer ability-boost guidance and documents the import and export workflow for character-creation drafts.
-- **A personal hobby project:** This fork is not a commercial product. I created it because I wanted to improve the module for my own Foundry VTT games—and because the same changes might be useful to other groups.
+- Searches begin after three characters and use a 250 ms debounce.
+- Stale asynchronous results are discarded.
+- Equipment, feat, and spell pickers render no more than 200 rows at once.
+- Lightweight compendium indexes are preferred over complete documents.
+- Loaded packs and in-flight requests are shared for the Foundry session.
+- Expensive cross-step calculations are reused until the character changes.
+- Static equipment facets are cached and spell compendiums may load in parallel.
+- Closed pickers are not rendered again after delayed loads complete.
 
-### What changed – and why?
+### Expanded GM tools
 
-- **Smoother tab changes:** Character-creation lists prefer lightweight compendium indexes over complete documents. Loaded packs and in-flight requests are shared between wizards for the complete Foundry session. Background data is loaded in priority order during browser idle time, while expensive cross-step calculations are reused until the character actually changes.
-- **Better versatile-heritage control:** The GM view adds separate ancestry-heritage and versatile-heritage filters and bulk actions. Stable heritage keys make a rule apply to matching copies supplied by translation or homebrew compendiums. GMs retain their intentional override.
-- **GM setup assistant:** An optional first-run assistant configures language, rarities, content sources, Leveler rules, detected PF2e variants, review requests, and player access in one place. Balanced, Restricted, and Homebrew-friendly presets provide starting points, and the assistant can be reopened from Module Settings.
-- **Campaign profiles and diagnostics:** Relevant Leveler and PF2e configuration can be transferred between worlds as a JSON profile. Diagnostics report missing compendiums, stale guidance references, missing quick-package items, duplicate heritage slugs, conflicting review settings, and runtime cache status. The same page can safely clear those caches.
-- **Campaign rules for players:** The Character Creation Summary displays active access and variant rules so players can see which content and optional rules govern the world before applying their character.
+- First-run campaign setup assistant
+- Campaign-profile import and export
+- Built-in diagnostics and safe runtime-cache clearing
+- Content guidance for ancestries, heritages, backgrounds, classes, and other supported options
+- Stable heritage matching across translation and homebrew compendiums
+- Visible campaign and access rules on the character-creation summary
 
-- **Faster search:** The previous search flow could scan large compendiums and create thousands of DOM elements after a single character. Searches now start at three characters, use a 250 ms debounce, and discard stale asynchronous results. Equipment, feat, and spell pickers render at most 200 result rows at once. Static equipment facets are cached, and multiple spell compendiums load in parallel.
-- **Custom quick-equipment packages:** Game Masters can create reusable packages with a name, image, description, class, level, rarity, and traits. Each package references normal PF2e items, while price and Bulk are calculated automatically from its contents and quantities. This makes complete class loadouts possible instead of exposing only an adventurer's pack.
-- **Heritages in content guidance:** Standard, versatile, mixed-ancestry, world, and module heritages can be suggested, restricted, or banned in the same way as ancestries. This closes a gap in campaign content control.
-- **Clearer ability boosts:** The ability-boost step now explains boosts, ancestry flaws, and the alternate ancestry rule. A live counter also shows how many of the four free boosts remain.
-- **Optional German interface:** German is an additional language, not a replacement. English, French, and Chinese remain available. The German wording follows established PF2e terminology.
-- **Stability fixes:** Queries below the minimum length no longer trigger full list rebuilds. Result lists remain bounded, and an equipment picker that has already been closed is not rendered again after a delayed compendium load completes.
-- **Gallery view and image preview:** The ancestry step in the character-creation wizard, along with the ancestry and heritage content guidance in GM administration, can switch between a compact list and a large-image gallery; the chosen view is remembered per user. Hovering over any image in the selection lists (ancestries, heritages, feats, spells, equipment, GM content guidance) also shows an enlarged preview next to the cursor.
-- **Fixes for reported upstream issues:** German proficiency prerequisites such as “Geübt in Athletik” and “Experte in Heilkunde” are recognized correctly, while ancestry and homebrew-heritage prerequisites can be checked together. The Time Oracle's **Advanced Revelation** now grants **Time Skip** instead of **Manifold Lives**, with Manifold Lives reserved for **Greater Revelation**. Leveler sheet controls are more resistant to sheet themes and UI modules, and the editable Foundry shortcut **Shift+L** opens the Leveler for a selected or assigned character.
+### Quick-equipment packages
 
-Feat, spell, item, and other game-content names and descriptions come from the active PF2e/SF2e compendiums. A matching system or compendium translation is therefore required for translated game content.
+Game Masters can build reusable starter or class loadouts from normal PF2e items. Packages may include a name, image, description, class, level, rarity, traits, quantities, and automatically calculated price and Bulk.
 
-### Tested environment
+### Gallery and image previews
 
-- Foundry VTT 14, Build 3654 and Build 14.365
-- Pathfinder Second Edition 8.3.0
+Ancestry and heritage selectors can switch between compact lists and large-image galleries. Hover previews are available across ancestry, heritage, feat, spell, equipment, and GM guidance lists.
 
-The manifest continues to support Foundry VTT 13 or newer and PF2e 7.0.0 or newer. The versions above identify the combination that was explicitly tested.
+### Localization and usability
+
+- Optional German module localization
+- English, French, and Simplified Chinese remain available
+- Clearer ability-boost guidance and a live free-boost counter
+- Character-creation plan import and export
+- More robust sheet controls across themes and UI modules
+- Configurable **Shift+L** shortcut for the selected or assigned actor
+
+### Fixes
+
+- German skill-rank prerequisites are recognized correctly.
+- Ancestry and homebrew-heritage prerequisites can be evaluated together.
+- The Time Oracle's **Advanced Revelation** grants **Time Skip** instead of **Manifold Lives**.
+- **Greater Revelation** continues to grant **Manifold Lives**.
+
+> [!NOTE]
+> Names and descriptions of feats, spells, equipment, and other game content come from active PF2e/SF2e compendiums. A matching system or compendium translation is required for translated game content.
+
+## Installation
+
+1. Open **Add-on Modules** in Foundry VTT.
+2. Select **Install Module**.
+3. Paste the following URL into **Manifest URL**:
+
+```text
+https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler/releases/latest/download/module.json
+```
+
+4. Select **Install**.
+5. Enable **Darkis Better PF2e-Leveler** in your world.
+
+> [!CAUTION]
+> Enable either Darkis Better PF2e-Leveler or the original PF2e Leveler in a world, not both.
+
+## Requirements and tested environment
 
 ### Requirements
 
 - Foundry VTT 13 or newer
-- Pathfinder Second Edition 7.0.0 or newer; alternatively, Starfinder Second Edition 0.0.10 or newer
+- Pathfinder Second Edition 7.0.0 or newer  
+  **or** Starfinder Second Edition 0.0.10 or newer
 - `socketlib` is recommended for reliable review-request delivery
 
-### Planned feature: homebrew deities
+### Explicitly tested
 
-A separate homebrew deity add-on with PF2e Leveler integration is planned. The intended technical model is a companion Foundry module that provides compatible PF2e `deity` items in a compendium. PF2e Leveler can then use that compendium as a deity source, while standard deities can be removed from the available selection through compendium and content-guidance configuration.
+- Foundry VTT **14.365**
+- Pathfinder Second Edition **8.3.0**
+- The module manifest currently marks Starfinder Second Edition **1.0.1** as verified
 
-This is a roadmap item and is **not included in the current version**.
+## Migration from version 3.8.5 or earlier
 
-### Installation
+Earlier test releases used the module ID `pf2e-leveler`. Current releases use `darkis-better-pf2e-leveler`, so Foundry treats the module as a separate installation.
 
-1. In Foundry VTT, open **Add-on Modules** and select **Install Module**.
-2. Enter this address in the **Manifest URL** field:
+1. Install the current release through the new manifest URL.
+2. Enable Darkis Better PF2e-Leveler in the target world.
+3. Review and recreate old settings where necessary.
+4. Disable or remove the legacy installation.
 
-   ```text
-   https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler/releases/latest/download/module.json
-   ```
+Settings and module-owned data from the old ID are not migrated automatically.
 
-3. Select **Install**, then enable **Darkis Better PF2e-Leveler** in your world.
+## Character-creation import and export
 
-The manifest URL always points to the latest published version of this fork.
-
-Darkis Better PF2e-Leveler uses its own module ID and therefore appears as a separate entry alongside the original in Foundry's module list. Enable only one of the two modules per world.
-
-### Exporting and importing character creation
-
-Select **Export** in the footer of the character-creation wizard to save the current draft as `<character-name>-creation-plan.json`. The file contains the wizard selections but does not modify the actor sheet.
+Use **Export** in the character-creation wizard footer to save the current draft as `<character-name>-creation-plan.json`. The file stores wizard selections without modifying the actor.
 
 To restore a draft:
 
-1. Open the actor that should receive the draft and start **Character Creation**.
-2. Select **Import** in the wizard footer and choose a previously exported JSON file.
-3. The imported draft replaces the saved wizard selections for the currently open actor. Review every step, especially content supplied by add-on modules or custom compendiums.
-4. Items and choices are applied to the actor only after you confirm character creation on the Summary step.
+1. Open the target actor and start **Character Creation**.
+2. Select **Import** in the wizard footer.
+3. Choose a previously exported JSON file.
+4. Review every step, especially content supplied by modules or custom compendiums.
+5. Confirm character creation on the Summary step to apply the selections.
 
-This import accepts PF2e Leveler character-creation plans only; level plans use their separate import function. Any module or compendium referenced by the draft must be active in the target world and accessible to the user.
+Character-creation and level-up plans use separate import workflows. Referenced modules and compendiums must be active and accessible in the target world.
 
-### GM setup and campaign profiles
+## GM setup and campaign profiles
 
-The setup assistant opens once for a GM on the first use of this version and remains available under **Module Settings → PF2e Leveler → GM Setup Assistant**. Settings selected directly in the assistant are applied through **Save and Finish**. Linked detail managers for content guidance, compendium sources, and equipment packages retain their own Save buttons. **Do not show automatically** dismisses first-run setup; the assistant can still be opened manually at any time.
+The setup assistant opens once for a Game Master and remains available under:
 
-**Export Campaign Profile** saves relevant Leveler world settings, content guidance, compendium assignments, quick-equipment packages, and supported PF2e variants as JSON. An imported profile is loaded into the assistant draft and is applied only after finishing. Diagnostics are read-only; only **Clear Runtime Caches** discards loaded lists so they can be rebuilt on demand.
+**Module Settings → PF2e Leveler → GM Setup Assistant**
 
-### Languages
+Settings selected directly in the assistant are applied through **Save and Finish**. Linked detail managers retain their own Save buttons. Imported campaign profiles remain drafts until the assistant is completed.
 
-German is optional and can be selected through each user's Foundry core language setting. German, English, French, and Chinese remain available. The GM setup assistant exposes the same Foundry language setting and reloads the interface after a change. The selected language applies to that user's complete Foundry interface, not only this module.
+## Languages
 
-### Origin, license, and use
+The module interface supports:
 
-- Original project and developer: [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
-- Community fork: [Darkiyus/Darkis-Better-PF2e-Leveler](https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler)
+- German
+- English
+- French
+- Simplified Chinese
 
-This community fork is not an official release by the original developer. The original PF2e Leveler is MIT-licensed per its README, and this fork is likewise released under the MIT License (see [`LICENSE`](LICENSE)). That covers the complete source code, inherited and original alike: free to use, modify, and redistribute as long as the copyright and license notice is retained. Pathfinder, Foundry VTT, and other third-party content or trademarks are excluded and remain subject to the rights of their respective owners.
+Language selection uses the Foundry core language setting and therefore applies to the user's complete Foundry interface, not only this module.
 
-The original developer is warmly invited to incorporate any or all of these changes into the original project. That kind of open exchange is one of the best parts of collaborative software development. 😊
+## Roadmap: homebrew deities
 
-I hope these improvements help your games as much as they have helped mine. Have fun tinkering, enjoy many unforgettable Pathfinder adventures, and have a fantastic tabletop night! 🎲
+A separate homebrew-deity companion module is planned. It is intended to provide compatible PF2e `deity` items through a compendium that the Leveler can use as an additional deity source.
+
+This feature is **not included in the current release**.
+
+## Origin, credits, and license
+
+- **Original project:** [RoiLeaf – PF2e Leveler](https://github.com/roi007leaf/pf2e-leveler)
+- **Community fork:** [Darkiyus – Darkis Better PF2e-Leveler](https://github.com/Darkiyus/Darkis-Better-PF2e-Leveler)
+
+This fork is not an official release by the original developer.
+
+The original project and this fork are distributed under the **MIT License**. The source may be used, modified, merged, published, and redistributed as long as the included copyright and license notices are retained. See [`LICENSE`](LICENSE) for the complete terms.
+
+Pathfinder, Starfinder, Foundry VTT, and other third-party content and trademarks remain subject to the rights of their respective owners.
+
+
+The original developer is warmly invited to incorporate any or all changes from this fork into the upstream project. ❤️

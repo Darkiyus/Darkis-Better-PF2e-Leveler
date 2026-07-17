@@ -15,6 +15,7 @@ export async function ensureLevelerTemplatesLoaded() {
     alchemistPanel: `modules/${MODULE_ID}/templates/partials/alchemist-panel.hbs`,
     animistPanel: `modules/${MODULE_ID}/templates/partials/animist-panel.hbs`,
     gmSetupWizard: `modules/${MODULE_ID}/templates/gm-setup-wizard.hbs`,
+    creditsMenu: `modules/${MODULE_ID}/templates/credits-menu.hbs`,
     contentGuidanceMenu: `modules/${MODULE_ID}/templates/content-guidance-menu.hbs`,
     compendiumSettings: `modules/${MODULE_ID}/templates/compendium-settings.hbs`,
   };
