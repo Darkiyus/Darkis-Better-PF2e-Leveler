@@ -3,7 +3,7 @@ name: PF2E Leveler Release Pipeline
 env:
   project_url: 'https://github.com/${{github.repository}}'
   latest_manifest_url: 'https://github.com/${{github.repository}}/releases/latest/download/module.json'
-  release_module_url: 'https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip'
+  release_module_url: 'https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name || inputs.release_tag}}/module.zip'
 
 on:
   push:
@@ -12,6 +12,12 @@ on:
     branches: [master, dev]
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing release tag to build and update'
+        required: true
+        type: string
 
 jobs:
   test:
@@ -61,7 +67,7 @@ jobs:
 
       - name: Extract Version From Tag
         id: get_version
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           version="${TAG_NAME#v}"
@@ -71,11 +77,11 @@ jobs:
           fi
           echo "version-without-v=${version}" >> "${GITHUB_OUTPUT}"
         env:
-          TAG_NAME: ${{ github.event.release.tag_name }}
+          TAG_NAME: ${{ github.event.release.tag_name || inputs.release_tag }}
 
       - name: Modify Module Manifest With Release-Specific Values
         id: sub_manifest_link_version
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: cschleiden/replace-tokens@v1
         with:
           files: 'module.json'
@@ -86,7 +92,7 @@ jobs:
           DOWNLOAD: ${{ env.release_module_url }}
 
       - name: Set Module Manifest Version From Release Tag
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           tmp_module="$(mktemp)"
           jq --arg version "${VERSION}" '.version = $version' module.json > "${tmp_module}"
@@ -96,7 +102,7 @@ jobs:
           VERSION: ${{steps.get_version.outputs.version-without-v}}
 
       - name: Create Module Archive
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           zip                                    \
             --recurse-paths                      \
@@ -111,17 +117,17 @@ jobs:
 
       - name: Update Release With Files
         id: create_version_release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          name: ${{ github.event.release.name }}
-          draft: ${{ github.event.release.unpublished }}
-          prerelease: ${{ github.event.release.prerelease }}
+          name: ${{ github.event.release.name || inputs.release_tag }}
+          draft: false
+          prerelease: ${{ github.event.release.prerelease || false }}
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: './module.json, ./module.zip'
-          tag: ${{ github.event.release.tag_name }}
-          body: ${{ github.event.release.body }}
+          tag: ${{ github.event.release.tag_name || inputs.release_tag }}
+          body: ${{ github.event.release.body || 'Automated PF2e Leveler release assets.' }}
 
   publish-to-foundry:
     runs-on: ubuntu-latest
