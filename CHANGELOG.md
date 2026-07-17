@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.11.1 – Release Packaging Fix
+
+### Fixed
+
+- The `assets/` folder (coin icons, module logo) was missing from the release archive, so those images appeared broken in Foundry after updating to 3.11.0. The release build now includes `assets/` in `module.zip`.
+
 ## 3.11.0 – Currency Fix and Quick-Equipment Overhaul
 
 ### Fixed
