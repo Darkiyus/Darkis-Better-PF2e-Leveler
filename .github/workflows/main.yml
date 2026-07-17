@@ -114,7 +114,8 @@ jobs:
             templates/                           \
             scripts/                             \
             styles/                              \
-            lang/
+            lang/                                \
+            assets/
 
       - name: Update Release With Files
         id: create_version_release
