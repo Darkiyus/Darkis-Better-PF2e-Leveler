@@ -18,9 +18,11 @@
   border-bottom: 1px solid var(--leveler-border);
 }
 
-.pf2e-leveler .credits-menu__brand i {
-  font-size: 1.6rem;
-  color: var(--leveler-accent);
+.pf2e-leveler .credits-menu__logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .pf2e-leveler .credits-menu__title {

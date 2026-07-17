@@ -9,6 +9,7 @@ import { registerReviewRequestSocket } from '../access/review-requests.js';
 import { registerPlanCommentsHooks } from './plan-comments-sync.js';
 import { maybeOpenGmSetupWizard } from '../ui/gm-setup-wizard.js';
 import { initImageZoomPreview } from '../ui/image-zoom.js';
+import { MODULE_ID } from '../constants.js';
 
 export function registerLifecycleHooks() {
   Hooks.once('init', onInit);
@@ -72,6 +73,36 @@ export function registerHandlebarsHelpers() {
   registerHandlebarsHelper('format', (key, options) => {
     return game.i18n.format(key, options.hash);
   });
+  registerHandlebarsHelper('coinIcons', (coins) => {
+    return new Handlebars.SafeString(buildCoinIconsHtml(coins));
+  });
+}
+
+const COIN_DENOMINATIONS = [
+  { code: 'pp', key: 'pp' },
+  { code: 'gp', key: 'gp' },
+  { code: 'sp', key: 'sp' },
+  { code: 'cp', key: 'cp' },
+];
+
+function buildCoinIconsHtml(coins) {
+  if (!coins || typeof coins !== 'object') return '';
+  const parts = COIN_DENOMINATIONS
+    .map(({ code, key }) => ({ code, value: Number(coins[key]) || 0 }))
+    .filter((entry) => entry.value > 0)
+    .map(({ code, value }) => (
+      `<span class="coin-amount coin-amount--${code}">`
+      + `<img class="coin-icon" src="modules/${MODULE_ID}/assets/coins/coin-${code}.png" alt="${code}">`
+      + `<span class="coin-amount__value">${value}</span>`
+      + '</span>'
+    ));
+  if (parts.length === 0) {
+    return '<span class="coin-amount coin-amount--zero">'
+      + `<img class="coin-icon" src="modules/${MODULE_ID}/assets/coins/coin-gp.png" alt="gp">`
+      + '<span class="coin-amount__value">0</span>'
+      + '</span>';
+  }
+  return `<span class="coin-amounts">${parts.join('')}</span>`;
 }
 
 function registerHandlebarsHelper(name, fn) {

@@ -160,6 +160,26 @@
   max-width: 100%;
 }
 
+/* Rows that hold a list of filter toggles (instead of a single select) stack
+   the label above the toggles, one per line, so long labels never push the
+   row past the sidebar's width. */
+.pf2e-leveler .picker__utility-row--inline-label:has(.picker__toggle-list) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--leveler-spacing-sm);
+}
+
+.pf2e-leveler .picker__utility-row--inline-label:has(.picker__toggle-list) .picker__toggle-list {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.pf2e-leveler .picker__utility-row--inline-label:has(.picker__toggle-list) .picker__prereq-toggle {
+  justify-content: flex-start;
+  width: 100%;
+  white-space: normal;
+}
+
 .pf2e-leveler .picker__source-list {
   display: flex;
   flex-direction: row;

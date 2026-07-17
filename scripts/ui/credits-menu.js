@@ -23,6 +23,7 @@ export class CreditsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   async _prepareContext() {
     return {
       version: game.modules.get(MODULE_ID)?.version ?? '',
+      moduleId: MODULE_ID,
     };
   }
 }

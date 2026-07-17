@@ -1,5 +1,6 @@
 import { MODULE_ID } from '../constants.js';
 import {
+  QUICK_EQUIPMENT_CATEGORIES,
   QUICK_EQUIPMENT_PACKAGES_SETTING,
   bulkValueToUnits,
   createQuickEquipmentPackage,
@@ -11,8 +12,18 @@ import {
   packageItemFromDocument,
   saveQuickEquipmentPackages,
 } from '../equipment/quick-equipment-packages.js';
+import { ClassRegistry } from '../classes/registry.js';
+import { ensureClassRegistry } from '../classes/ensure.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
+
+const QUICK_EQUIPMENT_CATEGORY_LABEL_KEYS = {
+  starter: 'PF2E_LEVELER.QUICK_EQUIPMENT.CATEGORY_STARTER',
+  classLoadout: 'PF2E_LEVELER.QUICK_EQUIPMENT.CATEGORY_CLASS_LOADOUT',
+  adventuringGear: 'PF2E_LEVELER.QUICK_EQUIPMENT.CATEGORY_ADVENTURING_GEAR',
+  specialist: 'PF2E_LEVELER.QUICK_EQUIPMENT.CATEGORY_SPECIALIST',
+  other: 'PF2E_LEVELER.QUICK_EQUIPMENT.CATEGORY_OTHER',
+};
 
 export class QuickEquipmentPackagesMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   constructor(options = {}) {
@@ -67,6 +78,12 @@ export class QuickEquipmentPackagesMenu extends HandlebarsApplicationMixin(Appli
     });
     root?.querySelector('[data-action="addQuickEquipmentItems"]')?.addEventListener('click', () => {
       this._openItemPicker();
+    });
+    root?.querySelector('[data-action="browsePackageImage"]')?.addEventListener('click', () => {
+      this._browsePackageImage();
+    });
+    root?.querySelectorAll('[data-action="toggleQuickEquipmentClass"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', () => this._toggleActivePackageClass(checkbox.dataset.classSlug));
     });
     root?.querySelectorAll('[data-action="removeQuickEquipmentItem"]').forEach((button) => {
       button.addEventListener('click', () => this._removeItem(button.dataset.uuid));
@@ -135,10 +152,25 @@ export class QuickEquipmentPackagesMenu extends HandlebarsApplicationMixin(Appli
     else if (field === 'level') activePackage.system.level.value = value;
     else if (field === 'rarity') activePackage.system.traits.rarity = value;
     else if (field === 'traits') activePackage.system.traits.value = value.split(',');
-    else if (field === 'classSlugs') activePackage.classSlugs = value.split(',');
+    else if (field === 'category') activePackage.category = value;
     else if (field === 'name' || field === 'img') activePackage[field] = value;
 
     this._replaceActivePackage(normalizeQuickEquipmentPackage(activePackage));
+  }
+
+  _toggleActivePackageClass(slug) {
+    const activePackage = this._getActivePackage();
+    if (!activePackage) return;
+    if (!slug) {
+      activePackage.classSlugs = [];
+    } else {
+      const current = new Set(activePackage.classSlugs ?? []);
+      if (current.has(slug)) current.delete(slug);
+      else current.add(slug);
+      activePackage.classSlugs = [...current];
+    }
+    this._replaceActivePackage(normalizeQuickEquipmentPackage(activePackage));
+    this.render(true);
   }
 
   _changeItemQuantity(uuid, delta) {
@@ -156,6 +188,21 @@ export class QuickEquipmentPackagesMenu extends HandlebarsApplicationMixin(Appli
     activePackage.items = activePackage.items.filter((entry) => entry.uuid !== uuid);
     this._replaceActivePackage(normalizeQuickEquipmentPackage(activePackage));
     this.render(true);
+  }
+
+  _browsePackageImage() {
+    const activePackage = this._getActivePackage();
+    if (!activePackage) return;
+    const picker = new FilePicker({
+      type: 'image',
+      current: activePackage.img,
+      callback: (path) => {
+        activePackage.img = path;
+        this._replaceActivePackage(normalizeQuickEquipmentPackage(activePackage));
+        this.render(true);
+      },
+    });
+    picker.browse();
   }
 
   async _openItemPicker() {
@@ -195,18 +242,35 @@ export class QuickEquipmentPackagesMenu extends HandlebarsApplicationMixin(Appli
       ...quickPackage,
       description: quickPackage.system.description.value,
       level: quickPackage.system.level.value,
-      classSlugsValue: quickPackage.classSlugs.join(', '),
       traitsValue: quickPackage.system.traits.value.join(', '),
       rarityCommon: quickPackage.system.traits.rarity === 'common',
       rarityUncommon: quickPackage.system.traits.rarity === 'uncommon',
       rarityRare: quickPackage.system.traits.rarity === 'rare',
       rarityUnique: quickPackage.system.traits.rarity === 'unique',
+      classOptions: this._getClassOptions(quickPackage),
+      categoryOptions: QUICK_EQUIPMENT_CATEGORIES.map((category) => ({
+        value: category,
+        label: game.i18n.localize(QUICK_EQUIPMENT_CATEGORY_LABEL_KEYS[category]),
+        selected: quickPackage.category === category,
+      })),
       items: quickPackage.items.map((item) => ({
         ...item,
         priceLabel: formatCoins(item.price),
         bulkLabel: formatBulkUnits(bulkValueToUnits(item.bulk)),
       })),
     };
+  }
+
+  _getClassOptions(quickPackage) {
+    ensureClassRegistry();
+    const selected = new Set(quickPackage.classSlugs ?? []);
+    return ClassRegistry.getAll()
+      .map((classDef) => ({
+        slug: classDef.slug,
+        name: game.i18n.localize(classDef.nameKey),
+        selected: selected.has(classDef.slug),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async _save() {

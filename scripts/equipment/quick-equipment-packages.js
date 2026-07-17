@@ -6,6 +6,8 @@ export const DEFAULT_QUICK_EQUIPMENT_IMAGE = 'icons/svg/item-bag.svg';
 
 const COIN_VALUES = { gp: 100, sp: 10, cp: 1 };
 const ALLOWED_RARITIES = new Set(['common', 'uncommon', 'rare', 'unique']);
+export const QUICK_EQUIPMENT_CATEGORIES = ['starter', 'classLoadout', 'adventuringGear', 'specialist', 'other'];
+const DEFAULT_QUICK_EQUIPMENT_CATEGORY = 'starter';
 
 export function createQuickEquipmentPackage(overrides = {}) {
   return normalizeQuickEquipmentPackage({
@@ -58,6 +60,7 @@ export function normalizeQuickEquipmentPackage(rawPackage = {}) {
     name: normalizeString(rawPackage.name),
     img: normalizeString(rawPackage.img) || DEFAULT_QUICK_EQUIPMENT_IMAGE,
     classSlugs: normalizeSlugList(rawPackage.classSlugs ?? rawPackage.classSlug),
+    category: normalizeQuickEquipmentCategory(rawPackage.category),
     items,
     priceCp,
     priceLabel: formatCoins(price),
@@ -221,6 +224,11 @@ function normalizeDescription(value) {
 function normalizeRarity(value) {
   const normalized = normalizeString(value).toLowerCase();
   return ALLOWED_RARITIES.has(normalized) ? normalized : 'common';
+}
+
+function normalizeQuickEquipmentCategory(value) {
+  const normalized = normalizeString(value);
+  return QUICK_EQUIPMENT_CATEGORIES.includes(normalized) ? normalized : DEFAULT_QUICK_EQUIPMENT_CATEGORY;
 }
 
 function normalizeStringList(value) {

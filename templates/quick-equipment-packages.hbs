@@ -10,7 +10,7 @@
         <img src="{{this.img}}" alt="">
         <span>
           <strong>{{this.displayName}}</strong>
-          <small>{{this.priceLabel}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}}</small>
+          <small>{{coinIcons this.system.price.value}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}}</small>
         </span>
       </button>
       {{/each}}
@@ -28,7 +28,12 @@
         </label>
         <label>
           <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.IMAGE"}}</span>
-          <input type="text" value="{{activePackage.img}}" data-package-field="img">
+          <div class="quick-equipment-packages__image-field">
+            <input type="text" value="{{activePackage.img}}" data-package-field="img">
+            <button type="button" data-action="browsePackageImage" data-tooltip="{{localize 'PF2E_LEVELER.QUICK_EQUIPMENT.BROWSE_IMAGE'}}">
+              <i class="fa-solid fa-folder-open"></i>
+            </button>
+          </div>
         </label>
       </div>
       <button type="button" class="quick-equipment-packages__delete" data-action="deleteQuickEquipmentPackage" data-tooltip="{{localize 'PF2E_LEVELER.UI.REMOVE'}}">
@@ -43,10 +48,6 @@
 
     <div class="quick-equipment-packages__fields">
       <label>
-        <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.CLASSES"}}</span>
-        <input type="text" value="{{activePackage.classSlugsValue}}" data-package-field="classSlugs" placeholder="rogue, ranger">
-      </label>
-      <label>
         <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.LEVEL"}}</span>
         <input type="number" min="0" step="1" value="{{activePackage.level}}" data-package-field="level">
       </label>
@@ -59,6 +60,14 @@
           <option value="unique" {{#if activePackage.rarityUnique}}selected{{/if}}>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.RARITY_UNIQUE"}}</option>
         </select>
       </label>
+      <label>
+        <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.CATEGORY"}}</span>
+        <select data-package-field="category">
+          {{#each activePackage.categoryOptions}}
+          <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </label>
     </div>
 
     <label class="quick-equipment-packages__field">
@@ -66,8 +75,24 @@
       <input type="text" value="{{activePackage.traitsValue}}" data-package-field="traits" placeholder="kit">
     </label>
 
+    <div class="quick-equipment-packages__field">
+      <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.CLASSES"}}</span>
+      <div class="quick-equipment-packages__class-list">
+        <label class="quick-equipment-packages__class-option quick-equipment-packages__class-option--general">
+          <input type="checkbox" data-action="toggleQuickEquipmentClass" data-class-slug="" {{#unless activePackage.classSlugs.length}}checked{{/unless}}>
+          <span>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.ALL_CLASSES"}}</span>
+        </label>
+        {{#each activePackage.classOptions}}
+        <label class="quick-equipment-packages__class-option">
+          <input type="checkbox" data-action="toggleQuickEquipmentClass" data-class-slug="{{this.slug}}" {{#if this.selected}}checked{{/if}}>
+          <span>{{this.name}}</span>
+        </label>
+        {{/each}}
+      </div>
+    </div>
+
     <div class="quick-equipment-packages__totals">
-      <span><strong>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.PRICE"}}:</strong> {{activePackage.priceLabel}}</span>
+      <span><strong>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.PRICE"}}:</strong> {{coinIcons activePackage.system.price.value}}</span>
       <span><strong>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}}:</strong> {{activePackage.bulkLabel}}</span>
       <small>{{localize "PF2E_LEVELER.QUICK_EQUIPMENT.AUTO_CALCULATED"}}</small>
     </div>
@@ -85,7 +110,7 @@
         <img src="{{this.img}}" alt="">
         <div class="quick-equipment-packages__item-name">
           <strong>{{this.name}}</strong>
-          <small>{{this.priceLabel}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}}</small>
+          <small>{{coinIcons this.price}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}}</small>
         </div>
         <div class="wizard-equipment-row__qty">
           <button type="button" class="wizard-equipment-row__qty-btn" data-action="decrementQuickEquipmentItem" data-uuid="{{this.uuid}}">−</button>

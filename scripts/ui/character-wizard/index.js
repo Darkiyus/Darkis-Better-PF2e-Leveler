@@ -31,7 +31,7 @@ import { renderApplicationInFront, scheduleBringApplicationToFront } from '../sh
 import { getActiveSearchQuery } from '../shared/search-utils.js';
 import { resolveSpellcastingTradition } from '../../data/subclass-spells.js';
 import { mountPlanComments, collectWizardCommentAnchors } from '../plan-comments-ui.js';
-import { copperToCoins, equipmentEntriesTotalCopper, getQuickEquipmentPackages } from '../../equipment/quick-equipment-packages.js';
+import { copperToCoins, equipmentEntriesTotalCopper, formatCoins, getQuickEquipmentPackages } from '../../equipment/quick-equipment-packages.js';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 registerHandlebarsHelpers();
@@ -167,6 +167,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const storedCreationData = getCreationData(actor);
     this.data = storedCreationData ? normalizeCreationData(storedCreationData) : createCreationData();
     this.currentStep = 0;
+    this._visitedSteps = new Set();
     this.featSubStep = 'ancestry';
     this.spellSubStep = 'cantrips';
     this.classHandler = getClassHandler(this.data.class?.slug);
@@ -424,6 +425,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _prepareContext() {
+    this._visitedSteps.add(this.stepId);
     if (this._isBooting) {
       this._cachedBoostStepComplete = await this._computeBoostStepComplete();
       const extraSteps = this._getStepHandlers().flatMap((entry) => entry.steps);
@@ -1473,6 +1475,42 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     this._saveAndRender();
   }
 
+  async _viewQuickEquipmentPackage(packageId) {
+    const quickPackage = getQuickEquipmentPackages().find((entry) => entry.id === packageId);
+    if (!quickPackage) return;
+
+    const itemsHtml = quickPackage.items.map((item) => `
+      <div class="quick-equipment-preview__item">
+        <img src="${item.img}" alt="">
+        <span class="quick-equipment-preview__item-name">${item.name}</span>
+        <span class="quick-equipment-preview__item-qty">×${item.quantity}</span>
+      </div>
+    `).join('');
+
+    const content = `
+      <div class="quick-equipment-preview">
+        <div class="quick-equipment-preview__header">
+          <img src="${quickPackage.img}" alt="" class="quick-equipment-preview__image">
+          <div>
+            <h3>${quickPackage.name}</h3>
+            <div class="quick-equipment-preview__meta">
+              ${formatCoins(quickPackage.system.price.value)} · ${game.i18n.localize('PF2E_LEVELER.QUICK_EQUIPMENT.BULK')} ${quickPackage.bulkLabel}
+            </div>
+          </div>
+        </div>
+        ${quickPackage.system.description.value ? `<p class="quick-equipment-preview__description">${quickPackage.system.description.value}</p>` : ''}
+        <div class="quick-equipment-preview__items">${itemsHtml}</div>
+      </div>
+    `;
+
+    await foundry.applications.api.DialogV2.prompt({
+      window: { title: quickPackage.name },
+      classes: ['pf2e-leveler'],
+      content,
+      ok: { label: game.i18n.localize('PF2E_LEVELER.UI.CLOSE') },
+    });
+  }
+
   async _openSpellChoicePicker(slot, flag) {
     const choiceContainer = slot === 'ancestry' ? this.data.ancestryFeat : slot === 'ancestryParagon' ? this.data.ancestryParagonFeat : slot === 'class' ? this.data.classFeat : slot === 'skill' ? this.data.skillFeat : (this.data.grantedFeatSections ?? []).find((section) => section.slot === slot);
     if (!choiceContainer) return;
@@ -1598,9 +1636,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       characterLevel: level,
       equipment: equipment.map((entry) => ({ ...entry })),
       equipmentTotal: totalParts.join(', ') || null,
+      equipmentTotalCoins: totals,
       goldLimit,
+      goldLimitCoins: goldLimit !== null ? { gp: goldLimit } : null,
       goldLimitLabel: mode === WEALTH_MODES.ITEMS_AND_CURRENCY ? game.i18n.format('PF2E_LEVELER.STARTING_WEALTH.CURRENCY_BUDGET', { gp: goldLimit }) : null,
       remaining: remainingParts?.join(', ') ?? null,
+      remainingCoins: remaining,
       overBudget,
       permanentItemSlots,
       quickEquipmentPackages,
@@ -2119,9 +2160,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         return primaryComplete && secondaryComplete;
       }
       case 'equipment':
-        return true;
+        return this._visitedSteps.has('equipment');
       case 'summary':
-        return true;
+        return this._visitedSteps.has('summary');
       default:
         return false;
     }

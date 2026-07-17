@@ -7,3 +7,10 @@ coverage/
 AGENTS.md
 CLAUDE.md
 .codex/
+
+# Original high-resolution source art (processed copies live in assets/)
+/gold.png
+/silber.png
+/kupfer.png
+/platinum.png
+/logo.png

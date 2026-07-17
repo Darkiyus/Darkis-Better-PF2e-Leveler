@@ -1,7 +1,8 @@
 import { getClassHandler } from './class-handlers/registry.js';
 import { getClassSelectionData, getGrantedFeatChoiceValues } from './creation-model.js';
 import { ClassRegistry } from '../classes/registry.js';
-import { MODULE_ID, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID } from '../constants.js';
+import { MODULE_ID, MIXED_ANCESTRY_CHOICE_FLAG, MIXED_ANCESTRY_UUID, CHARACTER_WEALTH, WEALTH_MODES } from '../constants.js';
+import { equipmentEntriesTotalCopper, copperToCoins } from '../equipment/quick-equipment-packages.js';
 import { getCompendiumKeysForCategory } from '../compendiums/catalog.js';
 import { info, warn } from '../utils/logger.js';
 import { capitalize, getCampaignFeatSectionIds, isAncestralParagonEnabled } from '../utils/pf2e-api.js';
@@ -367,6 +368,35 @@ async function applyEquipment(actor, data) {
     applyActorSizeToItem(itemData, actorSize);
     await actor.createEmbeddedDocuments('Item', [itemData]);
   }
+
+  await grantRemainingStartingCurrency(actor, data);
+}
+
+function getStartingWealthBudgetCp(actor) {
+  const mode = game.settings.get(MODULE_ID, 'startingWealthMode') ?? WEALTH_MODES.DISABLED;
+  const level = actor.system?.details?.level?.value ?? 1;
+  const entry = CHARACTER_WEALTH[level];
+  if (mode === WEALTH_MODES.LUMP_SUM && entry) return entry.lumpSumGp * 100;
+  if (mode === WEALTH_MODES.ITEMS_AND_CURRENCY && entry) return entry.currencyGp * 100;
+  if (mode === WEALTH_MODES.CUSTOM) return (game.settings.get(MODULE_ID, 'startingEquipmentGoldLimit') ?? 0) * 100;
+  return 0;
+}
+
+async function grantRemainingStartingCurrency(actor, data) {
+  const budgetCp = getStartingWealthBudgetCp(actor);
+  if (budgetCp <= 0) return;
+
+  const spentCp = equipmentEntriesTotalCopper(data.equipment ?? []);
+  const remainingCp = Math.max(0, budgetCp - spentCp);
+  if (remainingCp <= 0) return;
+
+  const remaining = copperToCoins(remainingCp);
+  const currentCurrency = actor.system?.currency ?? {};
+  await actor.update({
+    'system.currency.gp': (currentCurrency.gp ?? 0) + remaining.gp,
+    'system.currency.sp': (currentCurrency.sp ?? 0) + remaining.sp,
+    'system.currency.cp': (currentCurrency.cp ?? 0) + remaining.cp,
+  });
 }
 
 async function applySelectedSkillChoices(actor, data) {

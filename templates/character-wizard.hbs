@@ -1760,14 +1760,26 @@
               <img src="{{this.img}}" alt="" class="wizard-quick-equipment__image">
               <div class="wizard-quick-equipment__info">
                 <strong>{{this.name}}</strong>
-                <span class="wizard-quick-equipment__meta">{{this.priceLabel}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}} · {{this.itemCountLabel}}</span>
-                {{#if this.description}}<p>{{{this.description}}}</p>{{/if}}
-                <small data-tooltip="{{this.contentsLabel}}">{{this.contentsLabel}}</small>
+                <span class="wizard-quick-equipment__meta">{{coinIcons this.system.price.value}} · {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.BULK"}} {{this.bulkLabel}} · {{this.itemCountLabel}}</span>
+                {{#if this.description}}<p class="wizard-quick-equipment__description">{{{this.description}}}</p>{{/if}}
+                <div class="wizard-quick-equipment__contents">
+                  {{#each this.items}}
+                  <span class="wizard-quick-equipment__item-icon" data-tooltip="{{this.name}} ×{{this.quantity}}">
+                    <img src="{{this.img}}" alt="">
+                    <span class="wizard-quick-equipment__item-qty">{{this.quantity}}</span>
+                  </span>
+                  {{/each}}
+                </div>
               </div>
-              <button type="button" class="wizard-feat-slot-card__browse" data-action="addQuickEquipmentPackage" data-package-id="{{this.id}}">
-                <i class="fa-solid fa-plus"></i>
-                {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.ADD_PACKAGE"}}
-              </button>
+              <div class="wizard-quick-equipment__actions">
+                <button type="button" class="wizard-quick-equipment__view" data-action="viewQuickEquipmentPackage" data-package-id="{{this.id}}" data-tooltip="{{localize 'PF2E_LEVELER.UI.SHOW'}}">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button type="button" class="wizard-feat-slot-card__browse" data-action="addQuickEquipmentPackage" data-package-id="{{this.id}}">
+                  <i class="fa-solid fa-plus"></i>
+                  {{localize "PF2E_LEVELER.QUICK_EQUIPMENT.ADD_PACKAGE"}}
+                </button>
+              </div>
             </article>
             {{/each}}
           </div>
@@ -1809,13 +1821,13 @@
           {{#if equipmentTotal}}
           <div class="wizard-equipment-total {{#if overBudget}}wizard-equipment-total--over{{/if}}">
             <span class="wizard-equipment-total__label">{{localize "PF2E_LEVELER.ITEM_PICKER.TOTAL"}}</span>
-            <span class="wizard-equipment-total__value">{{equipmentTotal}}</span>
+            <span class="wizard-equipment-total__value">{{coinIcons equipmentTotalCoins}}</span>
             {{#if goldLimit}}
-            <span class="wizard-equipment-total__limit">/ {{goldLimit}} gp</span>
+            <span class="wizard-equipment-total__limit">/ {{coinIcons goldLimitCoins}}</span>
             {{#if overBudget}}
             <i class="fa-solid fa-triangle-exclamation wizard-equipment-total__warning" data-tooltip="{{localize 'PF2E_LEVELER.SETTINGS.EQUIPMENT_GOLD_LIMIT.EXCEEDED_TOOLTIP'}}"></i>
             {{else}}
-            <span class="wizard-equipment-total__remaining">({{remaining}} {{localize "PF2E_LEVELER.ITEM_PICKER.REMAINING"}})</span>
+            <span class="wizard-equipment-total__remaining">({{coinIcons remainingCoins}} {{localize "PF2E_LEVELER.ITEM_PICKER.REMAINING"}})</span>
             {{/if}}
             {{/if}}
           </div>

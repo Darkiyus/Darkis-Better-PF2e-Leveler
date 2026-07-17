@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.11.0 – Currency Fix and Quick-Equipment Overhaul
+
+### Fixed
+
+- Leftover starting gold is now credited to the character's currency when finishing character creation. Previously, if a player spent less than their starting wealth budget on equipment, the unspent amount was simply discarded instead of being added to the character's coin purse.
+- The equipment and summary steps of the character-creation wizard no longer show as complete (green check) before they've actually been opened and reviewed at least once.
+- Filter toggle buttons (e.g. "Only eligible", "Remaster only") in the feat, item, and spell pickers no longer overflow past the sidebar edge on narrower windows; they now stack under their label instead of forcing a single row.
+- Rarity and status tag colors (uncommon, rare, unique, etc.) are no longer muted by the leather-and-parchment theme added in 3.10.0. That theme's generic tag styling unintentionally overrode the existing rarity colors due to equal CSS specificity and load order; the theme's tag rule now only affects shape, not color.
+
+### Added
+
+- Currency amounts throughout the character wizard now render as coin icons (platinum/gold/silver/copper) instead of plain "gp"/"sp"/"cp" text, using new coin artwork.
+- A logo image now appears in the Credits menu instead of a generic dice icon.
+- Quick-equipment packages in the character wizard now show each item's icon with a quantity badge instead of a "1x Item Name" text list, plus a preview button that opens a popup with the full package contents, image, and description.
+- The quick-equipment package list can now scroll when several packages are defined, instead of extending the window indefinitely.
+- The quick-equipment package editor (GM-only) now has an image browser button to pick an item image via Foundry's file picker, instead of requiring a pasted path.
+- The quick-equipment package editor now has a category dropdown (Starter, Class Loadout, Adventuring Gear, Specialist, Other) instead of no categorization.
+- The quick-equipment package editor now offers class selection as a checkbox list (including a "General/all classes" option, multiple classes selectable) instead of a free-text, comma-separated slug field.
+
 ## 3.10.0 – Dark Leather-and-Parchment Theme
 
 ### Added
